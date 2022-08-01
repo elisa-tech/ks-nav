@@ -96,10 +96,20 @@ func get_successors_by_id(db *sql.DB, symbol_id int)([]Entry, error){
 	return res, nil
 }
 
+func Not_in(list []int, v int) bool {
 
-func Navigate(db *sql.DB, symbol_id int) {
+        for _, a := range list {
+                if a == v {
+                        return false
+                }
+        }
+        return true
+}
+
+func Navigate(db *sql.DB, symbol_id int, visited []int) {
 	var rname, lname, lpname	string
 
+	visited=append(visited, symbol_id)
 	lname=""
 	entry, err := get_entry_by_id(db, symbol_id)
 	if err!=nil {
@@ -119,7 +129,9 @@ func Navigate(db *sql.DB, symbol_id int) {
 				fmt.Printf("%s -> %s\n", rname, lname)
 				}
 			lpname=lname
-			Navigate(db, curr.Sym_id)
+			if Not_in(visited, curr.Sym_id){
+				Navigate(db, curr.Sym_id, visited)
+				}
 			}
 //		fmt.Println("--------------")
 		}
