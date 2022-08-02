@@ -28,6 +28,8 @@ type Edge struct {
 	Caller	int
 	Callee	int
 }
+var check int = 0
+var chached int = 0
 
 func Connect_db(t *Connect_token) (*sql.DB){
 	fmt.Println("connect")
@@ -40,11 +42,18 @@ func Connect_db(t *Connect_token) (*sql.DB){
 	return db
 }
 
-func get_entry_by_id(db *sql.DB, symbol_id int)(Entry, error){
+func get_entry_by_id(db *sql.DB, symbol_id int, cache map[int]Entry)(Entry, error){
 	var e		Entry
 	var s		sql.NullString
-
+	
 //	fmt.Println("query")
+	if e, ok := cache[symbol_id]; ok {
+//		fmt.Println("--------------------------------------------cache2 hit!---------------------------------------------------")
+		return e, nil
+		}
+
+
+
 	query:="select sym_id, symbol, exported, type, subsys, fn from (select * from symbols, kernel_file where symbols.fn_id=kernel_file.id) as dummy left outer join tags on dummy.fn_id=tags.fn_id where sym_id=$1"
 	rows, err := db.Query(query, symbol_id)
 	if err!= nil {
@@ -67,14 +76,21 @@ func get_entry_by_id(db *sql.DB, symbol_id int)(Entry, error){
 		fmt.Println("this error hit")
         	return e, err
 		}
+	cache[symbol_id]=e
 	return e, nil
 }
 
-func get_successors_by_id(db *sql.DB, symbol_id int)([]Entry, error){
+func get_successors_by_id(db *sql.DB, symbol_id int, cache map[int][]Entry, cache2 map[int]Entry )([]Entry, error){
 	var e		Edge
 	var res		[]Entry
 
 //	fmt.Println("query")
+
+	if res, ok := cache[symbol_id]; ok {
+//		fmt.Println("--------------------------------------------cache hit!---------------------------------------------------")
+		return res, nil
+		}
+
 	query:="select caller, callee from calls where caller =$1"
 	rows, err := db.Query(query, symbol_id)
 	if err!= nil {
@@ -87,13 +103,15 @@ func get_successors_by_id(db *sql.DB, symbol_id int)([]Entry, error){
 			fmt.Println("this error hit1 ")
 			return nil, err
 			}
-		successors,_ := get_entry_by_id(db, e.Callee)
+		successors,_ := get_entry_by_id(db, e.Callee, cache2)
 		res=append(res, successors )
 		}
 	if err = rows.Err(); err != nil {
 		fmt.Println("this error hit2 ")
         	return nil, err
 		}
+	cache[symbol_id]=res
+//	fmt.Println(cache)
 	return res, nil
 }
 
@@ -123,21 +141,22 @@ func removeDuplicate(list []Entry) []Entry {
 }
 
 
-func Navigate(db *sql.DB, symbol_id int, visited []int, prod map[string]int) {
+func Navigate(db *sql.DB, symbol_id int, visited *[]int, prod map[string]int, cache map[int][]Entry, cache2 map[int]Entry ) {
 	var l,r	string
 
-	visited=append(visited, symbol_id)
-	entry, err := get_entry_by_id(db, symbol_id)
+
+	*visited=append(*visited, symbol_id)
+	entry, err := get_entry_by_id(db, symbol_id, cache2)
 	if err!=nil {
 		l="Unknown";
 		}else{
 		l=entry.Symbol
 		}
-	successors, err:=get_successors_by_id(db, symbol_id);
+	successors, err:=get_successors_by_id(db, symbol_id, cache, cache2);
 	successors=removeDuplicate(successors)
 	if err==nil {
 		for _, curr := range successors{
-			entry, err := get_entry_by_id(db, curr.Sym_id)
+			entry, err := get_entry_by_id(db, curr.Sym_id, cache2)
 		        if err!=nil {
  		               r="Unknown";
                 		} else {
@@ -152,9 +171,10 @@ func Navigate(db *sql.DB, symbol_id int, visited []int, prod map[string]int) {
 					fmt.Println(s)
 					}
 
-			if Not_in(visited, curr.Sym_id){
-				Navigate(db, curr.Sym_id, visited, prod)
+			if Not_in(*visited, curr.Sym_id){
+				Navigate(db, curr.Sym_id, visited, prod, cache, cache2)
 				}
 			}
 		}
 }
+
