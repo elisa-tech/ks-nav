@@ -144,11 +144,12 @@ func Navigate(db *sql.DB, symbol_id int, visited []int, prod map[string]int) {
 					r=entry.Symbol
 					}
 			s:=fmt.Sprintf("%s->%s", l, r)
-			fmt.Println(s)
+//			fmt.Println(s)
 			if _, ok := prod[s]; ok {
 				prod[s]++
 				} else {
 					prod[s]=1
+					fmt.Println(s)
 					}
 
 			if Not_in(visited, curr.Sym_id){
