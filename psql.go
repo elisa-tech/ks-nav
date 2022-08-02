@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 //	"strings"
+	"sort"
 	_ "github.com/lib/pq"
 )
 type Connect_token struct{
@@ -106,33 +107,53 @@ func Not_in(list []int, v int) bool {
         return true
 }
 
-func Navigate(db *sql.DB, symbol_id int, visited []int) {
-	var rname, lname, lpname	string
+
+func removeDuplicate(list []Entry) []Entry {
+
+	sort.SliceStable(list, func(i, j int) bool { return list[i].Sym_id < list[j].Sym_id })
+        allKeys := make(map[int]bool)
+        res := []Entry{}
+        for _, item := range list {
+                if _, value := allKeys[item.Sym_id]; !value {
+                        allKeys[item.Sym_id] = true
+                        res = append(res, item)
+                        }
+                }
+        return res
+}
+
+
+func Navigate(db *sql.DB, symbol_id int, visited []int, prod map[string]int) {
+	var l,r	string
 
 	visited=append(visited, symbol_id)
-	lname=""
 	entry, err := get_entry_by_id(db, symbol_id)
 	if err!=nil {
-		rname="Unknown";
+		l="Unknown";
+		}else{
+		l=entry.Symbol
 		}
-	rname=entry.Symbol
 	successors, err:=get_successors_by_id(db, symbol_id);
+	successors=removeDuplicate(successors)
 	if err==nil {
 		for _, curr := range successors{
 			entry, err := get_entry_by_id(db, curr.Sym_id)
 		        if err!=nil {
- 		               lname="Unknown";
-                		}
-		        lname=entry.Symbol
-//			fmt.Printf("%d -> %d\n", symbol_id, curr.Sym_id)
-			if lpname!=lname {
-				fmt.Printf("%s -> %s\n", rname, lname)
-				}
-			lpname=lname
+ 		               r="Unknown";
+                		} else {
+					r=entry.Symbol
+					}
+			s:=fmt.Sprintf("%s->%s", l, r)
+			fmt.Println(s)
+			if _, ok := prod[s]; ok {
+				prod[s]++
+				} else {
+					prod[s]=1
+					}
+
 			if Not_in(visited, curr.Sym_id){
-				Navigate(db, curr.Sym_id, visited)
+				Navigate(db, curr.Sym_id, visited, prod)
 				}
 			}
-//		fmt.Println("--------------")
 		}
 }

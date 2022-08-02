@@ -1,10 +1,10 @@
 package main
-//import (
-//	"fmt"
-//	)
-
+import (
+	"fmt"
+	)
 
 func main() {
+	var prod = map[string]int{}
 	t:=Connect_token{"dbs.hqhome163.com",5432,"alessandro","<password>","kernel"}
 	db:=Connect_db(&t)
 /*é
@@ -16,6 +16,10 @@ func main() {
 		fmt.Println(e, ",,,,,,,,,,,;;")
 		}
 */
-	Navigate(db, 153735, nil)
-}
 
+	Navigate(db, 153735, nil, prod)
+	fmt.Println("============================")
+	for k, _ := range prod {
+		fmt.Println(k)
+		}
+}
