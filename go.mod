@@ -1,4 +1,4 @@
-module kern_bin_id
+module kern_bin_db
 
 go 1.18
 
