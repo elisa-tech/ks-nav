@@ -1,0 +1,7 @@
+System.map
+kern_bin_id
+sysfinder.go.bak
+vmlinux
+vmlinux.debug
+vmlinux.symvers
+*.swp
