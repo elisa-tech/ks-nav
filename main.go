@@ -12,4 +12,5 @@ func main(){
 	fmt.Println("----",s)
 	time.Sleep(5 * time.Second)
 	fmt.Println("----",s)
+	strip("/usr/bin/strip","./vmlinux")
 }
