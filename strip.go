@@ -11,7 +11,7 @@ func strip(executable string, fn string){
 		panic(err)
 		}
 
-	cmd := exec.Command(executable, "--strip-debug", fn)
+	cmd := exec.Command(executable, "--strip-debug", fn, "-o","./vmlinux")
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
