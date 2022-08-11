@@ -49,14 +49,14 @@ func main(){
 			}
 		}
 	bar.Finish()
-	bar = pb.StartNew(count*4)
+	bar = pb.StartNew(count*4)	//assuming 4 as callee/caller ratio
 	fmt.Println("Collecting xref")
 	for _, a :=range funcs_data{
-		bar.Increment()
 		if strings.Contains(a.Name, "sym.") {
 			Move(r2p, a.Offset)
 			xrefs:=remove_non_func(removeDuplicate(Getxrefs(r2p, a.Offset, &cache)),funcs_data)
 			for _, l :=range xrefs {
+				bar.Increment()
 				spawn_query(
 					db,
 					0,
