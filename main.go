@@ -2,8 +2,8 @@ package main
 import (
 	"fmt"
 	"strings"
-	"time"
 	r2 "github.com/radareorg/r2pipe-go"
+	"github.com/cheggaaa/pb/v3"
 )
 
 func main(){
@@ -20,21 +20,20 @@ func main(){
 		panic(err)
 		}
 	fmt.Println("initialize analysis")
-	fmt.Println(r2p)
 
 	init_fw(r2p)
 	funcs_data := get_all_funcdata(r2p)
 	t:=Connect_token{ "dbs.hqhome163.com",5432,"alessandro","<password>","kernel_bin"}
 	db:=Connect_db(&t)
 
+	count:=len(funcs_data)
+	bar := pb.StartNew(count)
 
 	//first iteration fills symbols and files tables
-
+	fmt.Println("collecting symbols & files")
 	for _, a :=range funcs_data{
-		fmt.Printf("main cycle: %s 0x%08x enter\n",a.Name, a.Offset)
-		fmt.Printf("main cycle: %s 0x%08x before ifx\n", a.Name, a.Offset)
+		bar.Increment()
 		if strings.Contains(a.Name, "sym.") {
-			fmt.Printf("main cycle: %s 0x%08x in the if\n",a.Name, a.Offset)
 			fmtstring:=fmt.Sprintf(
 					"insert into files (file_name) Select '%%[1]s' Where not exists (select * from files where file_name='%%[1]s');"+
 					"insert into symbols (symbol_name, address, file_ref_id) select '%[1]s', '%[2]s', (select file_id from files where file_name='%%[1]s');"+
@@ -42,7 +41,6 @@ func main(){
 					strings.ReplaceAll(a.Name, "sym.", ""),
 					fmt.Sprintf("0x%08x",a.Offset))
 
-			fmt.Printf("main cycle: %s 0x%08x raw query %s\n",a.Name, a.Offset, fmtstring)
 			spawn_query(
 				db,
 				a.Offset, strings.ReplaceAll(a.Name, "sym.", ""),
@@ -50,22 +48,15 @@ func main(){
 				fmtstring)
 			}
 		}
-
-//	fmt.Println("---------------")
-//	fmt.Println(funcs_data)
-//	fmt.Println("---------------")
-	//second iteration fills xrefs table
-	time.Sleep(5 * time.Second)
-	fmt.Println(r2p)
+	bar.Finish()
+	bar = pb.StartNew(count*4)
+	fmt.Println("Collecting xref")
 	for _, a :=range funcs_data{
+		bar.Increment()
 		if strings.Contains(a.Name, "sym.") {
-//			xrefs:=Getxrefs(r2p, a.Offset, &cache)
 			Move(r2p, a.Offset)
 			xrefs:=remove_non_func(removeDuplicate(Getxrefs(r2p, a.Offset, &cache)),funcs_data)
-			fmt.Printf("func_data iteration: 0x%08x, %s", a.Offset, a.Name)
-			fmt.Println(xrefs)
 			for _, l :=range xrefs {
-				fmt.Printf("deps: 0x%08x\n", l)
 				spawn_query(
 					db,
 					0,
@@ -80,7 +71,7 @@ func main(){
 
 			}
 		}
-
+bar.Finish()
 
 }
 

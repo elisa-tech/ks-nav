@@ -26,7 +26,6 @@ func Connect_db(t *Connect_token) (*sql.DB){
 
 func Insert_data(db *sql.DB, query string, test bool){
 
-        fmt.Println(query)
         if !test {
                 _, err := db.Exec(query)
                 if err!= nil {

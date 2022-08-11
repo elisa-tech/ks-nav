@@ -30,7 +30,6 @@ func addr2line_init(fn string) (chan workloads){
 		panic( err)
 		}
 	adresses := make(chan workloads, 16)
-//	go workload(a, adresses, print_query)
 	go workload(a, adresses, Insert_data)
 	return adresses
 }
@@ -54,19 +53,14 @@ func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_
 
 	for {
 		e = <-addresses
-		fmt.Printf("workload %s(0x%08x)\n", e.Name, e.Addr)
 		if e.Name!= "None" {
-			fmt.Printf("workload - resolve %s(0x%08x)\n", e.Name, e.Addr)
 			rs, _ := a.Resolve(e.Addr)
 			if len(rs)==0 {
 				qready=fmt.Sprintf(e.Query, "NONE")
 				}
-			fmt.Printf("workload got reolution %s(0x%08x)\n", e.Name, e.Addr)
-			fmt.Println(rs)
 			for _, a:=range rs{
 				qready=fmt.Sprintf(e.Query, filepath.Clean(a.File))
 				if a.Function == strings.ReplaceAll(e.Name, "sym.", "") {
-					fmt.Println("workload ", qready)
 					break
 					}
 				}
@@ -79,6 +73,5 @@ func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_
 
 
 func spawn_query(db *sql.DB, addr uint64, name string, addresses chan workloads, query string) {
-	fmt.Println("spawn_query: ", name)
 	addresses <- workloads{addr, name, query, db}
 }
