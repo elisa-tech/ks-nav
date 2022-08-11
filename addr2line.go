@@ -12,7 +12,6 @@ type workloads struct{
 	Addr	uint64
 	Name    string
 	Query	string
-	Note	string
 	DB	*sql.DB
 	}
 
@@ -54,30 +53,32 @@ func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_
 	var qready string
 
 	for {
-		if goroutine_nr>0 {
-			e = <-addresses
-
+		e = <-addresses
+		fmt.Printf("workload %s(0x%08x)\n", e.Name, e.Addr)
+		if e.Name!= "None" {
+			fmt.Printf("workload - resolve %s(0x%08x)\n", e.Name, e.Addr)
 			rs, _ := a.Resolve(e.Addr)
 			if len(rs)==0 {
-				if e.Note=="" {
-					fmt.Printf("no results resolving %s(0x%08x), giving up!\n", e.Name, e.Addr)
-					continue
-					}
-				qready=fmt.Sprintf(e.Query, e.Note)
-				/*go*/ insert_func(e.DB, qready, false)
+				qready=fmt.Sprintf(e.Query, "NONE")
 				}
+			fmt.Printf("workload got reolution %s(0x%08x)\n", e.Name, e.Addr)
+			fmt.Println(rs)
 			for _, a:=range rs{
+				qready=fmt.Sprintf(e.Query, filepath.Clean(a.File))
 				if a.Function == strings.ReplaceAll(e.Name, "sym.", "") {
-					qready=fmt.Sprintf(e.Query, filepath.Clean(a.File))
-					/*go*/ insert_func(e.DB, qready, false)
+					fmt.Println("workload ", qready)
 					break
 					}
 				}
-			}
-		}
+			/*go*/ insert_func(e.DB, qready, false)
+			} else {
+				insert_func(e.DB, e.Query, false)
+				}
+	}
 }
 
 
-func spawn_query(db *sql.DB, addr uint64, name string, addresses chan workloads, query string, note string) {
-	addresses <- workloads{addr, name, query, note, db}
+func spawn_query(db *sql.DB, addr uint64, name string, addresses chan workloads, query string) {
+	fmt.Println("spawn_query: ", name)
+	addresses <- workloads{addr, name, query, db}
 }

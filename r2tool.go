@@ -4,8 +4,10 @@ import (
 	"os"
 	"errors"
 	"log"
+	"time"
 	"encoding/json"
 	"sort"
+	"strings"
 	"strconv"
 	r2 "github.com/radareorg/r2pipe-go"
 )
@@ -106,6 +108,20 @@ type results struct{
 }
 
 
+
+func get_function_by_addr(addr uint64, all_funcs []func_data)(*func_data){
+
+	fmt.Printf("get_function_by_addr @0x%08x\n", addr)
+	for i, f := range all_funcs{
+//		if addr >= f.Offset && addr <= f.Offset +f.Size{
+		if addr == f.Offset {
+			fmt.Println(",,,,,,,,,", &all_funcs[i])
+			return &(all_funcs[i])
+			}
+		}
+	return nil
+}
+
 func get_all_relocdata(r2p *r2.Pipe)([]reloc_data){
 
         var relocs   []reloc_data
@@ -160,6 +176,8 @@ func get_f_relocs(sym string, all_relocs []reloc_data, all_funcs []func_data) ([
 func Move(r2p *r2.Pipe,current uint64){
 	_, err := r2p.Cmd("s "+ strconv.FormatUint(current,10))
 	if err != nil {
+		fmt.Println("PANIC",err)
+		time.Sleep(5 * time.Second)
 		panic(err)
 		}
 }
@@ -168,11 +186,13 @@ func Getxrefs(r2p *r2.Pipe, current uint64, cache *[]xref_cache) ([]uint64){
         var xrefs               []xref
         var res                 []uint64;
 
+	fmt.Println("check cache")
 	for _, item := range *cache  {
                 if item.Addr==current {
                         return item.Xr
                         }
                 }
+	fmt.Println("use radare")
         buf, err := r2p.Cmd("afxj")
         if err != nil {
                 panic(err)
@@ -204,6 +224,18 @@ func Symb2Addr_r(s string, r2p *r2.Pipe) (uint64){
 	return 0
 }
 
+func removeDuplicate(intSlice []uint64) []uint64 {
+
+        allKeys := make(map[uint64]bool)
+        list := []uint64{}
+        for _, item := range intSlice {
+                if _, value := allKeys[item]; !value {
+                        allKeys[item] = true
+                        list = append(list, item)
+                        }
+                }
+        return list
+}
 
 func remove_non_func(list []uint64, functions []func_data) []uint64 {
 
@@ -236,7 +268,7 @@ func init_fw(r2p *r2.Pipe){
 
 func is_func(addr uint64, list []func_data) (bool){
 	i := sort.Search(len(list), func(i int) bool { return list[i].Offset >= addr })
-	if i < len(list) && list[i].Offset == addr {
+	if i < len(list) && list[i].Offset == addr && strings.Contains(list[i].Name, "sym."){
 		return true;
 		}
 	return false

@@ -26,7 +26,6 @@ func Connect_db(t *Connect_token) (*sql.DB){
 
 func Insert_data(db *sql.DB, query string, test bool){
 
-	goroutine_nr --
         fmt.Println(query)
         if !test {
                 _, err := db.Exec(query)
@@ -36,6 +35,4 @@ func Insert_data(db *sql.DB, query string, test bool){
                 } else {
                         fmt.Println(query)
                         }
-	goroutine_nr ++
-
 }
