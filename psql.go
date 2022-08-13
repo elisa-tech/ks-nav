@@ -29,6 +29,9 @@ func Insert_data(db *sql.DB, query string, test bool){
         if !test {
                 _, err := db.Exec(query)
                 if err!= nil {
+			fmt.Println("##################################################")
+			fmt.Println(query)
+			fmt.Println("##################################################")
                         panic(err)
                         }
                 } else {
