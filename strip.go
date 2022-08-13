@@ -3,7 +3,7 @@ import (
 	"os/exec"
 )
 
-func strip(executable string, fn string){
+func strip(executable string, fn string, outfile string){
 
 
 	_, err := exec.LookPath(executable)
@@ -11,7 +11,7 @@ func strip(executable string, fn string){
 		panic(err)
 		}
 
-	cmd := exec.Command(executable, "--strip-debug", fn, "-o","./vmlinux")
+	cmd := exec.Command(executable, "--strip-debug", fn, "-o", outfile)
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
