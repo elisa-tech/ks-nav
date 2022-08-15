@@ -9,6 +9,7 @@ import (
 const ENABLE_SYBOLSNFILES	= 1
 const ENABLE_XREFS		= 2
 const ENABLE_MAINTAINERS	= 4
+const ENABLE_VERSION_CONFIG	= 8
 type configuration struct {
 	LinuxWDebug	string
 	LinuxWODebug	string
@@ -19,6 +20,8 @@ type configuration struct {
 	DBPassword	string
 	DBTargetDB	string
 	Maintainers_fn	string
+	KConfig_fn	string
+	KMakefile	string
 	Mode		int
 }
 
@@ -32,10 +35,38 @@ func main(){
 	var err		error
 	var count	int
 
-	conf:=configuration{"vmlinux", "vmlinux.work", "/usr/bin/strip", "dbs.hqhome163.com",5432,"alessandro","<password>","kernel_bin", "MAINTAINERS", ENABLE_SYBOLSNFILES|ENABLE_XREFS|ENABLE_MAINTAINERS}
+	conf:=configuration{"vmlinux", "vmlinux.work", "/usr/bin/strip", "dbs.hqhome163.com",5432,"alessandro","<password>","kernel_bin", "MAINTAINERS", "./include/generated/autoconf.h", "Makefile", ENABLE_SYBOLSNFILES|ENABLE_XREFS|ENABLE_MAINTAINERS|ENABLE_VERSION_CONFIG}
 	fmt.Println("create stripped version")
 	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
 	addresses:=addr2line_init(conf.LinuxWDebug)
+
+	t:=Connect_token{ conf.DBURL, conf.DBPort,  conf.DBUser, conf.DBPassword, conf.DBTargetDB}
+	db:=Connect_db(&t)
+
+
+	id:=1//fake
+
+
+	if conf.Mode & (ENABLE_VERSION_CONFIG) != 0 {
+	        config, _ := get_FromFile(conf.KConfig_fn)
+	        makefile, _ := get_FromFile(conf.KMakefile)
+	        v, err:= get_version(makefile)
+	        if err!=nil {
+        	        panic(err)
+                	}
+	        fmt.Println(v)
+        	kconfig:=parse_config(config)
+		fmt.Println("store config")
+                bar = pb.StartNew(len(kconfig))
+                for key,value :=range kconfig{
+			q:=fmt.Sprintf("insert into configs (config_symbol, config_value, instance_id_ref) values ('%s', '%s', %d);", key, value, id)
+//                      fmt.Println(q)
+                        bar.Increment()
+                        spawn_query(db, 0, "None", addresses, q )
+                        }
+                bar.Finish()
+
+		}
 
 
 	if conf.Mode & (ENABLE_SYBOLSNFILES|ENABLE_XREFS) != 0 {
@@ -48,9 +79,6 @@ func main(){
 		init_fw(r2p)
 		funcs_data = get_all_funcdata(r2p)
 		}
-
-	t:=Connect_token{ conf.DBURL, conf.DBPort,  conf.DBUser, conf.DBPassword, conf.DBTargetDB}
-	db:=Connect_db(&t)
 
 
 	if conf.Mode & ENABLE_SYBOLSNFILES != 0 {
