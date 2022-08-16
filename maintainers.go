@@ -158,7 +158,7 @@ func navigate(root string) []string {
 
 
 
-func generate_queries(items []m_item, template_query string) []string{
+func generate_queries(items []m_item, template_query string, id int) []string{
 	var res []string
 
 	for _, item := range items{
@@ -170,10 +170,10 @@ func generate_queries(items []m_item, template_query string) []string{
 			for _, f := range files{
 				if isdir(f) {
 					for _,x:= range navigate(f){
-						res=append(res,fmt.Sprintf(template_query, strings.ReplaceAll(item.subsystem_name, "'", "`"), filepath.Clean(x)))
+						res=append(res,fmt.Sprintf(template_query, strings.ReplaceAll(item.subsystem_name, "'", "`"), filepath.Clean(x), id))
 						}
 					} else {
-						res=append(res,fmt.Sprintf(template_query, strings.ReplaceAll(item.subsystem_name, "'", "`"), filepath.Clean(f)))
+						res=append(res,fmt.Sprintf(template_query, strings.ReplaceAll(item.subsystem_name, "'", "`"), filepath.Clean(f), id))
 						}
 				}
 			}

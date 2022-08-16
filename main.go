@@ -23,6 +23,7 @@ type configuration struct {
 	KConfig_fn	string
 	KMakefile	string
 	Mode		int
+	Note		string
 }
 
 
@@ -34,18 +35,15 @@ func main(){
 	var funcs_data	[]func_data
 	var err		error
 	var count	int
+	var id		int
 
-	conf:=configuration{"vmlinux", "vmlinux.work", "/usr/bin/strip", "dbs.hqhome163.com",5432,"alessandro","<password>","kernel_bin", "MAINTAINERS", "./include/generated/autoconf.h", "Makefile", ENABLE_SYBOLSNFILES|ENABLE_XREFS|ENABLE_MAINTAINERS|ENABLE_VERSION_CONFIG}
+	conf:=configuration{"vmlinux", "vmlinux.work", "/usr/bin/strip", "dbs.hqhome163.com",5432,"alessandro","<password>","kernel_bin", "MAINTAINERS", "./include/generated/autoconf.h", "Makefile", ENABLE_SYBOLSNFILES|ENABLE_XREFS|ENABLE_MAINTAINERS|ENABLE_VERSION_CONFIG, "upstream"}
 	fmt.Println("create stripped version")
 	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
 	addresses:=addr2line_init(conf.LinuxWDebug)
 
 	t:=Connect_token{ conf.DBURL, conf.DBPort,  conf.DBUser, conf.DBPassword, conf.DBTargetDB}
 	db:=Connect_db(&t)
-
-
-	id:=1//fake
-
 
 	if conf.Mode & (ENABLE_VERSION_CONFIG) != 0 {
 	        config, _ := get_FromFile(conf.KConfig_fn)
@@ -55,12 +53,13 @@ func main(){
         	        panic(err)
                 	}
 	        fmt.Println(v)
+		q:=fmt.Sprintf("insert into instances (version_string, note) values ('%d.%d.%d%s', '%s');", v.Version, v.Patchlevel, v.Sublevel, v.Extraversion, conf.Note)
+		id=Insert_datawID(db, q)
         	kconfig:=parse_config(config)
 		fmt.Println("store config")
                 bar = pb.StartNew(len(kconfig))
                 for key,value :=range kconfig{
 			q:=fmt.Sprintf("insert into configs (config_symbol, config_value, instance_id_ref) values ('%s', '%s', %d);", key, value, id)
-//                      fmt.Println(q)
                         bar.Increment()
                         spawn_query(db, 0, "None", addresses, q )
                         }
@@ -91,9 +90,10 @@ func main(){
 			bar.Increment()
 			if strings.Contains(a.Name, "sym.") {
 				fmtstring:=fmt.Sprintf(
-						"insert into files (file_name) Select '%%[1]s' Where not exists (select * from files where file_name='%%[1]s');"+
-						"insert into symbols (symbol_name, address, file_ref_id) select '%[1]s', '%[2]s', (select file_id from files where file_name='%%[1]s');"+
+						"insert into files (file_name, instance_id_ref) Select '%%[1]s', %[1]d Where not exists (select * from files where file_name='%%[1]s');"+
+						"insert into symbols (symbol_name, address, file_ref_id, instance_id_ref) select '%[2]s', '%[3]s', (select file_id from files where file_name='%%[1]s'), %[1]d;"+
 						"",
+						id,
 						strings.ReplaceAll(a.Name, "sym.", ""),
 						fmt.Sprintf("0x%08x",a.Offset))
 				spawn_query(
@@ -120,10 +120,11 @@ func main(){
 						"None",
 						addresses,
 						fmt.Sprintf(
-							"insert into xrefs (caller, callee) select (Select symbol_id from symbols where address ='0x%08x'), (Select symbol_id from symbols where address ='0x%08x');"+
+							"insert into xrefs (caller, callee, instance_id_ref) select (Select symbol_id from symbols where address ='0x%08x'), (Select symbol_id from symbols where address ='0x%08x'), %d;"+
 							"",
 							a.Offset,
-							l))
+							l,
+							id))
 					}
 
 				}
@@ -139,9 +140,9 @@ func main(){
         	        }
 	        ss:=s[seek2data(s):]
         	items:=parse_maintainers(ss)
-	        queries:=generate_queries(items, "insert into tags (subsys_name, file_ref_id) select '%[1]s', "+
-        	                                "(select file_id from files where file_name='%[2]s') as fn_id "+
-                	                        "WHERE EXISTS ( select file_id from files where file_name='%[2]s');")
+	        queries:=generate_queries(items, "insert into tags (subsys_name, file_ref_id, instance_id_ref) select '%[1]s', "+
+        	                                "(select file_id from files where file_name='%[2]s') as fn_id, %d "+
+                	                        "WHERE EXISTS ( select file_id from files where file_name='%[2]s');", id)
 		bar = pb.StartNew(len(queries))
         	for _,q :=range queries{
 //			fmt.Println(q)
