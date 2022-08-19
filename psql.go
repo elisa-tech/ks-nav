@@ -32,13 +32,13 @@ var check int = 0
 var chached int = 0
 
 func Connect_db(t *Connect_token) (*sql.DB){
-	fmt.Println("connect")
+//	fmt.Println("connect")
 	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", (*t).Host, (*t).Port, (*t).User, (*t).Pass, (*t).Dbname)
 	db, err := sql.Open("postgres", psqlconn)
 	if err!= nil {
 		panic(err)
 		}
-	fmt.Println("connected")
+//	fmt.Println("connected")
 	return db
 }
 
@@ -54,7 +54,7 @@ func get_entry_by_id(db *sql.DB, symbol_id int, cache map[int]Entry)(Entry, erro
 
 
 
-	query:="select sym_id, symbol, exported, type, subsys, fn from (select * from symbols, kernel_file where symbols.fn_id=kernel_file.id) as dummy left outer join tags on dummy.fn_id=tags.fn_id where sym_id=$1"
+	query:="select symbol_id, symbol_name, subsys_name, file_name from (select * from symbols, files where symbols.file_ref_id=files.file_id) as dummy left outer join tags on dummy.file_ref_id=tags.file_ref_id where symbol_id=$1"
 	rows, err := db.Query(query, symbol_id)
 	if err!= nil {
 		panic(err)
@@ -62,7 +62,7 @@ func get_entry_by_id(db *sql.DB, symbol_id int, cache map[int]Entry)(Entry, erro
 	defer rows.Close()
 
 	for rows.Next() {
-		if err := rows.Scan(&e.Sym_id, &e.Symbol, &e.Exported, &e.Type, &s, &e.Fn); err != nil {
+		if err := rows.Scan(&e.Sym_id, &e.Symbol, &s, &e.Fn); err != nil {
 			fmt.Println("this error hit3")
 			fmt.Println(err)
 			return e, err
@@ -91,7 +91,7 @@ func get_successors_by_id(db *sql.DB, symbol_id int, cache map[int][]Entry, cach
 		return res, nil
 		}
 
-	query:="select caller, callee from calls where caller =$1"
+	query:="select caller, callee from xrefs where caller =$1"
 	rows, err := db.Query(query, symbol_id)
 	if err!= nil {
 		panic(err)
@@ -162,7 +162,7 @@ func Navigate(db *sql.DB, symbol_id int, visited *[]int, prod map[string]int, ca
                 		} else {
 					r=entry.Symbol
 					}
-			s:=fmt.Sprintf("%s->%s", l, r)
+			s:=fmt.Sprintf("\"%s\"->\"%s\"", l, r)
 //			fmt.Println(s)
 			if _, ok := prod[s]; ok {
 				prod[s]++
