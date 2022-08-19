@@ -7,6 +7,12 @@ import (
 	"sort"
 	_ "github.com/lib/pq"
 )
+const (
+	PRINT_ALL int	= 1
+	PRINT_SUBSYS	= 2
+)
+
+
 type Connect_token struct{
 	Host	string
 	Port	int
@@ -28,8 +34,18 @@ type Edge struct {
 	Caller	int
 	Callee	int
 }
+type Cache struct {
+	Successors	map[int][]Entry
+	Entries		map[int]Entry
+	SubSys		map[string]string
+}
+
 var check int = 0
 var chached int = 0
+
+
+
+
 
 func Connect_db(t *Connect_token) (*sql.DB){
 //	fmt.Println("connect")
@@ -80,13 +96,13 @@ func get_entry_by_id(db *sql.DB, symbol_id int, cache map[int]Entry)(Entry, erro
 	return e, nil
 }
 
-func get_successors_by_id(db *sql.DB, symbol_id int, cache map[int][]Entry, cache2 map[int]Entry )([]Entry, error){
+func get_successors_by_id(db *sql.DB, symbol_id int, cache Cache )([]Entry, error){
 	var e		Edge
 	var res		[]Entry
 
 //	fmt.Println("query")
 
-	if res, ok := cache[symbol_id]; ok {
+	if res, ok := cache.Successors[symbol_id]; ok {
 //		fmt.Println("--------------------------------------------cache hit!---------------------------------------------------")
 		return res, nil
 		}
@@ -103,14 +119,14 @@ func get_successors_by_id(db *sql.DB, symbol_id int, cache map[int][]Entry, cach
 			fmt.Println("this error hit1 ")
 			return nil, err
 			}
-		successors,_ := get_entry_by_id(db, e.Callee, cache2)
+		successors,_ := get_entry_by_id(db, e.Callee, cache.Entries)
 		res=append(res, successors )
 		}
 	if err = rows.Err(); err != nil {
 		fmt.Println("this error hit2 ")
         	return nil, err
 		}
-	cache[symbol_id]=res
+	cache.Successors[symbol_id]=res
 //	fmt.Println(cache)
 	return res, nil
 }
@@ -139,42 +155,84 @@ func removeDuplicate(list []Entry) []Entry {
                 }
         return res
 }
+func get_subsys_from_symbol_name(db *sql.DB, symbol string, subsytems_cache map[string]string)(string, error){
+	var res string
+
+	if res, ok := subsytems_cache[symbol]; ok {
+		return res, nil
+		}
+	query:="select subsys_name from symbols, tags where symbols.file_ref_id=tags.file_ref_id and symbols.symbol_name=$1;"
+        rows, err := db.Query(query, symbol)
+        if err!= nil {
+                panic(err)
+                }
+        defer rows.Close()
+
+        for rows.Next() {
+                if err := rows.Scan(&res); err != nil {
+                        fmt.Println("this error hit1 ")
+                        return "", err
+                        }
+		}
+        subsytems_cache[symbol]=res
+        return res, nil
 
 
-func Navigate(db *sql.DB, symbol_id int, visited *[]int, prod map[string]int, cache map[int][]Entry, cache2 map[int]Entry ) {
-	var l,r	string
+
+}
+
+func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, prod map[string]int, cache Cache, mode int) {
+	var tmp,s,l,ll,r	string
 
 
 	*visited=append(*visited, symbol_id)
-	entry, err := get_entry_by_id(db, symbol_id, cache2)
-	if err!=nil {
-		l="Unknown";
-		}else{
-		l=entry.Symbol
-		}
-	successors, err:=get_successors_by_id(db, symbol_id, cache, cache2);
+//	entry, err := get_entry_by_id(db, symbol_id, cache2)
+	l=parent_dispaly
+	successors, err:=get_successors_by_id(db, symbol_id, cache);
 	successors=removeDuplicate(successors)
 	if err==nil {
 		for _, curr := range successors{
-			entry, err := get_entry_by_id(db, curr.Sym_id, cache2)
+			entry, err := get_entry_by_id(db, curr.Sym_id, cache.Entries)
 		        if err!=nil {
  		               r="Unknown";
                 		} else {
 					r=entry.Symbol
 					}
-			s:=fmt.Sprintf("\"%s\"->\"%s\"", l, r)
+			switch mode {
+				case PRINT_ALL:
+					s=fmt.Sprintf("\"%s\"->\"%s\"", l, r)
+					ll=r
+					break
+				case PRINT_SUBSYS:
+					if tmp, err=get_subsys_from_symbol_name(db,r, cache.SubSys); r!=tmp {
+						if tmp != "" {
+							r=tmp
+							} else {
+								r="UNDEFINED SUBSYSTEM"
+								}
+						}
+					if l!=r {
+						s=fmt.Sprintf("\"%s\"->\"%s\"", l, r)
+						} else {
+							s="";
+							}
+					ll=r
+					break
+
+				}
 //			fmt.Println(s)
 			if _, ok := prod[s]; ok {
 				prod[s]++
 				} else {
 					prod[s]=1
-					fmt.Println(s)
+					if s!="" {
+						fmt.Println(s)
+						}
 					}
 
 			if Not_in(*visited, curr.Sym_id){
-				Navigate(db, curr.Sym_id, visited, prod, cache, cache2)
+				Navigate(db, curr.Sym_id, ll, visited, prod, cache, mode)
 				}
 			}
 		}
 }
-
