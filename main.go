@@ -6,10 +6,13 @@ import (
 	"github.com/cheggaaa/pb/v3"
 )
 
-const ENABLE_SYBOLSNFILES	= 1
-const ENABLE_XREFS		= 2
-const ENABLE_MAINTAINERS	= 4
-const ENABLE_VERSION_CONFIG	= 8
+const (
+	ENABLE_SYBOLSNFILES	= 1
+	ENABLE_XREFS		= 2
+	ENABLE_MAINTAINERS	= 4
+	ENABLE_VERSION_CONFIG	= 8
+	)
+
 type configuration struct {
 	LinuxWDebug	string
 	LinuxWODebug	string
@@ -37,7 +40,38 @@ func main(){
 	var count	int
 	var id		int
 
-	conf:=configuration{"vmlinux", "vmlinux.work", "/usr/bin/strip", "dbs.hqhome163.com",5432,"alessandro","<password>","kernel_bin", "MAINTAINERS", "./include/generated/autoconf.h", "Makefile", ENABLE_SYBOLSNFILES|ENABLE_XREFS|ENABLE_MAINTAINERS|ENABLE_VERSION_CONFIG, "upstream"}
+/*
+	conf:=configuration{
+				"vmlinux",
+				"vmlinux.work",
+				"/usr/bin/strip",
+				"dbs.hqhome163.com",
+				5432,
+				"alessandro",
+				"<password>",
+				"kernel_bin",
+				"MAINTAINERS",
+				"./include/generated/autoconf.h",
+				"Makefile",
+				ENABLE_SYBOLSNFILES|ENABLE_XREFS|ENABLE_MAINTAINERS|ENABLE_VERSION_CONFIG,
+				"upstream"
+				}
+*/
+	conf:=configuration{
+				"vmlinux",
+				"vmlinux.work",
+				"/usr/bin/aarch64-linux-gnu-strip",
+				"dbs.hqhome163.com",
+				5432,
+				"alessandro",
+				"<password>",
+				"kernel_bin",
+				"MAINTAINERS",
+				"./include/generated/autoconf.h",
+				"Makefile",
+				ENABLE_SYBOLSNFILES|ENABLE_XREFS|ENABLE_MAINTAINERS|ENABLE_VERSION_CONFIG,
+				"upstream",
+				}
 	fmt.Println("create stripped version")
 	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
 	addresses:=addr2line_init(conf.LinuxWDebug)
@@ -73,12 +107,18 @@ func main(){
 		if err != nil {
 			panic(err)
 			}
+		q:=fmt.Sprintf("insert into files (file_name, instance_id_ref) select 'NoFile',%d;", id)
+		fmt.Println(q)
+		spawn_query(db, 0, "None", addresses, q, )
+		q=fmt.Sprintf("insert into symbols (symbol_name,address,file_ref_id,instance_id_ref) select (select 'Indirect call'), '0x00000000', (select file_id from files where file_name ='NoFile'), %d;", id)
+		fmt.Println(q)
+		spawn_query(db, 0, "None", addresses, q, )
+
 		fmt.Println("initialize analysis")
 
 		init_fw(r2p)
 		funcs_data = get_all_funcdata(r2p)
 		}
-
 
 	if conf.Mode & ENABLE_SYBOLSNFILES != 0 {
 		count=len(funcs_data)
@@ -106,14 +146,27 @@ func main(){
 		bar.Finish()
 		}
 	if conf.Mode & ENABLE_XREFS != 0 {
-		bar = pb.StartNew(count)
+		fmt.Println("Collecting indrcalls")
+		indcl:=get_indirect_calls(r2p, funcs_data)
 		fmt.Println("Collecting xref")
+		bar = pb.StartNew(count)
 		for _, a :=range funcs_data{
 			bar.Increment()
 			if strings.Contains(a.Name, "sym.") {
 				Move(r2p, a.Offset)
-				xrefs:=remove_non_func(removeDuplicate(Getxrefs(r2p, a.Offset, &cache)),funcs_data)
+				xrefs:=remove_non_func(removeDuplicate(Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache)),funcs_data)
 				for _, l :=range xrefs {
+/*
+					if l==0 {
+						s:=fmt.Sprintf(
+							"insert into xrefs (caller, callee, instance_id_ref) select (Select symbol_id from symbols where address ='0x%08x'), (Select symbol_id from symbols where address ='0x%08x'), %d;"+
+							"",
+							a.Offset,
+							l,
+							id)
+						fmt.Println(s)
+						}
+*/
 					spawn_query(
 						db,
 						0,

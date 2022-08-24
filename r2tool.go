@@ -12,12 +12,12 @@ import (
 )
 
 type sysc struct {
-	Addr	uint64
-	Name	string
+	Addr		uint64
+	Name		string
 }
 type res struct{
-	Syscall	sysc
-	Path	[]uint64
+	Syscall		sysc
+	Path		[]uint64
 }
 
 type reloc_data struct {
@@ -105,7 +105,21 @@ type results struct{
 	Name		string
 	Path		[]fref
 }
-
+type rad_bloc struct {
+	Jump		uint64		`json: "jump"`
+	Fail		uint64		`json: "fail"`
+	Opaddr		uint64		`json: "opaddr"`
+	Addr		uint64		`json: "addr"`
+	Size		uint64		`json: "size"`
+	Inputs		uint8		`json: "inputs"`
+	Outputs		uint8		`json: "outputs"`
+	ninstr		uint16		`json: "ninstr"`
+	traced		bool		`json: "traced"`
+}
+type bloc struct {
+	Start		uint64
+	End		uint64
+}
 
 
 func get_function_by_addr(addr uint64, all_funcs []func_data)(*func_data){
@@ -120,30 +134,30 @@ func get_function_by_addr(addr uint64, all_funcs []func_data)(*func_data){
 
 func get_all_relocdata(r2p *r2.Pipe)([]reloc_data){
 
-        var relocs   []reloc_data
+	var relocs   []reloc_data
 
-        buf, err := r2p.Cmd("irj")
-        if err != nil {
-                panic(err)
-                }
-        error := json.Unmarshal( []byte(buf), &relocs)
-        if(error != nil){
-                fmt.Printf("Error while parsing data: %s", error)
-                }
-        return relocs
+	buf, err := r2p.Cmd("irj")
+	if err != nil {
+		panic(err)
+		}
+	error := json.Unmarshal( []byte(buf), &relocs)
+	if(error != nil){
+		fmt.Printf("Error while parsing data: %s", error)
+		}
+	return relocs
 }
 
 func removeSDup(intSlice []string) []string {
 
-        allKeys := make(map[string]bool)
-        list := []string{}
-        for _, item := range intSlice {
-                if _, value := allKeys[item]; !value {
-                        allKeys[item] = true
-                        list = append(list, item)
-                        }
-                }
-        return list
+	allKeys := make(map[string]bool)
+	list := []string{}
+	for _, item := range intSlice {
+		if _, value := allKeys[item]; !value {
+			allKeys[item] = true
+			list = append(list, item)
+			}
+		}
+	return list
 }
 
 func get_f_relocs(sym string, all_relocs []reloc_data, all_funcs []func_data) ([]string, error){
@@ -176,40 +190,57 @@ func Move(r2p *r2.Pipe,current uint64){
 		}
 }
 
-func Getxrefs(r2p *r2.Pipe, current uint64, cache *[]xref_cache) ([]uint64){
-        var xrefs               []xref
-        var res                 []uint64;
+func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data, cache *[]xref_cache) ([]uint64){
+	var xrefs		[]xref
+	var res			[]uint64;
+//	var x			bool=false;
 
+//	fmt.Println("Getxrefs enter");
 	for _, item := range *cache  {
-                if item.Addr==current {
-                        return item.Xr
-                        }
-                }
-        buf, err := r2p.Cmd("afxj")
-        if err != nil {
-                panic(err)
-                }
-        error := json.Unmarshal( []byte(buf), &xrefs)
-        if(error != nil){
-                fmt.Printf("Error while parsing data: %s", error)
-                }
-        for _, item := range xrefs  {
-                res=append(res,item.To)
-                }
+		if item.Addr==current {
+//			fmt.Println("Getxrefs cache hit!");
+
+			return item.Xr
+				}
+		}
+//	fmt.Println("Getxrefs radare fetch");
+	buf, err := r2p.Cmd("afxj")
+	if err != nil {
+		panic(err)
+		}
+	error := json.Unmarshal( []byte(buf), &xrefs)
+	if(error != nil){
+		fmt.Printf("Error while parsing data: %s", error)
+		}
+	for _, item := range xrefs  {
+		res=append(res,item.To)
+		}
+//	fmt.Println("Getxrefs check for indirects");
+	if func_has_indirects(r2p, indcall, current, funcs){
+//		fmt.Println("Getxrefs this has indirects");
+		res=append(res,0)	//zero is null and it is used to indicate indirect calls.
+//		x=true;
+		}
 	*cache=append(*cache,xref_cache{current,res})
-        return  res
+/*
+	if x {
+		fmt.Println(res)
+		}
+*/
+//	fmt.Println("Getxrefs exit");
+	return  res
 }
 
 func Symb2Addr_r(s string, r2p *r2.Pipe) (uint64){
 	var f  []func_data
-        buf, err := r2p.Cmd("afij "+ s)
-        if err != nil {
-                panic(err)
-                }
+	buf, err := r2p.Cmd("afij "+ s)
+	if err != nil {
+		panic(err)
+		}
 	error := json.Unmarshal( []byte(buf), &f)
-        if(error != nil){
-                fmt.Printf("Error while parsing data: %s", error)
-                }
+	if(error != nil){
+		fmt.Printf("Error while parsing data: %s", error)
+		}
 	if len(f)>0 {
 		return f[0].Offset
 		}
@@ -218,25 +249,37 @@ func Symb2Addr_r(s string, r2p *r2.Pipe) (uint64){
 
 func removeDuplicate(intSlice []uint64) []uint64 {
 
-        allKeys := make(map[uint64]bool)
-        list := []uint64{}
-        for _, item := range intSlice {
-                if _, value := allKeys[item]; !value {
-                        allKeys[item] = true
-                        list = append(list, item)
-                        }
-                }
-        return list
+	allKeys := make(map[uint64]bool)
+	list := []uint64{}
+	for _, item := range intSlice {
+		if _, value := allKeys[item]; !value {
+			allKeys[item] = true
+			list = append(list, item)
+			}
+		}
+	return list
 }
 
 func remove_non_func(list []uint64, functions []func_data) []uint64 {
+//	var x	bool=false
 
 	res := []uint64{}
 	for _, item := range list {
-		if is_func(item, functions) {
+/*
+		if item==0 {
+			fmt.Println("remove_non_func 0")
+			x=true
+			}
+*/
+		if is_func(item, functions) || item==0 {
 			res = append(res, item)
 			}
 		}
+/*
+	if x {
+		fmt.Println("remove_non_func ",res)
+		}
+*/
 	return res
 }
 
@@ -244,10 +287,10 @@ func init_fw(r2p *r2.Pipe){
 	l := log.New(os.Stderr, "", 0)
 
 	l.Println("Initializing Radare framework")
-        _, err := r2p.Cmd("e anal.nopskip=false")
-        if err != nil {
-                panic(err)
-                }
+	_, err := r2p.Cmd("e anal.nopskip=false")
+	if err != nil {
+		panic(err)
+		}
 	_, err = r2p.Cmd("aa")
 	if err != nil {
 		panic(err)
@@ -283,10 +326,132 @@ func get_all_funcdata(r2p *r2.Pipe)([]func_data){
 }
 
 func Addr2Sym(addr uint64, list []func_data) (string){
-        i := sort.Search(len(list), func(i int) bool { return list[i].Offset >= addr })
-        if i < len(list) && list[i].Offset == addr {
-                return list[i].Name;
-                }
-        return "Unknown"
+	i := sort.Search(len(list), func(i int) bool { return list[i].Offset >= addr })
+	if i < len(list) && list[i].Offset == addr {
+		return list[i].Name;
+		}
+	return "Unknown"
 }
+
+/*
+func is_in_func(addr uint64, blocs []bloc )(bool){
+
+	for _, b := range blocs {
+		if s.Addr >= b.Start && s.Addr <= b.End {
+			*results=append(*results,res{s,path})
+			}
+		}
+	return tmp
+
+}
+*/
+
+func get_indirect_calls(r2p *r2.Pipe, funcs []func_data) ([]uint64){
+	var smap	[]uint64
+
+//	fmt.Println("get_indirect_calls enter");
+	buf, err := r2p.Cmd("/at rcall")
+	if err != nil {
+		panic(err)
+		}
+//	fmt.Println("get_indirect_calls rcall fetched");
+	temp := strings.Split(buf,"\n")
+	for _, line := range temp {
+		temp2 := strings.Split(line," ")
+		num, err := strconv.ParseUint(strings.Replace(temp2[0], "0x", "", -1) , 16, 64)
+		if err != nil {
+			panic(err)
+			}
+//		if faddr:=is_in_func(r2p,uint64(num), funcs); faddr!=0 {
+			smap = append(smap, uint64(num))
+//			}
+		}
+//	fmt.Println("get_indirect_calls rcall processed");
+
+	buf, err = r2p.Cmd("/at ucall")
+	if err != nil {
+		panic(err)
+		}
+//	fmt.Println("get_indirect_calls ucall fetched");
+	if len(buf)>10 {
+		temp = strings.Split(buf,"\n")
+//	        fmt.Println("get_indirect_calls ucalls ", len(temp));
+
+		for _, line := range temp {
+			temp2 := strings.Split(line," ")
+//			fmt.Println("--", temp2)
+			num, err := strconv.ParseUint(strings.Replace(temp2[0], "0x", "", -1) , 16, 64)
+			if err != nil {
+				panic(err)
+				}
+//			if faddr:=is_in_func(r2p,uint64(num), funcs); faddr!=0 {
+				smap = append(smap, uint64(num))
+//				}
+
+			}
+		}
+//	fmt.Println("get_indirect_calls ucall processed");
+
+	sort.SliceStable(smap, func(i, j int) bool {return smap[i] < smap[j]})
+//	fmt.Println("get_indirect_calls exit");
+	return smap
+}
+
+func get_func_space(r2p *r2.Pipe, addr uint64, funcs []func_data)([]bloc){
+	var blocs       []bloc
+	var rad_blocs   []rad_bloc
+
+	for _, f := range funcs {
+		if f.Offset == addr {
+			if f.Size==f.Realsz {
+				blocs=append(blocs,bloc{f.Offset, f.Offset+f.Size})
+				} else {
+				buf, err := r2p.Cmd("afbj")
+				if err != nil {
+					panic(err)
+					 }
+				error := json.Unmarshal( []byte(buf), &rad_blocs)
+				if(error != nil){
+					fmt.Printf("Error while parsing data: %s", error)
+					}
+				for _,b := range rad_blocs {
+					blocs=append(blocs, bloc{b.Addr,b.Addr+b.Size})
+					}
+				}
+		break
+		}
+	}
+	return blocs
+}
+
+
+func is_in_func(r2p *r2.Pipe, addr uint64, funcs []func_data) (uint64){
+
+	for _, f := range funcs {
+		blocs:=get_func_space(r2p, f.Offset, funcs)
+		for _, b := range blocs {
+			 if addr >= b.Start && addr <= b.End {
+				return f.Offset
+				}
+			}
+		}
+	return 0
+
+}
+
+func func_has_indirects(r2p *r2.Pipe, indcall []uint64, faddr uint64, funcs []func_data) (bool){
+
+	blocs:=get_func_space(r2p, faddr, funcs)
+	for _, ic:= range indcall{
+		for _, b := range blocs {
+			 if ic >= b.Start && ic <= b.End {
+//				fmt.Printf("func_has_indirects 0x%08x [0x%08x,0x%08x]\n", ic, b.Start, b.End)
+				return true
+				}
+			}
+		}
+	return false
+
+}
+
 
