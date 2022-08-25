@@ -63,6 +63,7 @@ type func_data struct {
 	Spvars		[]stack_var_	`json: "spvars"`
 	Regvars		[]reg_var_	`json: "regvars"`
 	Difftype	string		`json: "difftype"`
+	Indirect	bool
 }
 type ref_ struct{
 	Addr		uint64		`json: "addr"`
@@ -121,7 +122,27 @@ type bloc struct {
 	End		uint64
 }
 
-
+type bin_info struct{
+	Arch		string		`json: "arch"`
+	Bits		int		`json: "bits"`
+	Compiler	string		`json: "compiler"`
+	Endian		string		`json: "endian"`
+	Machine		string		`json: "machine"`
+}
+type core_info struct{
+	Type		string		`json: "type"`
+	Format		string		`json: "format"`
+}
+type file_info struct{
+	Core	core_info
+	Bin	bin_info
+}
+type symb_data struct{
+	Name		string		`json: "name"`
+	Realname	string		`json: "realname"`
+	Size		int		`json: "size"`
+	Offset		uint64		`json: "offset"`
+}
 func get_function_by_addr(addr uint64, all_funcs []func_data)(*func_data){
 
 	for i, f := range all_funcs{
@@ -287,6 +308,8 @@ func is_func(addr uint64, list []func_data) (bool){
 func get_all_funcdata(r2p *r2.Pipe)([]func_data){
 
 	var functions	[]func_data
+	var symbols	[]symb_data
+	var info	file_info
 
 	buf, err := r2p.Cmd("aflj")
 	if err != nil {
@@ -296,6 +319,42 @@ func get_all_funcdata(r2p *r2.Pipe)([]func_data){
 	if(error != nil){
 		fmt.Printf("Error while parsing data: %s", error)
 		}
+	buf, err = r2p.Cmd("ij")
+	if err != nil {
+		panic(err)
+		}
+	error = json.Unmarshal( []byte(buf), &info)
+	if(error != nil){
+		fmt.Printf("Error while parsing data: %s", error)
+		}
+	if info.Bin.Arch=="x86" {
+		buf, err = r2p.Cmd("fs symbols")
+		if err != nil {
+			panic(err)
+			}
+		buf, err = r2p.Cmd("fj")
+                if err != nil {
+                        panic(err)
+                        }
+		error = json.Unmarshal( []byte(buf), &symbols)
+		if(error != nil){
+			fmt.Printf("Error while parsing data: %s", error)
+			}
+		for _,s :=range symbols{
+			if strings.Contains(s.Name, "loc.__x86_indirect_thunk_") {
+				functions=append(functions,func_data{Offset: s.Offset, Name: s.Name, Indirect: true})
+				}
+			}
+		}
+		
+/****************************************************************************************************************************
+ ****************************************************************************************************************************
+ ****************************************************************************************************************************
+ ****************************************************************************************************************************
+ ****************************************************************************************************************************
+ ****************************************************************************************************************************/
+
+
 	sort.SliceStable(functions, func(i, j int) bool {return functions[i].Offset < functions[j].Offset})
 	return functions
 }

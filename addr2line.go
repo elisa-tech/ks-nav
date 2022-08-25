@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+//	"regexp"
 	"database/sql"
 	"path/filepath"
 	addr2line "github.com/elazarl/addr2line"
@@ -53,7 +54,14 @@ func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_
 
 	for {
 		e = <-addresses
-		if e.Name!= "None" {
+		switch e.Name {
+		case "None":
+			insert_func(e.DB, e.Query, false)
+			break
+// "insert into files (file_name, instance_id_ref) Select '%%[1]s', %[1]d Where not exists (select * from files where file_name='%%[1]s');"+
+// "insert into symbols (symbol_name, address, type, file_ref_id, instance_id_ref) select '%[2]s', '%[3]s', 'direct', (select file_id from files where file_name='%%[1]s'), %[1]d;"+
+
+		default:
 			rs, _ := a.Resolve(e.Addr)
 			if len(rs)==0 {
 				qready=fmt.Sprintf(e.Query, "NONE")
@@ -65,9 +73,8 @@ func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_
 					}
 				}
 			/*go*/ insert_func(e.DB, qready, false)
-			} else {
-				insert_func(e.DB, e.Query, false)
-				}
+			break
+			}
 	}
 }
 
