@@ -108,10 +108,10 @@ func main(){
 			panic(err)
 			}
 		q:=fmt.Sprintf("insert into files (file_name, instance_id_ref) select 'NoFile',%d;", id)
-		fmt.Println(q)
 		spawn_query(db, 0, "None", addresses, q, )
 		q=fmt.Sprintf("insert into symbols (symbol_name,address,file_ref_id,instance_id_ref) select (select 'Indirect call'), '0x00000000', (select file_id from files where file_name ='NoFile'), %d;", id)
-		fmt.Println(q)
+		spawn_query(db, 0, "None", addresses, q, )
+		q=fmt.Sprintf("insert into tags (subsys_name, file_ref_id, instance_id_ref) select (select 'Indirect Calls'), (select file_id from files where file_name='NoFile'), %d;", id)
 		spawn_query(db, 0, "None", addresses, q, )
 
 		fmt.Println("initialize analysis")

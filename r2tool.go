@@ -193,17 +193,13 @@ func Move(r2p *r2.Pipe,current uint64){
 func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data, cache *[]xref_cache) ([]uint64){
 	var xrefs		[]xref
 	var res			[]uint64;
-//	var x			bool=false;
 
-//	fmt.Println("Getxrefs enter");
 	for _, item := range *cache  {
 		if item.Addr==current {
-//			fmt.Println("Getxrefs cache hit!");
 
 			return item.Xr
 				}
 		}
-//	fmt.Println("Getxrefs radare fetch");
 	buf, err := r2p.Cmd("afxj")
 	if err != nil {
 		panic(err)
@@ -215,19 +211,10 @@ func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data,
 	for _, item := range xrefs  {
 		res=append(res,item.To)
 		}
-//	fmt.Println("Getxrefs check for indirects");
 	if func_has_indirects(r2p, indcall, current, funcs){
-//		fmt.Println("Getxrefs this has indirects");
 		res=append(res,0)	//zero is null and it is used to indicate indirect calls.
-//		x=true;
 		}
 	*cache=append(*cache,xref_cache{current,res})
-/*
-	if x {
-		fmt.Println(res)
-		}
-*/
-//	fmt.Println("Getxrefs exit");
 	return  res
 }
 
@@ -261,25 +248,13 @@ func removeDuplicate(intSlice []uint64) []uint64 {
 }
 
 func remove_non_func(list []uint64, functions []func_data) []uint64 {
-//	var x	bool=false
 
 	res := []uint64{}
 	for _, item := range list {
-/*
-		if item==0 {
-			fmt.Println("remove_non_func 0")
-			x=true
-			}
-*/
 		if is_func(item, functions) || item==0 {
 			res = append(res, item)
 			}
 		}
-/*
-	if x {
-		fmt.Println("remove_non_func ",res)
-		}
-*/
 	return res
 }
 
@@ -333,28 +308,13 @@ func Addr2Sym(addr uint64, list []func_data) (string){
 	return "Unknown"
 }
 
-/*
-func is_in_func(addr uint64, blocs []bloc )(bool){
-
-	for _, b := range blocs {
-		if s.Addr >= b.Start && s.Addr <= b.End {
-			*results=append(*results,res{s,path})
-			}
-		}
-	return tmp
-
-}
-*/
-
 func get_indirect_calls(r2p *r2.Pipe, funcs []func_data) ([]uint64){
 	var smap	[]uint64
 
-//	fmt.Println("get_indirect_calls enter");
 	buf, err := r2p.Cmd("/at rcall")
 	if err != nil {
 		panic(err)
 		}
-//	fmt.Println("get_indirect_calls rcall fetched");
 	temp := strings.Split(buf,"\n")
 	for _, line := range temp {
 		temp2 := strings.Split(line," ")
@@ -362,38 +322,27 @@ func get_indirect_calls(r2p *r2.Pipe, funcs []func_data) ([]uint64){
 		if err != nil {
 			panic(err)
 			}
-//		if faddr:=is_in_func(r2p,uint64(num), funcs); faddr!=0 {
 			smap = append(smap, uint64(num))
-//			}
 		}
-//	fmt.Println("get_indirect_calls rcall processed");
 
 	buf, err = r2p.Cmd("/at ucall")
 	if err != nil {
 		panic(err)
 		}
-//	fmt.Println("get_indirect_calls ucall fetched");
 	if len(buf)>10 {
 		temp = strings.Split(buf,"\n")
-//	        fmt.Println("get_indirect_calls ucalls ", len(temp));
 
 		for _, line := range temp {
 			temp2 := strings.Split(line," ")
-//			fmt.Println("--", temp2)
 			num, err := strconv.ParseUint(strings.Replace(temp2[0], "0x", "", -1) , 16, 64)
 			if err != nil {
 				panic(err)
 				}
-//			if faddr:=is_in_func(r2p,uint64(num), funcs); faddr!=0 {
-				smap = append(smap, uint64(num))
-//				}
-
+			smap = append(smap, uint64(num))
 			}
 		}
-//	fmt.Println("get_indirect_calls ucall processed");
 
 	sort.SliceStable(smap, func(i, j int) bool {return smap[i] < smap[j]})
-//	fmt.Println("get_indirect_calls exit");
 	return smap
 }
 
@@ -445,7 +394,6 @@ func func_has_indirects(r2p *r2.Pipe, indcall []uint64, faddr uint64, funcs []fu
 	for _, ic:= range indcall{
 		for _, b := range blocs {
 			 if ic >= b.Start && ic <= b.End {
-//				fmt.Printf("func_has_indirects 0x%08x [0x%08x,0x%08x]\n", ic, b.Start, b.End)
 				return true
 				}
 			}
@@ -453,5 +401,3 @@ func func_has_indirects(r2p *r2.Pipe, indcall []uint64, faddr uint64, funcs []fu
 	return false
 
 }
-
-
