@@ -52,7 +52,7 @@ func main(){
 		fmt.Println("store config")
                 bar = pb.StartNew(len(kconfig))
                 for key,value :=range kconfig{
-			q:=fmt.Sprintf("insert into configs (config_symbol, config_value, instance_id_ref) values ('%s', '%s', %d);", key, value, id)
+			q:=fmt.Sprintf("insert into configs (config_symbol, config_value, config_instance_id_ref) values ('%s', '%s', %d);", key, value, id)
                         bar.Increment()
                         spawn_query(db, 0, "None", addresses, q )
                         }
@@ -66,13 +66,13 @@ func main(){
 		if err != nil {
 			panic(err)
 			}
-		q:=fmt.Sprintf("insert into files (file_name, instance_id_ref) select 'NoFile',%d;", id)
+		q:=fmt.Sprintf("insert into files (file_name, file_instance_id_ref) select 'NoFile',%d;", id)
 //		fmt.Println(q)
 		spawn_query(db, 0, "None", addresses, q, )
-		q=fmt.Sprintf("insert into symbols (symbol_name,address,type,file_ref_id,instance_id_ref) select (select 'Indirect call'), '0x00000000', 'indirect', (select file_id from files where file_name ='NoFile' and instance_id_ref=%[1]d), %[1]d;", id)
+		q=fmt.Sprintf("insert into symbols (symbol_name,symbol_address,symbol_type,symbol_file_ref_id,symbol_instance_id_ref) select (select 'Indirect call'), '0x00000000', 'indirect', (select file_id from files where file_name ='NoFile' and file_instance_id_ref=%[1]d), %[1]d;", id)
 //		fmt.Println(q)
 		spawn_query(db, 0, "None", addresses, q, )
-		q=fmt.Sprintf("insert into tags (subsys_name, file_ref_id, instance_id_ref) select (select 'Indirect Calls'), (select file_id from files where file_name='NoFile' and instance_id_ref=%[1]d), %[1]d;", id)
+		q=fmt.Sprintf("insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select (select 'Indirect Calls'), (select file_id from files where file_name='NoFile' and file_instance_id_ref=%[1]d), %[1]d;", id)
 //		fmt.Println(q)
 		spawn_query(db, 0, "None", addresses, q, )
 
@@ -96,8 +96,8 @@ func main(){
 				}
 			if strings.Contains(a.Name, "sym.") || a.Indirect {
 				fmtstring:=fmt.Sprintf(
-						"insert into files (file_name, instance_id_ref) Select '%%[1]s', %[1]d Where not exists (select * from files where file_name='%%[1]s' and instance_id_ref=%[1]d);"+
-						"insert into symbols (symbol_name, address, type, file_ref_id, instance_id_ref) select '%[2]s', '%[3]s', '%[4]s', (select file_id from files where file_name='%%[1]s' and instance_id_ref=%[1]d), %[1]d;"+
+						"insert into files (file_name, file_instance_id_ref) Select '%%[1]s', %[1]d Where not exists (select * from files where file_name='%%[1]s' and file_instance_id_ref=%[1]d);"+
+						"insert into symbols (symbol_name, symbol_address, symbol_type, symbol_file_ref_id, symbol_instance_id_ref) select '%[2]s', '%[3]s', '%[4]s', (select file_id from files where file_name='%%[1]s' and file_instance_id_ref=%[1]d), %[1]d;"+
 						"",
 						id,
 						strings.ReplaceAll(a.Name, "sym.", ""),
@@ -142,7 +142,7 @@ func main(){
 						"None",
 						addresses,
 						fmt.Sprintf(
-							"insert into xrefs (caller, callee, instance_id_ref) select (Select symbol_id from symbols where address ='0x%[1]08x' and instance_id_ref=%[3]d), (Select symbol_id from symbols where address ='0x%[2]08x' and instance_id_ref=%[3]d), %[3]d;"+
+							"insert into xrefs (caller, callee, xref_instance_id_ref) select (Select symbol_id from symbols where symbol_address ='0x%08[1]x' and symbol_instance_id_ref=%[3]d), (Select symbol_id from symbols where symbol_address ='0x%08[2]x' and symbol_instance_id_ref=%[3]d), %[3]d;"+
 							"",
 							a.Offset,
 							l,
@@ -162,9 +162,9 @@ func main(){
         	        }
 	        ss:=s[seek2data(s):]
         	items:=parse_maintainers(ss)
-	        queries:=generate_queries(items, "insert into tags (subsys_name, file_ref_id, instance_id_ref) select '%[1]s', "+
-        	                                "(select file_id from files where file_name='%[2]s' and instance_id_ref=%[3]d) as fn_id, %[3]d "+
-                	                        "WHERE EXISTS ( select file_id from files where file_name='%[2]s' and instance_id_ref=%[3]d);", id)
+	        queries:=generate_queries(items, "insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select '%[1]s', "+
+        	                                "(select file_id from files where file_name='%[2]s' and file_instance_id_ref=%[3]d) as fn_id, %[3]d "+
+                	                        "WHERE EXISTS ( select file_id from files where file_name='%[2]s' and file_instance_id_ref=%[3]d);", id)
 		bar = pb.StartNew(len(queries))
         	for _,q :=range queries{
 //			fmt.Println(q)
