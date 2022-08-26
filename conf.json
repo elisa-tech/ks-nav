@@ -1,0 +1,10 @@
+{
+"DBURL":"dbs.hqhome163.com",
+"DBPort":5432,
+"DBUser":"alessandro",
+"DBPassword":"<password>",
+"DBTargetDB":"kernel_bin",
+"Symbol":"",
+"Instance":0,
+"Mode":2
+}
