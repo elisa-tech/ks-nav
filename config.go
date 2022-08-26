@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
         )
 var conf_fn = "conf.json"
+const app_name	string="nav"
+const app_descr	string="kernel symbol navigator"
 
 type Arg_func func(*configuration, []string) (error)
 
@@ -120,12 +122,17 @@ func func_Mode        (conf *configuration, mode []string)    (error){
         if err!=nil {
                 return err
                 }
+	if s<1 || s>2 {
+		return errors.New("unsupported mode")
+		}
         (*conf).Mode=s
         return nil
 }
 
 func print_help(lines []cmd_line_items){
 
+	fmt.Println(app_name)
+	fmt.Println(app_descr)
 	for _,item := range lines{
 		fmt.Printf(
 			"\t%s\t%s\t%s\n",

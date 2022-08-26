@@ -17,7 +17,9 @@ func main() {
 
         conf, err := args_parse(cmd_line_item_init())
         if err!=nil {
-                fmt.Println("Kernel symbol fetcher")
+		if err.Error() != "dummy"{
+			fmt.Println(err.Error())
+			}
                 print_help(cmd_line_item_init());
                 os.Exit(-1)
                 }
@@ -28,6 +30,7 @@ func main() {
 	start, err:=sym2num(db, conf.Symbol, conf.Instance)
 	if err!=nil{
 		fmt.Println("symbol not found")
+		print_help(cmd_line_item_init());
 		os.Exit(-2)
 		}
 
