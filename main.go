@@ -2,6 +2,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"os"
 	r2 "github.com/radareorg/r2pipe-go"
 	"github.com/cheggaaa/pb/v3"
 )
@@ -13,24 +14,6 @@ const (
 	ENABLE_VERSION_CONFIG	= 8
 	)
 
-type configuration struct {
-	LinuxWDebug	string
-	LinuxWODebug	string
-	StripBin	string
-	DBURL		string
-	DBPort		int
-	DBUser		string
-	DBPassword	string
-	DBTargetDB	string
-	Maintainers_fn	string
-	KConfig_fn	string
-	KMakefile	string
-	Mode		int
-	Note		string
-}
-
-
-
 func main(){
 	var cache	[]xref_cache
 	var r2p		*r2.Pipe
@@ -40,39 +23,14 @@ func main(){
 	var count	int
 	var id		int
 
-/*
-	conf:=configuration{
-				"vmlinux",
-				"vmlinux.work",
-				"/usr/bin/strip",
-				"dbs.hqhome163.com",
-				5432,
-				"alessandro",
-				"<password>",
-				"kernel_bin",
-				"MAINTAINERS",
-				"./include/generated/autoconf.h",
-				"Makefile",
-				ENABLE_SYBOLSNFILES|ENABLE_XREFS|ENABLE_MAINTAINERS|ENABLE_VERSION_CONFIG,
-				"upstream"
-				}
-*/
-	conf:=configuration{
-				"vmlinux",
-				"vmlinux.work",
-				"/usr/bin/aarch64-linux-gnu-strip",
-//				"/usr/bin/strip",
-				"dbs.hqhome163.com",
-				5432,
-				"alessandro",
-				"<password>",
-				"kernel_bin",
-				"MAINTAINERS",
-				"./include/generated/autoconf.h",
-				"Makefile",
-				ENABLE_SYBOLSNFILES|ENABLE_XREFS|ENABLE_MAINTAINERS|ENABLE_VERSION_CONFIG,
-				"upstream",
-				}
+
+	conf, err := args_parse(cmd_line_item_init())
+	if err!=nil {
+		fmt.Println("Kernel symbol fetcher")
+		print_help(cmd_line_item_init());
+		os.Exit(-1)
+		}
+//	fmt.Println(conf)
 	fmt.Println("create stripped version")
 	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
 	addresses:=addr2line_init(conf.LinuxWDebug)
@@ -109,13 +67,13 @@ func main(){
 			panic(err)
 			}
 		q:=fmt.Sprintf("insert into files (file_name, instance_id_ref) select 'NoFile',%d;", id)
-		fmt.Println(q)
+//		fmt.Println(q)
 		spawn_query(db, 0, "None", addresses, q, )
 		q=fmt.Sprintf("insert into symbols (symbol_name,address,type,file_ref_id,instance_id_ref) select (select 'Indirect call'), '0x00000000', 'indirect', (select file_id from files where file_name ='NoFile' and instance_id_ref=%[1]d), %[1]d;", id)
-		fmt.Println(q)
+//		fmt.Println(q)
 		spawn_query(db, 0, "None", addresses, q, )
 		q=fmt.Sprintf("insert into tags (subsys_name, file_ref_id, instance_id_ref) select (select 'Indirect Calls'), (select file_id from files where file_name='NoFile' and instance_id_ref=%[1]d), %[1]d;", id)
-		fmt.Println(q)
+//		fmt.Println(q)
 		spawn_query(db, 0, "None", addresses, q, )
 
 		fmt.Println("initialize analysis")
