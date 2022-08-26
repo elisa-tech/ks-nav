@@ -2,7 +2,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
+//	"strconv"
 	)
 
 func main() {
@@ -15,22 +15,30 @@ func main() {
 	cache3 := make(map[string]string)
 
 
-        start, err := strconv.Atoi(os.Args[1])
-        if err != nil {
-                panic(err)
-        }
-	t:=Connect_token{"dbs.hqhome163.com",5432,"alessandro","<password>","kernel_bin"}
+        conf, err := args_parse(cmd_line_item_init())
+        if err!=nil {
+                fmt.Println("Kernel symbol fetcher")
+                print_help(cmd_line_item_init());
+                os.Exit(-1)
+                }
+
+	t:=Connect_token{ conf.DBURL, conf.DBPort,  conf.DBUser, conf.DBPassword, conf.DBTargetDB}
 	db:=Connect_db(&t)
 
-//	Navigate(db, 153735, nil, prod)
+	start, err:=sym2num(db, conf.Symbol, conf.Instance)
+	if err!=nil{
+		fmt.Println("symbol not found")
+		os.Exit(-2)
+		}
+
 	fmt.Println("digraph G {")
-	entry, err := get_entry_by_id(db, start, cache2)
+	entry, err := get_entry_by_id(db, start, conf.Instance, cache2)
 		if err!=nil {
 			entry_name="Unknown";
 			} else {
 				entry_name=entry.Symbol
 				}
 
-	Navigate(db, start, entry_name, &visited, prod, Cache{cache, cache2, cache3}, PRINT_SUBSYS)
+	Navigate(db, start, entry_name, &visited, prod, conf.Instance, Cache{cache, cache2, cache3}, conf.Mode)
 	fmt.Println("}")
 }
