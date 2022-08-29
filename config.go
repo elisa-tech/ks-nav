@@ -31,6 +31,7 @@ type configuration struct {
 	Symbol		string
 	Instance	int
 	Mode		int
+	Excluded	[]string
 }
 var	Default_config  configuration = configuration{
 	DBURL:		"dbs.hqhome163.com",
@@ -41,6 +42,7 @@ var	Default_config  configuration = configuration{
 	Symbol:		"",
 	Instance:	0,
 	Mode:		PRINT_SUBSYS,
+	Excluded:	[]string{"rcu_.*"},
 	}
 
 func push_cmd_line_item(Switch string, Help_str string, Has_arg bool, Needed bool, Func Arg_func, cmd_line *[]cmd_line_items){

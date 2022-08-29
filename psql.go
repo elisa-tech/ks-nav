@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 //	"strings"
+	"regexp"
 	"errors"
 	"sort"
 	_ "github.com/lib/pq"
@@ -208,7 +209,18 @@ func sym2num(db *sql.DB, symb string, instance int)(int, error){
 	return res, nil
 }
 
-func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, prod map[string]int, instance int, cache Cache, mode int) {
+func not_exluded(symbol string, excluded []string)bool{
+
+	for _,s:=range excluded{
+		if match,_ :=regexp.MatchString(s, symbol); match{
+			return false
+			}
+		}
+	return true
+}
+
+
+func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, prod map[string]int, instance int, cache Cache, mode int, excluded []string) {
 	var tmp,s,l,ll,r	string
 
 
@@ -258,7 +270,9 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 					}
 
 			if Not_in(*visited, curr.Sym_id){
-				Navigate(db, curr.Sym_id, ll, visited, prod, instance, cache, mode)
+				if not_exluded(r, excluded){
+					Navigate(db, curr.Sym_id, ll, visited, prod, instance, cache, mode, excluded)
+					}
 				}
 			}
 		}
