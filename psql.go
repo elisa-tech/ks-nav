@@ -270,7 +270,7 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 					}
 
 			if Not_in(*visited, curr.Sym_id){
-				if not_exluded(r, excluded){
+				if not_exluded(entry.Symbol, excluded){
 					Navigate(db, curr.Sym_id, ll, visited, prod, instance, cache, mode, excluded)
 					}
 				}

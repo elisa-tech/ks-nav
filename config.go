@@ -157,6 +157,7 @@ func args_parse(lines []cmd_line_items)(configuration, error){
 
 	for _, os_arg := range os.Args[1:] {
 //		fmt.Printf("osarg=%s\n", os_arg)
+//		fmt.Println(os_arg," -> ",conf)
 		if !skip {
 //			fmt.Printf("check if I have it\n")
 			for _, arg := range lines{
@@ -188,6 +189,7 @@ func args_parse(lines []cmd_line_items)(configuration, error){
 			}
 
 		}
+//	fmt.Println("use -> ",conf)
 	return	conf, nil
 }
 
