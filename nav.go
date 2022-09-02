@@ -42,6 +42,6 @@ func main() {
 				entry_name=entry.Symbol
 				}
 
-	Navigate(db, start, entry_name, &visited, prod, conf.Instance, Cache{cache, cache2, cache3}, conf.Mode, conf.Excluded)
+	Navigate(db, start, entry_name, &visited, prod, conf.Instance, Cache{cache, cache2, cache3}, conf.Mode, conf.Excluded, 0, conf.MaxDepth)
 	fmt.Println("}")
 }

@@ -32,6 +32,7 @@ type configuration struct {
 	Instance	int
 	Mode		int
 	Excluded	[]string
+	MaxDepth    uint
 }
 var	Default_config  configuration = configuration{
 	DBURL:		"dbs.hqhome163.com",
@@ -43,6 +44,7 @@ var	Default_config  configuration = configuration{
 	Instance:	0,
 	Mode:		PRINT_SUBSYS,
 	Excluded:	[]string{"rcu_.*"},
+	MaxDepth:   0,    //0: no limit
 	}
 
 func push_cmd_line_item(Switch string, Help_str string, Has_arg bool, Needed bool, Func Arg_func, cmd_line *[]cmd_line_items){

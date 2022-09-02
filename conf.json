@@ -7,5 +7,6 @@
 "Symbol":"__arm64_sys_getppid",
 "Instance":1,
 "Mode":2,
-"Excluded": ["rcu_.*", "kmalloc", "kfree"]
+"Excluded": ["rcu_.*", "kmalloc", "kfree"],
+"MaxDepth":0
 }
