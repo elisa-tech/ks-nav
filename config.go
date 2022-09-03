@@ -158,23 +158,16 @@ func args_parse(lines []cmd_line_items)(configuration, error){
 	var 	f		Arg_func
 
 	for _, os_arg := range os.Args[1:] {
-//		fmt.Printf("osarg=%s\n", os_arg)
-//		fmt.Println(os_arg," -> ",conf)
 		if !skip {
-//			fmt.Printf("check if I have it\n")
 			for _, arg := range lines{
-//				fmt.Printf("consider configured arg=%s\n", arg.Switch)
 				if arg.Switch==os_arg {
-//					fmt.Printf("have it\n")
 					if arg.Has_arg{
-//						fmt.Printf("it needs more arguments\n")
 						f=arg.Func
 						skip=true
 						break
 						}
 					err := arg.Func(&conf, []string{})
 					if err != nil {
-//						fmt.Println("-----------------------------_")
 						return Default_config, err
 						}
 					}
@@ -182,7 +175,6 @@ func args_parse(lines []cmd_line_items)(configuration, error){
 			continue
 			}
 		if skip{
-//			fmt.Printf("Fetch extra arg (%s)and use it\n", os_arg)
 			err := f(&conf,[]string{os_arg})
 			if err != nil {
 				return Default_config, err
@@ -191,7 +183,6 @@ func args_parse(lines []cmd_line_items)(configuration, error){
 			}
 
 		}
-//	fmt.Println("use -> ",conf)
 	return	conf, nil
 }
 

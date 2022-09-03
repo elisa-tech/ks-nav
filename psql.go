@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-//	"strings"
 	"regexp"
 	"errors"
 	"sort"
@@ -50,13 +49,11 @@ var chached int = 0
 
 
 func Connect_db(t *Connect_token) (*sql.DB){
-//	fmt.Println("connect")
 	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", (*t).Host, (*t).Port, (*t).User, (*t).Pass, (*t).Dbname)
 	db, err := sql.Open("postgres", psqlconn)
 	if err!= nil {
 		panic(err)
 		}
-//	fmt.Println("connected")
 	return db
 }
 
@@ -64,16 +61,13 @@ func get_entry_by_id(db *sql.DB, symbol_id int, instance int,cache map[int]Entry
 	var e		Entry
 	var s		sql.NullString
 	
-//	fmt.Println("query")
 	if e, ok := cache[symbol_id]; ok {
-//		fmt.Println("--------------------------------------------cache2 hit!---------------------------------------------------")
 		return e, nil
 		}
 
 
 
 	query:="select symbol_id, symbol_name, subsys_name, file_name from (select * from symbols, files where symbols.symbol_file_ref_id=files.file_id and symbols.symbol_instance_id_ref=$2) as dummy left outer join tags on dummy.symbol_file_ref_id=tags.tag_file_ref_id where symbol_id=$1 and symbol_instance_id_ref=$2"
-//	fmt.Println(query,symbol_id,instance)
 	rows, err := db.Query(query, symbol_id, instance)
 	if err!= nil {
 		panic(err)
@@ -86,7 +80,6 @@ func get_entry_by_id(db *sql.DB, symbol_id int, instance int,cache map[int]Entry
 			fmt.Println(err)
 			return e, err
 			}
-//		fmt.Println(e)
 		if s.Valid {
 			e.Subsys=append(e.Subsys, s.String)
 			}
@@ -103,10 +96,8 @@ func get_successors_by_id(db *sql.DB, symbol_id int, instance int, cache Cache )
 	var e		Edge
 	var res		[]Entry
 
-//	fmt.Println("query")
 
 	if res, ok := cache.Successors[symbol_id]; ok {
-//		fmt.Println("--------------------------------------------cache hit!---------------------------------------------------")
 		return res, nil
 		}
 
@@ -130,7 +121,6 @@ func get_successors_by_id(db *sql.DB, symbol_id int, instance int, cache Cache )
         	return nil, err
 		}
 	cache.Successors[symbol_id]=res
-//	fmt.Println(cache)
 	return res, nil
 }
 
@@ -164,7 +154,9 @@ func get_subsys_from_symbol_name(db *sql.DB, symbol string, instance int, subsyt
 	if res, ok := subsytems_cache[symbol]; ok {
 		return res, nil
 		}
-	query:="select subsys_name from symbols, tags where symbols.symbol_file_ref_id=tags.tag_file_ref_id and symbols.symbol_name=$1 and symbols.symbol_instance_id_ref=$2;"
+        query:="select subsys_name from (select count(*)as cnt, subsys_name from tags where subsys_name in (select subsys_name from symbols, "+
+		"tags where symbols.symbol_file_ref_id=tags.tag_file_ref_id and symbols.symbol_name='autosuspend_delay_ms_show' and symbols.symbol_instance_id_ref=1) group by subsys_name order by cnt desc) as tbl;"
+
         rows, err := db.Query(query, symbol, instance)
         if err!= nil {
                 panic(err)
@@ -188,7 +180,6 @@ func sym2num(db *sql.DB, symb string, instance int)(int, error){
 	var 	res	int=0
 	var	cnt 	int=0
 	query:="select symbol_id from symbols where symbols.symbol_name=$1 and symbols.symbol_instance_id_ref=$2"
-//	fmt.Println(query, symb, instance)
         rows, err := db.Query(query, symb, instance)
         if err!= nil {
                 panic(err)
@@ -225,7 +216,6 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 
 
 	*visited=append(*visited, symbol_id)
-//	entry, err := get_entry_by_id(db, symbol_id, cache2)
 	l=parent_dispaly
 	successors, err:=get_successors_by_id(db, symbol_id, instance, cache);
 	successors=removeDuplicate(successors)
@@ -261,7 +251,6 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 					break
 
 				}
-//			fmt.Println(s)
 			if _, ok := prod[s]; ok {
 				prod[s]++
 				} else {
