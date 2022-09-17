@@ -155,7 +155,7 @@ func get_subsys_from_symbol_name(db *sql.DB, symbol string, instance int, subsyt
 		return res, nil
 		}
         query:="select subsys_name from (select count(*)as cnt, subsys_name from tags where subsys_name in (select subsys_name from symbols, "+
-		"tags where symbols.symbol_file_ref_id=tags.tag_file_ref_id and symbols.symbol_name='autosuspend_delay_ms_show' and symbols.symbol_instance_id_ref=1) group by subsys_name order by cnt desc) as tbl;"
+		"tags where symbols.symbol_file_ref_id=tags.tag_file_ref_id and symbols.symbol_name=$1 and symbols.symbol_instance_id_ref=$2) group by subsys_name order by cnt desc) as tbl;"
 
         rows, err := db.Query(query, symbol, instance)
         if err!= nil {
