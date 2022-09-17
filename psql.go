@@ -261,7 +261,7 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 					}
 
 			if Not_in(*visited, curr.Sym_id){
-				if not_exluded(entry.Symbol, excluded) && (maxdepth > 0 && depth < maxdepth){
+				if not_exluded(entry.Symbol, excluded) && (maxdepth == 0 || (maxdepth > 0 && depth < maxdepth)){
 					Navigate(db, curr.Sym_id, ll, visited, prod, instance, cache, mode, excluded, depth, maxdepth)
 					}
 				}
