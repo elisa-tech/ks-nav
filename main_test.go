@@ -29,14 +29,17 @@ func TestParseFilesMakefile(t *testing.T){
 	for _, item := range test_makefile {
 		makefile, err := get_FromFile(item.FileName);
 		if err!=nil {
-			t.Error("Error fetch makefile {}", item.FileName)
+			s:=fmt.Sprintf("Error fetch makefile %s", item.FileName)
+			t.Error(s)
 			}
 		v, err:= get_version(makefile)
 		if err!=nil {
 			t.Error("Error parsing makefile")
 			}
 		 if v!=item.Expected {
-			t.Error("Error in validating the result: got {}, expected {}", v, item.Expected)
+			s:=fmt.Sprintf("Error in validating the result: got %d.%d.%d%s, expected %d.%d.%d%s", v.Version, v.Patchlevel, v.Sublevel, v.Extraversion,
+					item.Expected.Version, item.Expected.Patchlevel, item.Expected.Sublevel, item.Expected.Extraversion)
+			t.Error(s)
 			}
 		}
 
@@ -58,7 +61,8 @@ func TestParseFilesConfig(t *testing.T){
 	for _, item := range test_config  {
 		config, err := get_FromFile(item.FileName)
 		if err!=nil {
-                        t.Error("Error fetch config {}", item.FileName)
+			s:=fmt.Sprintf("Error fetch config %s", item.FileName)
+                        t.Error(s)
                         }
 		kconfig:=parse_config(config)
 		tconf:=""
@@ -75,7 +79,8 @@ func TestParseFilesConfig(t *testing.T){
 		hasher.Write([]byte(tconf))
 		sha := hex.EncodeToString(hasher.Sum(nil))
 		if sha!=item.Expected {
-			t.Error("Error in validating the result: got {}, expected {}", sha, item.Expected)
+			s:=fmt.Sprintf("Error in validating the result: got %s, expected %s", sha, item.Expected)
+			t.Error(s)
 			}
 		}
 }
