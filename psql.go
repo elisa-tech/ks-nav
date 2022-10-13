@@ -86,7 +86,7 @@ func get_entry_by_id(db *sql.DB, symbol_id int, instance int,cache map[int]Entry
 		}
 	if err = rows.Err(); err != nil {
 		fmt.Println("this error hit")
-        	return e, err
+		return e, err
 		}
 	cache[symbol_id]=e
 	return e, nil
@@ -118,7 +118,7 @@ func get_successors_by_id(db *sql.DB, symbol_id int, instance int, cache Cache )
 		}
 	if err = rows.Err(); err != nil {
 		fmt.Println("this error hit2 ")
-        	return nil, err
+		return nil, err
 		}
 	cache.Successors[symbol_id]=res
 	return res, nil
@@ -126,27 +126,27 @@ func get_successors_by_id(db *sql.DB, symbol_id int, instance int, cache Cache )
 
 func Not_in(list []int, v int) bool {
 
-        for _, a := range list {
-                if a == v {
-                        return false
-                }
-        }
-        return true
+	for _, a := range list {
+		if a == v {
+			return false
+			}
+		}
+	return true
 }
 
 
 func removeDuplicate(list []Entry) []Entry {
 
 	sort.SliceStable(list, func(i, j int) bool { return list[i].Sym_id < list[j].Sym_id })
-        allKeys := make(map[int]bool)
-        res := []Entry{}
-        for _, item := range list {
-                if _, value := allKeys[item.Sym_id]; !value {
-                        allKeys[item.Sym_id] = true
-                        res = append(res, item)
-                        }
-                }
-        return res
+	allKeys := make(map[int]bool)
+	res := []Entry{}
+	for _, item := range list {
+		if _, value := allKeys[item.Sym_id]; !value {
+			allKeys[item.Sym_id] = true
+			res = append(res, item)
+			}
+		}
+	return res
 }
 func get_subsys_from_symbol_name(db *sql.DB, symbol string, instance int, subsytems_cache map[string]string)(string, error){
 	var res string
@@ -154,23 +154,23 @@ func get_subsys_from_symbol_name(db *sql.DB, symbol string, instance int, subsyt
 	if res, ok := subsytems_cache[symbol]; ok {
 		return res, nil
 		}
-        query:="select subsys_name from (select count(*)as cnt, subsys_name from tags where subsys_name in (select subsys_name from symbols, "+
+	query:="select subsys_name from (select count(*)as cnt, subsys_name from tags where subsys_name in (select subsys_name from symbols, "+
 		"tags where symbols.symbol_file_ref_id=tags.tag_file_ref_id and symbols.symbol_name=$1 and symbols.symbol_instance_id_ref=$2) group by subsys_name order by cnt desc) as tbl;"
 
-        rows, err := db.Query(query, symbol, instance)
-        if err!= nil {
-                panic(err)
-                }
-        defer rows.Close()
-
-        for rows.Next() {
-                if err := rows.Scan(&res); err != nil {
-                        fmt.Println("this error hit1 ")
-                        return "", err
-                        }
+	rows, err := db.Query(query, symbol, instance)
+	if err!= nil {
+		panic(err)
 		}
-        subsytems_cache[symbol]=res
-        return res, nil
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(&res); err != nil {
+			fmt.Println("this error hit1 ")
+			return "", err
+			}
+		}
+	subsytems_cache[symbol]=res
+	return res, nil
 
 
 
@@ -180,19 +180,19 @@ func sym2num(db *sql.DB, symb string, instance int)(int, error){
 	var 	res	int=0
 	var	cnt 	int=0
 	query:="select symbol_id from symbols where symbols.symbol_name=$1 and symbols.symbol_instance_id_ref=$2"
-        rows, err := db.Query(query, symb, instance)
-        if err!= nil {
-                panic(err)
-                }
-        defer rows.Close()
+	rows, err := db.Query(query, symb, instance)
+	if err!= nil {
+		panic(err)
+		}
+	defer rows.Close()
 
-        for rows.Next() {
+	for rows.Next() {
 		cnt++
-                if err := rows.Scan(&res,); err != nil {
-                        fmt.Println("this error hit7")
-                        fmt.Println(err)
-                        return res, err
-                        }
+		if err := rows.Scan(&res,); err != nil {
+			fmt.Println("this error hit7")
+			fmt.Println(err)
+			return res, err
+			}
 		}
 	if cnt!=1 {
 		return res, errors.New("id is not unique")
@@ -211,9 +211,8 @@ func not_exluded(symbol string, excluded []string)bool{
 }
 
 
-func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, prod map[string]int, instance int, cache Cache, mode int, excluded []string, depth uint, maxdepth uint) {
+func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, prod map[string]int, instance int, cache Cache, mode int, excluded []string, depth uint, maxdepth uint, dot_fmt string, output *string) {
 	var tmp,s,l,ll,r	string
-
 
 	*visited=append(*visited, symbol_id)
 	l=parent_dispaly
@@ -222,14 +221,14 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 	if err==nil {
 		for _, curr := range successors{
 			entry, err := get_entry_by_id(db, curr.Sym_id, instance, cache.Entries)
-		        if err!=nil {
- 		               r="Unknown";
-                		} else {
+			if err!=nil {
+				r="Unknown";
+				} else {
 					r=entry.Symbol
 					}
 			switch mode {
 				case PRINT_ALL:
-					s=fmt.Sprintf("\"%s\"->\"%s\"", l, r)
+					s=fmt.Sprintf(dot_fmt, l, r)
 					ll=r
 					depth++
 					break
@@ -242,7 +241,7 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 								}
 						}
 					if l!=r {
-						s=fmt.Sprintf("\"%s\"->\"%s\"", l, r)
+						s=fmt.Sprintf(dot_fmt, l, r)
 						} else {
 							s="";
 							}
@@ -256,15 +255,17 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 				} else {
 					prod[s]=1
 					if s!="" {
-						fmt.Println(s)
+						//fmt.Println(s)
+						(*output)=(*output)+s
 						}
 					}
 
 			if Not_in(*visited, curr.Sym_id){
 				if not_exluded(entry.Symbol, excluded) && (maxdepth == 0 || (maxdepth > 0 && depth < maxdepth)){
-					Navigate(db, curr.Sym_id, ll, visited, prod, instance, cache, mode, excluded, depth, maxdepth)
+					Navigate(db, curr.Sym_id, ll, visited, prod, instance, cache, mode, excluded, depth, maxdepth, dot_fmt, output)
 					}
 				}
 			}
 		}
 }
+

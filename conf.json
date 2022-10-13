@@ -6,7 +6,8 @@
 "DBTargetDB":"kernel_bin",
 "Symbol":"__arm64_sys_getppid",
 "Instance":1,
-"Mode":2,
+"Mode":1,
 "Excluded": ["rcu_.*", "kmalloc", "kfree"],
-"MaxDepth":0
+"MaxDepth":0,
+"Jout": 4
 }
