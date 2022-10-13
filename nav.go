@@ -14,13 +14,21 @@ const (
 	JsonOutputB64 int	= 3
 	JsonOutputGZB64 int	= 4
 	)
-const JsonOutputFMT string = "{\"graph\": \"%s\",\"graph_type\",\"%s\",\"symbols\": [%s]}"
+const JsonOutputFMT string = "{\"graph\": \"%s\",\"graph_type\":\"%s\",\"symbols\": [%s]}"
+
 var fmt_dot = []string {
 		"",
 		"\"%s\"->\"%s\" \n",
-		"\\\"%s\\\"->\\\"%s\\\" \\\n",
+		"\\\"%s\\\"->\\\"%s\\\" \\\\\\n",
 		"\"%s\"->\"%s\" \n",
 		"\"%s\"->\"%s\" \n",
+		}
+var fmt_dot_header = []string {
+		"",
+		"digraph G {\n",
+		"digraph G {\\\\\\n",
+		"digraph G {\n",
+		"digraph G {\n",
 		}
 
 func opt2num(s string) int{
@@ -55,7 +63,7 @@ func generate_output(db *sql.DB, conf *configuration) (string, error){
 		return "", err
 		}
 
-	GraphOutput="digraph G {\n"
+	GraphOutput=fmt_dot_header[opt2num((*conf).Jout)]
 	entry, err := get_entry_by_id(db, start, (*conf).Instance, cache2)
 		if err!=nil {
 			entry_name="Unknown";
@@ -66,7 +74,7 @@ func generate_output(db *sql.DB, conf *configuration) (string, error){
 
 	Navigate(db, start, entry_name, &visited, prod, (*conf).Instance, Cache{cache, cache2, cache3}, (*conf).Mode, (*conf).Excluded, 0, (*conf).MaxDepth, fmt_dot[opt2num((*conf).Jout)], &output)
 	GraphOutput=GraphOutput+output
-	GraphOutput=GraphOutput+"}\n"
+	GraphOutput=GraphOutput+"}"
 
 /*
 	fmt.Println("vvvv debug vvvv")

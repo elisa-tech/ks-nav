@@ -9,5 +9,5 @@
 "Mode":1,
 "Excluded": ["rcu_.*", "kmalloc", "kfree"],
 "MaxDepth":0,
-"Jout": "JsonOutputGZB64"
+"Jout": "JsonOutputPlain"
 }
