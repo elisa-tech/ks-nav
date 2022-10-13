@@ -33,7 +33,7 @@ type configuration struct {
 	Mode		int
 	Excluded	[]string
 	MaxDepth	uint
-	Jout		int
+	Jout		string
 }
 var	Default_config  configuration = configuration{
 	DBURL:		"dbs.hqhome163.com",
@@ -55,7 +55,7 @@ func push_cmd_line_item(Switch string, Help_str string, Has_arg bool, Needed boo
 func cmd_line_item_init() ([]cmd_line_items){
 	var res	[]cmd_line_items
 
-	push_cmd_line_item("-j", "Force Json output with subsystems data",	true,  true,	func_jout,	&res)
+	push_cmd_line_item("-j", "Force Json output with subsystems data",	true,  false,	func_outtype,	&res)
 	push_cmd_line_item("-s", "Specifies symbol",				true,  true,	func_symbol,	&res)
 	push_cmd_line_item("-i", "Specifies instance",				true,  true,	func_instance,	&res)
 	push_cmd_line_item("-f", "Specifies config file",			true,  false,	func_jconf,	&res)
@@ -71,15 +71,8 @@ func cmd_line_item_init() ([]cmd_line_items){
 func func_help		(conf *configuration,fn []string)		(error){
 	return errors.New("Dummy")
 }
-func func_jout(conf *configuration, jout []string)			(error){
-	s, err := strconv.Atoi(jout[0])
-	if err!=nil {
-		return err
-		}
-	if s<1 || s>5 {
-		return errors.New("unsupported mode")
-		}
-	(*conf).Jout=s
+func func_outtype(conf *configuration, jout []string)			(error){
+	(*conf).Jout=jout[0]
 	return nil
 }
 func func_jconf		(conf *configuration,fn []string)		(error){

@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"regexp"
 	"errors"
 	"sort"
@@ -45,9 +46,6 @@ var check int = 0
 var chached int = 0
 
 
-
-
-
 func Connect_db(t *Connect_token) (*sql.DB){
 	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", (*t).Host, (*t).Port, (*t).User, (*t).Pass, (*t).Dbname)
 	db, err := sql.Open("postgres", psqlconn)
@@ -60,12 +58,10 @@ func Connect_db(t *Connect_token) (*sql.DB){
 func get_entry_by_id(db *sql.DB, symbol_id int, instance int,cache map[int]Entry)(Entry, error){
 	var e		Entry
 	var s		sql.NullString
-	
+
 	if e, ok := cache[symbol_id]; ok {
 		return e, nil
 		}
-
-
 
 	query:="select symbol_id, symbol_name, subsys_name, file_name from (select * from symbols, files where symbols.symbol_file_ref_id=files.file_id and symbols.symbol_instance_id_ref=$2) as dummy left outer join tags on dummy.symbol_file_ref_id=tags.tag_file_ref_id where symbol_id=$1 and symbol_instance_id_ref=$2"
 	rows, err := db.Query(query, symbol_id, instance)
@@ -269,3 +265,42 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 		}
 }
 
+
+
+func symbSubsys(db *sql.DB, symblist []int, instance int, cache Cache,)(string, error){
+	var out	string
+	var res	string
+
+//	fmt.Println("###################################")
+//	defer fmt.Println("##########################")
+
+	for _, symbid := range symblist {
+		//resolve sybm
+		symb, _ := get_entry_by_id(db, symbid, instance, cache.Entries)
+//		{"Funcname":"sub1", "subsystems":["f1","f2","f3"]}
+//		fmt.Println(symb.Symbol)
+
+
+		out=out+fmt.Sprintf("{\"FuncName\":\"%s\", \"subsystems\":[", symb.Symbol)
+
+		query:=fmt.Sprintf("select subsys_name from tags where tag_file_ref_id= (select symbol_file_ref_id from symbols where symbol_id=%d);", symbid)
+//		fmt.Println(query)
+		rows, err := db.Query(query)
+			if err!= nil {
+				return "", errors.New("symbSubsys query failed")
+				}
+		defer rows.Close()
+
+		for rows.Next() {
+			if err := rows.Scan(&res,); err != nil {
+				return "", errors.New("symbSubsys query browsing failed")
+				}
+			out=out+fmt.Sprintf("\"%s\",", res)
+			}
+		out=strings.TrimSuffix(out, ",")+"]},"
+
+//		fmt.Println(out)
+		}
+	out=strings.TrimSuffix(out, ",")
+	return out, nil
+}
