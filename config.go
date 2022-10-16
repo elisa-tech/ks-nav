@@ -46,6 +46,7 @@ var	Default_config  configuration = configuration{
 	Mode:		PRINT_SUBSYS,
 	Excluded:	[]string{"rcu_.*"},
 	MaxDepth:	0,		//0: no limit
+	Jout:       "GraphOnly",
 	}
 
 func push_cmd_line_item(Switch string, Help_str string, Has_arg bool, Needed bool, Func Arg_func, cmd_line *[]cmd_line_items){
