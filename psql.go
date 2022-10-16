@@ -209,6 +209,7 @@ func not_exluded(symbol string, excluded []string)bool{
 
 func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, prod map[string]int, instance int, cache Cache, mode int, excluded []string, depth uint, maxdepth uint, dot_fmt string, output *string) {
 	var tmp,s,l,ll,r	string
+	var depthInc		uint	= 0
 
 	*visited=append(*visited, symbol_id)
 	l=parent_dispaly
@@ -226,7 +227,7 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 				case PRINT_ALL:
 					s=fmt.Sprintf(dot_fmt, l, r)
 					ll=r
-					depth++
+					depthInc = 1
 					break
 				case PRINT_SUBSYS:
 					if tmp, err=get_subsys_from_symbol_name(db,r, instance, cache.SubSys); r!=tmp {
@@ -238,11 +239,11 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 						}
 					if l!=r {
 						s=fmt.Sprintf(dot_fmt, l, r)
+						depthInc = 1
 						} else {
 							s="";
 							}
 					ll=r
-					depth++
 					break
 
 				}
@@ -258,7 +259,7 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 
 			if Not_in(*visited, curr.Sym_id){
 				if not_exluded(entry.Symbol, excluded) && (maxdepth == 0 || (maxdepth > 0 && depth < maxdepth)){
-					Navigate(db, curr.Sym_id, ll, visited, prod, instance, cache, mode, excluded, depth, maxdepth, dot_fmt, output)
+					Navigate(db, curr.Sym_id, ll, visited, prod, instance, cache, mode, excluded, depth+depthInc, maxdepth, dot_fmt, output)
 					}
 				}
 			}
