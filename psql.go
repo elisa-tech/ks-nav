@@ -1,5 +1,34 @@
+	/*
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Name: nav - Kernel source code analysis tool
+	 *   Description: Extract call trees for kernel API
+	 *
+	 *   Author: Alessandro Carminati <acarmina@redhat.com>
+	 *   Author: Maurizio Papini <mpapini@redhat.com>
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *
+	 *   This copyrighted material is made available to anyone wishing
+	 *   to use, modify, copy, or redistribute it subject to the terms
+	 *   and conditions of the GNU General Public License version 2.
+	 *
+	 *   This program is distributed in the hope that it will be
+	 *   useful, but WITHOUT ANY WARRANTY; without even the implied
+	 *   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+	 *   PURPOSE. See the GNU General Public License for more details.
+	 *
+	 *   You should have received a copy of the GNU General Public
+	 *   License along with this program; if not, write to the Free
+	 *   Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+	 *   Boston, MA 02110-1301, USA.
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 */
 package main
- 
+
 import (
 	"database/sql"
 	"fmt"
@@ -9,11 +38,11 @@ import (
 	"sort"
 	_ "github.com/lib/pq"
 )
+
 const (
 	PRINT_ALL int	= 1
 	PRINT_SUBSYS	= 2
 )
-
 
 type Connect_token struct{
 	Host	string
@@ -36,6 +65,7 @@ type Edge struct {
 	Caller	int
 	Callee	int
 }
+
 type Cache struct {
 	Successors	map[int][]Entry
 	Entries		map[int]Entry
@@ -43,8 +73,8 @@ type Cache struct {
 }
 
 var check int = 0
-var chached int = 0
 
+var chached int = 0
 
 func Connect_db(t *Connect_token) (*sql.DB){
 	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", (*t).Host, (*t).Port, (*t).User, (*t).Pass, (*t).Dbname)
@@ -63,7 +93,9 @@ func get_entry_by_id(db *sql.DB, symbol_id int, instance int,cache map[int]Entry
 		return e, nil
 		}
 
-	query:="select symbol_id, symbol_name, subsys_name, file_name from (select * from symbols, files where symbols.symbol_file_ref_id=files.file_id and symbols.symbol_instance_id_ref=$2) as dummy left outer join tags on dummy.symbol_file_ref_id=tags.tag_file_ref_id where symbol_id=$1 and symbol_instance_id_ref=$2"
+	query:="select symbol_id, symbol_name, subsys_name, file_name from "+
+		"(select * from symbols, files where symbols.symbol_file_ref_id=files.file_id and symbols.symbol_instance_id_ref=$2) as dummy "+
+		"left outer join tags on dummy.symbol_file_ref_id=tags.tag_file_ref_id where symbol_id=$1 and symbol_instance_id_ref=$2"
 	rows, err := db.Query(query, symbol_id, instance)
 	if err!= nil {
 		panic(err)
@@ -130,7 +162,6 @@ func Not_in(list []int, v int) bool {
 	return true
 }
 
-
 func removeDuplicate(list []Entry) []Entry {
 
 	sort.SliceStable(list, func(i, j int) bool { return list[i].Sym_id < list[j].Sym_id })
@@ -144,6 +175,7 @@ func removeDuplicate(list []Entry) []Entry {
 		}
 	return res
 }
+
 func get_subsys_from_symbol_name(db *sql.DB, symbol string, instance int, subsytems_cache map[string]string)(string, error){
 	var res string
 
@@ -151,7 +183,8 @@ func get_subsys_from_symbol_name(db *sql.DB, symbol string, instance int, subsyt
 		return res, nil
 		}
 	query:="select subsys_name from (select count(*)as cnt, subsys_name from tags where subsys_name in (select subsys_name from symbols, "+
-		"tags where symbols.symbol_file_ref_id=tags.tag_file_ref_id and symbols.symbol_name=$1 and symbols.symbol_instance_id_ref=$2) group by subsys_name order by cnt desc) as tbl;"
+		"tags where symbols.symbol_file_ref_id=tags.tag_file_ref_id and symbols.symbol_name=$1 and symbols.symbol_instance_id_ref=$2) "+
+		"group by subsys_name order by cnt desc) as tbl;"
 
 	rows, err := db.Query(query, symbol, instance)
 	if err!= nil {
@@ -167,9 +200,6 @@ func get_subsys_from_symbol_name(db *sql.DB, symbol string, instance int, subsyt
 		}
 	subsytems_cache[symbol]=res
 	return res, nil
-
-
-
 }
 
 func sym2num(db *sql.DB, symb string, instance int)(int, error){
@@ -205,7 +235,6 @@ func not_exluded(symbol string, excluded []string)bool{
 		}
 	return true
 }
-
 
 func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, prod map[string]int, instance int, cache Cache, mode int, excluded []string, depth uint, maxdepth uint, dot_fmt string, output *string) {
 	var tmp,s,l,ll,r	string
@@ -252,7 +281,6 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 				} else {
 					prod[s]=1
 					if s!="" {
-						//fmt.Println(s)
 						(*output)=(*output)+s
 						}
 					}
@@ -266,26 +294,15 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 		}
 }
 
-
-
 func symbSubsys(db *sql.DB, symblist []int, instance int, cache Cache,)(string, error){
 	var out	string
 	var res	string
 
-//	fmt.Println("###################################")
-//	defer fmt.Println("##########################")
-
 	for _, symbid := range symblist {
 		//resolve sybm
 		symb, _ := get_entry_by_id(db, symbid, instance, cache.Entries)
-//		{"Funcname":"sub1", "subsystems":["f1","f2","f3"]}
-//		fmt.Println(symb.Symbol)
-
-
 		out=out+fmt.Sprintf("{\"FuncName\":\"%s\", \"subsystems\":[", symb.Symbol)
-
 		query:=fmt.Sprintf("select subsys_name from tags where tag_file_ref_id= (select symbol_file_ref_id from symbols where symbol_id=%d);", symbid)
-//		fmt.Println(query)
 		rows, err := db.Query(query)
 			if err!= nil {
 				return "", errors.New("symbSubsys query failed")
@@ -299,8 +316,6 @@ func symbSubsys(db *sql.DB, symblist []int, instance int, cache Cache,)(string, 
 			out=out+fmt.Sprintf("\"%s\",", res)
 			}
 		out=strings.TrimSuffix(out, ",")+"]},"
-
-//		fmt.Println(out)
 		}
 	out=strings.TrimSuffix(out, ",")
 	return out, nil

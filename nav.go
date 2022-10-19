@@ -1,4 +1,34 @@
+	/*
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Name: nav - Kernel source code analysis tool
+	 *   Description: Extract call trees for kernel API
+	 *
+	 *   Author: Alessandro Carminati <acarmina@redhat.com>
+	 *   Author: Maurizio Papini <mpapini@redhat.com>
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *
+	 *   This copyrighted material is made available to anyone wishing
+	 *   to use, modify, copy, or redistribute it subject to the terms
+	 *   and conditions of the GNU General Public License version 2.
+	 *
+	 *   This program is distributed in the hope that it will be
+	 *   useful, but WITHOUT ANY WARRANTY; without even the implied
+	 *   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+	 *   PURPOSE. See the GNU General Public License for more details.
+	 *
+	 *   You should have received a copy of the GNU General Public
+	 *   License along with this program; if not, write to the Free
+	 *   Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+	 *   Boston, MA 02110-1301, USA.
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 */
 package main
+
 import (
 	"bytes"
 	"compress/gzip"
@@ -8,12 +38,14 @@ import (
 	"database/sql"
 	"encoding/base64"
 	)
+
 const (
 	GraphOnly int		= 1
 	JsonOutputPlain int	= 2
 	JsonOutputB64 int	= 3
 	JsonOutputGZB64 int	= 4
 	)
+
 const JsonOutputFMT string = "{\"graph\": \"%s\",\"graph_type\":\"%s\",\"symbols\": [%s]}"
 
 var fmt_dot = []string {
@@ -23,6 +55,7 @@ var fmt_dot = []string {
 		"\"%s\"->\"%s\" \n",
 		"\"%s\"->\"%s\" \n",
 		}
+
 var fmt_dot_header = []string {
 		"",
 		"digraph G {\n",
@@ -76,18 +109,6 @@ func generate_output(db *sql.DB, conf *configuration) (string, error){
 	GraphOutput=GraphOutput+output
 	GraphOutput=GraphOutput+"}"
 
-/*
-	fmt.Println("vvvv debug vvvv")
-	fmt.Println(cache)
-	fmt.Println("----------------------------------------")
-	fmt.Println(cache2)
-	fmt.Println("----------------------------------------")
-	fmt.Println(cache3)
-	fmt.Println("----------------------------------------")
-	fmt.Println(visited)
-	fmt.Println("^^^^ debug ^^^^")
-*/
-
 	symbdata, err := symbSubsys(db, visited, (*conf).Instance, Cache{cache, cache2, cache3})
 	if err != nil{
 		return "",err
@@ -117,12 +138,8 @@ func generate_output(db *sql.DB, conf *configuration) (string, error){
 		default:
 			return "", errors.New("Unknown output mode")
 	}
-//	fmt.Println(visited)
 	return JsonOutput, nil
 }
-
-
-
 
 func main() {
 
@@ -149,4 +166,3 @@ func main() {
 	fmt.Println(output)
 
 }
-

@@ -1,4 +1,34 @@
+	/*
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Name: nav - Kernel source code analysis tool
+	 *   Description: Extract call trees for kernel API
+	 *
+	 *   Author: Alessandro Carminati <acarmina@redhat.com>
+	 *   Author: Maurizio Papini <mpapini@redhat.com>
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *
+	 *   This copyrighted material is made available to anyone wishing
+	 *   to use, modify, copy, or redistribute it subject to the terms
+	 *   and conditions of the GNU General Public License version 2.
+	 *
+	 *   This program is distributed in the hope that it will be
+	 *   useful, but WITHOUT ANY WARRANTY; without even the implied
+	 *   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+	 *   PURPOSE. See the GNU General Public License for more details.
+	 *
+	 *   You should have received a copy of the GNU General Public
+	 *   License along with this program; if not, write to the Free
+	 *   Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+	 *   Boston, MA 02110-1301, USA.
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 */
 package main
+
 import (
 	"strconv"
 	"fmt"
@@ -7,9 +37,12 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	)
+
 var conf_fn = "conf.json"
-const app_name	string="nav"
-const app_descr	string="kernel symbol navigator"
+
+const app_name	string="App Name: nav"
+
+const app_descr	string="Descr: kernel symbol navigator"
 
 type Arg_func func(*configuration, []string) (error)
 
@@ -35,6 +68,7 @@ type configuration struct {
 	MaxDepth	uint
 	Jout		string
 }
+
 var	Default_config  configuration = configuration{
 	DBURL:		"dbs.hqhome163.com",
 	DBPort:		5432,
@@ -69,13 +103,16 @@ func cmd_line_item_init() ([]cmd_line_items){
 
 	return res
 }
+
 func func_help		(conf *configuration,fn []string)		(error){
-	return errors.New("Dummy")
+	return errors.New("Command Help")
 }
+
 func func_outtype(conf *configuration, jout []string)			(error){
 	(*conf).Jout=jout[0]
 	return nil
 }
+
 func func_jconf		(conf *configuration,fn []string)		(error){
 	jsonFile, err := os.Open(fn[0])
 	if err != nil {
