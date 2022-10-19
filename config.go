@@ -68,7 +68,7 @@ func cmd_line_item_init() ([]cmd_line_items){
 	push_cmd_line_item("-u", "Forces use specified database userid",		true,  func_DBUser,	&res)
 	push_cmd_line_item("-p", "Forecs use specified password",			true,  func_DBPass,	&res)
 	push_cmd_line_item("-d", "Forecs use specified DBhost",				true,  func_DBHost,	&res)
-	push_cmd_line_item("-p", "Forecs use specified DBPort",				true,  func_DBPort,	&res)
+	push_cmd_line_item("-o", "Forecs use specified DBPort",				true,  func_DBPort,	&res)
 	push_cmd_line_item("-n", "Forecs use specified note (default 'upstream')",	true,  func_Note,	&res)
 	push_cmd_line_item("-c", "Checks dependencies",					false, func_check,	&res)
 	push_cmd_line_item("-h", "This Help",						false, func_help,	&res)
@@ -149,13 +149,13 @@ func print_help(lines []cmd_line_items){
 }
 
 func args_parse(lines []cmd_line_items)(configuration, error){
-	var	skip		bool=false;
+	var	extra		bool=false;
 	var	conf		configuration=Default_config
 	var 	f		Arg_func
 
 	for _, os_arg := range os.Args[1:] {
 //		fmt.Printf("osarg=%s\n", os_arg)
-		if !skip {
+		if !extra {
 //			fmt.Printf("check if I have it\n")
 			for _, arg := range lines{
 //				fmt.Printf("consider configured arg=%s\n", arg.Switch)
@@ -164,7 +164,7 @@ func args_parse(lines []cmd_line_items)(configuration, error){
 					if arg.Has_arg{
 //						fmt.Printf("it needs more arguments\n")
 						f=arg.Func
-						skip=true
+						extra=true
 						break
 						}
 					err := arg.Func(&conf, []string{})
@@ -176,16 +176,20 @@ func args_parse(lines []cmd_line_items)(configuration, error){
 				}
 			continue
 			}
-		if skip{
+		if extra{
 //			fmt.Printf("Fetch extra arg (%s)and use it\n", os_arg)
 			err := f(&conf,[]string{os_arg})
 			if err != nil {
 				return Default_config, err
 				}
-			skip=false
+			extra=false
 			}
 
 		}
-	return	conf, nil
+	if extra {
+		return	conf, errors.New("extra arg needed but none")
+		} else { 
+			return	conf, nil
+			}
 }
 

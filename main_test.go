@@ -2,6 +2,7 @@ package main
 
 import (
 	"testing"
+	"path/filepath"
 	"sort"
 	"crypto/sha1"
 	"fmt"
@@ -10,7 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path/filepath"
+	"runtime"
 	)
 
 func TestParseFilesMakefile(t *testing.T){
@@ -136,7 +137,6 @@ func cp(source string, destination string) error{
 	return nil
 }
 
-
 func TestMaintainer(t *testing.T){
 	var FakeLinuxTreeTest string =	"t_files/linux-fake.tar"
 	var Fakedir string =		"/tmp/linux-fake"
@@ -160,7 +160,9 @@ func TestMaintainer(t *testing.T){
 		t.Error("Error cant initialize fake linux directory", err)
 		}
 
-	current, _ := os.Getwd()
+	_, filename, _, _ := runtime.Caller(0)
+	current := filepath.Dir(filename)
+
 	err = os.Chdir(Fakedir)
 	if err != nil {
 		t.Error("Error cant initialize fake linux directory", err)
@@ -181,6 +183,82 @@ func TestMaintainer(t *testing.T){
 		if (f.subs!=len(items)) && (f.files!=len(queries)){
 			t.Error("Error validating number of files and subsystems in ", f.filename)
 			}
+		}
+
+}
+func TestConfig(t *testing.T){
+var     Default_config  configuration = configuration{
+        LinuxWDebug:    "vmlinux",
+        LinuxWODebug:   "vmlinux.work",
+        StripBin:       "/usr/bin/strip",
+        DBURL:          "dbs.hqhome163.com",
+        DBPort:         5432,
+        DBUser:         "alessandro",
+        DBPassword:     "<password>",
+        DBTargetDB:     "kernel_bin",
+        Maintainers_fn: "MAINTAINERS",
+        KConfig_fn:     "include/generated/autoconf.h",
+        KMakefile:      "Makefile",
+        Mode:           15,
+        Note:           "upstream",
+        }
+	os.Args=[]string{"nav"}
+	conf, err := args_parse(cmd_line_item_init())
+	if err!=nil {
+		t.Error("Error validating empty command line input")
+		}
+	if conf!=Default_config {
+		t.Error("Error parsing empty command line input")
+		}
+	os.Args=[]string{"nav", "-f"}
+	conf, err = args_parse(cmd_line_item_init())
+	if err==nil {
+		t.Error("error cmd line not detected", conf)
+		}
+
+	_, filename, _, _ := runtime.Caller(0)
+	current := filepath.Dir(filename)
+
+	os.Args=[]string{"nav", "-f", current+"/t_files/test1.json"}
+	conf, err = args_parse(cmd_line_item_init())
+	if err!=nil {
+		t.Error("error loading sample test configuration 1", err)
+		}
+	if conf==Default_config {
+		t.Error("Error parsing sample test configuration 1", conf)
+		}
+	if conf.LinuxWDebug!="dummy" {
+		t.Error("Error parsing sample test configuration 1", conf)
+		}
+
+	os.Args=[]string{"nav", "-s", "None1"}
+	conf, err = args_parse(cmd_line_item_init())
+	if conf.StripBin != "None1" {
+		t.Error("Error parsing strip binary arg")
+		}
+
+	os.Args=[]string{"nav", "-u", "None2"}
+	conf, err = args_parse(cmd_line_item_init())
+	if conf.DBUser != "None2" {
+		t.Error("Error parsing database userid arg")
+		}
+
+	os.Args=[]string{"nav", "-p", "None3"}
+	conf, err = args_parse(cmd_line_item_init())
+	if conf.DBPassword != "None3" {
+		t.Error("Error parsing password arg")
+		}
+
+	os.Args=[]string{"nav", "-d", "None4"}
+	conf, err = args_parse(cmd_line_item_init())
+	if conf.DBURL != "None4" {
+		t.Error("Error parsing db url arg")
+		}
+
+	os.Args=[]string{"nav", "-o", "1234"}
+	conf, err = args_parse(cmd_line_item_init())
+	if conf.DBPort != 1234 {
+		t.Error("Error parsing db port arg")
 		}
 
 }
