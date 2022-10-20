@@ -1,3 +1,32 @@
+	/*
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Name: nav - Kernel source code analysis tool
+	 *   Description: Extract call trees for kernel API
+	 *
+	 *   Author: Alessandro Carminati <acarmina@redhat.com>
+	 *   Author: Maurizio Papini <mpapini@redhat.com>
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *
+	 *   This copyrighted material is made available to anyone wishing
+	 *   to use, modify, copy, or redistribute it subject to the terms
+	 *   and conditions of the GNU General Public License version 2.
+	 *
+	 *   This program is distributed in the hope that it will be
+	 *   useful, but WITHOUT ANY WARRANTY; without even the implied
+	 *   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+	 *   PURPOSE. See the GNU General Public License for more details.
+	 *
+	 *   You should have received a copy of the GNU General Public
+	 *   License along with this program; if not, write to the Free
+	 *   Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+	 *   Boston, MA 02110-1301, USA.
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 */
 package main
 
 import (
@@ -8,7 +37,7 @@ import (
 	"os"
 	"path/filepath"
 	"fmt"
-)
+	)
 
 type m_item struct{
 	subsystem_name	string
@@ -22,7 +51,6 @@ func get_FromHttp(url string) ([]string, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
 	buf, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
@@ -38,10 +66,9 @@ func get_FromFile(path string) ([]string, error) {
 		return nil, err
 		}
 	defer file.Close()
-
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
- 		lines = append(lines, scanner.Text())
+		lines = append(lines, scanner.Text())
 		}
 	return lines, scanner.Err()
 }
@@ -57,7 +84,6 @@ func seek2data(s []string) int{
 		if len(line)>=2 {
 			searchpattern=line[0:2]
 			}
-//		fmt.Printf("%d [%s] - %s\n", state, searchpattern, line)
 		if len(line)>=2 && searchpattern ==".." {
 			state=1
 			}
@@ -72,16 +98,12 @@ func seek2data(s []string) int{
 	return res
 }
 
-
 func parse_maintainers(lines []string) []m_item{
 	var res []m_item
 	var it m_item
 	var state int = 0
-//	lines := strings.Split(s, "\n")
-//	fmt.Println(lines)
 
 	for _, line := range lines {
-//		fmt.Printf("%d - %s\n", state, line)
 		if state == 0 {
 			it.subsystem_name = line
 			state = 1
@@ -90,7 +112,6 @@ func parse_maintainers(lines []string) []m_item{
 		if state == 1 && len(line) > 2 && line[0:2] == "F:" {
 			tmp := strings.Split(line, ":")
 			it.wildcards = append(it.wildcards,  strings.TrimLeftFunc(tmp[1], func(c rune) bool {
-//							fmt.Println(c)
 							if c == ' ' || c == '\t' {
 								return true
 								} else {
@@ -108,7 +129,6 @@ func parse_maintainers(lines []string) []m_item{
 			state = 0
 		}
 	}
-//	fmt.Println(res)
 	return res
 }
 
@@ -178,6 +198,5 @@ func generate_queries(items []m_item, template_query string, id int) []string{
 				}
 			}
 		}
-
 	return res
 }
