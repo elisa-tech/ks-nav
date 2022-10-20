@@ -67,6 +67,7 @@ type configuration struct {
 	Excluded	[]string
 	MaxDepth	uint
 	Jout		string
+	cmdlineNeeds	map[string] bool
 }
 
 var	Default_config  configuration = configuration{
@@ -80,7 +81,8 @@ var	Default_config  configuration = configuration{
 	Mode:		PRINT_SUBSYS,
 	Excluded:	[]string{"rcu_.*"},
 	MaxDepth:	0,		//0: no limit
-	Jout:       "GraphOnly",
+	Jout:		"GraphOnly",
+	cmdlineNeeds:	map[string] bool{},
 	}
 
 func push_cmd_line_item(Switch string, Help_str string, Has_arg bool, Needed bool, Func Arg_func, cmd_line *[]cmd_line_items){
@@ -197,17 +199,26 @@ func print_help(lines []cmd_line_items){
 }
 
 func args_parse(lines []cmd_line_items)(configuration, error){
-	var	skip		bool=false;
+	var	extra		bool=false;
 	var	conf		configuration=Default_config
 	var 	f		Arg_func
 
+	for _, item := range lines{
+		if item.Needed {
+			conf.cmdlineNeeds[item.Switch]=false
+			}
+		}
+
 	for _, os_arg := range os.Args[1:] {
-		if !skip {
+		if !extra {
 			for _, arg := range lines{
 				if arg.Switch==os_arg {
+					if arg.Needed {
+						conf.cmdlineNeeds[arg.Switch]=true
+						}
 					if arg.Has_arg{
 						f=arg.Func
-						skip=true
+						extra=true
 						break
 						}
 					err := arg.Func(&conf, []string{})
@@ -218,15 +229,25 @@ func args_parse(lines []cmd_line_items)(configuration, error){
 				}
 			continue
 			}
-		if skip{
+		if extra{
 			err := f(&conf,[]string{os_arg})
 			if err != nil {
 				return Default_config, err
 				}
-			skip=false
+			extra=false
 			}
 
 		}
-	return	conf, nil
-}
+	if extra {
+		 return  Default_config, errors.New("Missing switch arg")
+		}
 
+	res:=true
+	for _, element := range conf.cmdlineNeeds {
+		res = res && element
+		}
+	if res {
+		return	conf, nil
+		}
+	return Default_config, errors.New("Missing needed arg")
+}
