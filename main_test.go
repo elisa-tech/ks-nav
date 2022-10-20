@@ -1,3 +1,32 @@
+	/*
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Name: nav - Kernel source code analysis tool
+	 *   Description: Extract call trees for kernel API
+	 *
+	 *   Author: Alessandro Carminati <acarmina@redhat.com>
+	 *   Author: Maurizio Papini <mpapini@redhat.com>
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *
+	 *   This copyrighted material is made available to anyone wishing
+	 *   to use, modify, copy, or redistribute it subject to the terms
+	 *   and conditions of the GNU General Public License version 2.
+	 *
+	 *   This program is distributed in the hope that it will be
+	 *   useful, but WITHOUT ANY WARRANTY; without even the implied
+	 *   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+	 *   PURPOSE. See the GNU General Public License for more details.
+	 *
+	 *   You should have received a copy of the GNU General Public
+	 *   License along with this program; if not, write to the Free
+	 *   Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+	 *   Boston, MA 02110-1301, USA.
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 */
 package main
 
 import (
@@ -43,9 +72,8 @@ func TestParseFilesMakefile(t *testing.T){
 			t.Error(s)
 			}
 		}
-
 }
-/**/
+
 func TestParseFilesConfig(t *testing.T){
 	var test_config =[]struct{
 		FileName	string
@@ -63,11 +91,10 @@ func TestParseFilesConfig(t *testing.T){
 		config, err := get_FromFile(item.FileName)
 		if err!=nil {
 			s:=fmt.Sprintf("Error fetch config %s", item.FileName)
-                        t.Error(s)
-                        }
+			t.Error(s)
+			}
 		kconfig:=parse_config(config)
 		tconf:=""
-
 		keys := make([]string, 0, len(tconf))
 		for k := range kconfig{
 			keys = append(keys, k)
@@ -93,7 +120,6 @@ func Untar(tarball, target string) error {
 		}
 	defer reader.Close()
 	tarReader := tar.NewReader(reader)
-
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -101,7 +127,6 @@ func Untar(tarball, target string) error {
 			} else if err != nil {
 				return err
 				}
-
 		path := filepath.Join(target, header.Name)
 		info := header.FileInfo()
 		if info.IsDir() {
@@ -110,7 +135,6 @@ func Untar(tarball, target string) error {
 				}
 			continue
 			}
-
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
 		if err != nil {
 			return err
@@ -151,23 +175,18 @@ func TestMaintainer(t *testing.T){
 			{"t_files/linux-5.8.2_MAINTAINERS",	2208,133981},
 			{"t_files/linux-6.0_MAINTAINERS",	2585,142382},
 		}
-
-
 	defer os.RemoveAll(Fakedir)
 
 	err := Untar(FakeLinuxTreeTest, Fakedir)
 	if err!=nil {
 		t.Error("Error cant initialize fake linux directory", err)
 		}
-
 	_, filename, _, _ := runtime.Caller(0)
 	current := filepath.Dir(filename)
-
 	err = os.Chdir(Fakedir)
 	if err != nil {
 		t.Error("Error cant initialize fake linux directory", err)
 		}
-
 	for _,f := range testData {
 		err=cp(current+"/"+f.filename, "MAINTAINERS")
 		if err!=nil {
@@ -187,22 +206,23 @@ func TestMaintainer(t *testing.T){
 
 }
 func TestConfig(t *testing.T){
-var     Default_config  configuration = configuration{
-        LinuxWDebug:    "vmlinux",
-        LinuxWODebug:   "vmlinux.work",
-        StripBin:       "/usr/bin/strip",
-        DBURL:          "dbs.hqhome163.com",
-        DBPort:         5432,
-        DBUser:         "alessandro",
-        DBPassword:     "<password>",
-        DBTargetDB:     "kernel_bin",
-        Maintainers_fn: "MAINTAINERS",
-        KConfig_fn:     "include/generated/autoconf.h",
-        KMakefile:      "Makefile",
-        Mode:           15,
-        Note:           "upstream",
-        }
-	os.Args=[]string{"nav"}
+var	Default_config  configuration = configuration{
+	LinuxWDebug:	"vmlinux",
+	LinuxWODebug:	"vmlinux.work",
+	StripBin:	"/usr/bin/strip",
+	DBURL:		"dbs.hqhome163.com",
+	DBPort:		5432,
+	DBUser:		"alessandro",
+	DBPassword:	"<password>",
+	DBTargetDB:	"kernel_bin",
+	Maintainers_fn:	"MAINTAINERS",
+	KConfig_fn:	"include/generated/autoconf.h",
+	KMakefile:	"Makefile",
+	Mode:		15,
+	Note:		"upstream",
+	}
+
+	os.Args=[]string{"kern_bin_db"}
 	conf, err := args_parse(cmd_line_item_init())
 	if err!=nil {
 		t.Error("Error validating empty command line input")
@@ -210,16 +230,14 @@ var     Default_config  configuration = configuration{
 	if conf!=Default_config {
 		t.Error("Error parsing empty command line input")
 		}
-	os.Args=[]string{"nav", "-f"}
+	os.Args=[]string{"kern_bin_db", "-f"}
 	conf, err = args_parse(cmd_line_item_init())
 	if err==nil {
 		t.Error("error cmd line not detected", conf)
 		}
-
 	_, filename, _, _ := runtime.Caller(0)
 	current := filepath.Dir(filename)
-
-	os.Args=[]string{"nav", "-f", current+"/t_files/test1.json"}
+	os.Args=[]string{"kern_bin_db", "-f", current+"/t_files/test1.json"}
 	conf, err = args_parse(cmd_line_item_init())
 	if err!=nil {
 		t.Error("error loading sample test configuration 1", err)
@@ -230,35 +248,29 @@ var     Default_config  configuration = configuration{
 	if conf.LinuxWDebug!="dummy" {
 		t.Error("Error parsing sample test configuration 1", conf)
 		}
-
-	os.Args=[]string{"nav", "-s", "None1"}
+	os.Args=[]string{"kern_bin_db", "-s", "None1"}
 	conf, err = args_parse(cmd_line_item_init())
 	if conf.StripBin != "None1" {
 		t.Error("Error parsing strip binary arg")
 		}
-
-	os.Args=[]string{"nav", "-u", "None2"}
+	os.Args=[]string{"kern_bin_db", "-u", "None2"}
 	conf, err = args_parse(cmd_line_item_init())
 	if conf.DBUser != "None2" {
 		t.Error("Error parsing database userid arg")
 		}
-
-	os.Args=[]string{"nav", "-p", "None3"}
+	os.Args=[]string{"kern_bin_db", "-p", "None3"}
 	conf, err = args_parse(cmd_line_item_init())
 	if conf.DBPassword != "None3" {
 		t.Error("Error parsing password arg")
 		}
-
-	os.Args=[]string{"nav", "-d", "None4"}
+	os.Args=[]string{"kern_bin_db", "-d", "None4"}
 	conf, err = args_parse(cmd_line_item_init())
 	if conf.DBURL != "None4" {
 		t.Error("Error parsing db url arg")
 		}
-
-	os.Args=[]string{"nav", "-o", "1234"}
+	os.Args=[]string{"kern_bin_db", "-o", "1234"}
 	conf, err = args_parse(cmd_line_item_init())
 	if conf.DBPort != 1234 {
 		t.Error("Error parsing db port arg")
 		}
-
 }

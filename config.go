@@ -1,4 +1,34 @@
+	/*
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Name: nav - Kernel source code analysis tool
+	 *   Description: Extract call trees for kernel API
+	 *
+	 *   Author: Alessandro Carminati <acarmina@redhat.com>
+	 *   Author: Maurizio Papini <mpapini@redhat.com>
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *
+	 *   This copyrighted material is made available to anyone wishing
+	 *   to use, modify, copy, or redistribute it subject to the terms
+	 *   and conditions of the GNU General Public License version 2.
+	 *
+	 *   This program is distributed in the hope that it will be
+	 *   useful, but WITHOUT ANY WARRANTY; without even the implied
+	 *   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+	 *   PURPOSE. See the GNU General Public License for more details.
+	 *
+	 *   You should have received a copy of the GNU General Public
+	 *   License along with this program; if not, write to the Free
+	 *   Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+	 *   Boston, MA 02110-1301, USA.
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 */
 package main
+
 import (
 	"strconv"
 	"fmt"
@@ -6,17 +36,18 @@ import (
 	"errors"
 	"encoding/json"
 	"io/ioutil"
-        )
+	)
 var conf_fn = "conf.json"
 
 type Arg_func func(*configuration, []string) (error)
 
 type Secret struct {
-        Secret string   `json:"secret"`
-        Fix string      `json:"fix"`
-        Counter uint64  `json:"counter"`
-        Len int         `json:"len"`
-        }
+	Secret string	`json:"secret"`
+	Fix string	`json:"fix"`
+	Counter uint64	`json:"counter"`
+	Len int		`json:"len"`
+	}
+
 type cmd_line_items struct {
 	id		int
 	Switch		string
@@ -75,16 +106,16 @@ func cmd_line_item_init() ([]cmd_line_items){
 
 	return res
 }
-func func_help          (conf *configuration,fn []string)               (error){
+func func_help		(conf *configuration,fn []string)		(error){
 	return errors.New("Dummy")
 }
 func func_jconf		(conf *configuration,fn []string)		(error){
 	jsonFile, err := os.Open(fn[0])
 	if err != nil {
-                return err
-                }
-        byteValue, _ := ioutil.ReadAll(jsonFile)
-        jsonFile.Close()
+		return err
+		}
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	jsonFile.Close()
 	err=json.Unmarshal(byteValue, conf)
 	if err != nil {
 		return err
@@ -130,7 +161,6 @@ func func_check		(conf *configuration, dummy []string)			(error){
 	return nil
 }
 
-
 func print_help(lines []cmd_line_items){
 
 	for _,item := range lines{
@@ -154,22 +184,16 @@ func args_parse(lines []cmd_line_items)(configuration, error){
 	var 	f		Arg_func
 
 	for _, os_arg := range os.Args[1:] {
-//		fmt.Printf("osarg=%s\n", os_arg)
 		if !extra {
-//			fmt.Printf("check if I have it\n")
 			for _, arg := range lines{
-//				fmt.Printf("consider configured arg=%s\n", arg.Switch)
 				if arg.Switch==os_arg {
-//					fmt.Printf("have it\n")
 					if arg.Has_arg{
-//						fmt.Printf("it needs more arguments\n")
 						f=arg.Func
 						extra=true
 						break
 						}
 					err := arg.Func(&conf, []string{})
 					if err != nil {
-//						fmt.Println("-----------------------------_")
 						return Default_config, err
 						}
 					}
@@ -177,19 +201,16 @@ func args_parse(lines []cmd_line_items)(configuration, error){
 			continue
 			}
 		if extra{
-//			fmt.Printf("Fetch extra arg (%s)and use it\n", os_arg)
 			err := f(&conf,[]string{os_arg})
 			if err != nil {
 				return Default_config, err
 				}
 			extra=false
 			}
-
 		}
 	if extra {
 		return	conf, errors.New("extra arg needed but none")
-		} else { 
+		} else {
 			return	conf, nil
 			}
 }
-

@@ -1,4 +1,34 @@
+	/*
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Name: nav - Kernel source code analysis tool
+	 *   Description: Extract call trees for kernel API
+	 *
+	 *   Author: Alessandro Carminati <acarmina@redhat.com>
+	 *   Author: Maurizio Papini <mpapini@redhat.com>
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *
+	 *   This copyrighted material is made available to anyone wishing
+	 *   to use, modify, copy, or redistribute it subject to the terms
+	 *   and conditions of the GNU General Public License version 2.
+	 *
+	 *   This program is distributed in the hope that it will be
+	 *   useful, but WITHOUT ANY WARRANTY; without even the implied
+	 *   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+	 *   PURPOSE. See the GNU General Public License for more details.
+	 *
+	 *   You should have received a copy of the GNU General Public
+	 *   License along with this program; if not, write to the Free
+	 *   Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+	 *   Boston, MA 02110-1301, USA.
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 */
 package main
+
 import (
 	"fmt"
 	"os"
@@ -15,6 +45,7 @@ type sysc struct {
 	Addr		uint64
 	Name		string
 }
+
 type res struct{
 	Syscall		sysc
 	Path		[]uint64
@@ -201,9 +232,6 @@ func get_f_relocs(sym string, all_relocs []reloc_data, all_funcs []func_data) ([
 	return removeSDup(res), nil
 }
 
-
-
-
 func Move(r2p *r2.Pipe,current uint64){
 	_, err := r2p.Cmd("s "+ strconv.FormatUint(current,10))
 	if err != nil {
@@ -217,7 +245,6 @@ func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data,
 
 	for _, item := range *cache  {
 		if item.Addr==current {
-
 			return item.Xr
 				}
 		}
@@ -333,9 +360,9 @@ func get_all_funcdata(r2p *r2.Pipe)([]func_data){
 			panic(err)
 			}
 		buf, err = r2p.Cmd("fj")
-                if err != nil {
-                        panic(err)
-                        }
+		if err != nil {
+			panic(err)
+			}
 		error = json.Unmarshal( []byte(buf), &symbols)
 		if(error != nil){
 			fmt.Printf("Error while parsing data: %s", error)
@@ -346,15 +373,6 @@ func get_all_funcdata(r2p *r2.Pipe)([]func_data){
 				}
 			}
 		}
-		
-/****************************************************************************************************************************
- ****************************************************************************************************************************
- ****************************************************************************************************************************
- ****************************************************************************************************************************
- ****************************************************************************************************************************
- ****************************************************************************************************************************/
-
-
 	sort.SliceStable(functions, func(i, j int) bool {return functions[i].Offset < functions[j].Offset})
 	return functions
 }
@@ -383,14 +401,12 @@ func get_indirect_calls(r2p *r2.Pipe, funcs []func_data) ([]uint64){
 			}
 			smap = append(smap, uint64(num))
 		}
-
 	buf, err = r2p.Cmd("/at ucall")
 	if err != nil {
 		panic(err)
 		}
 	if len(buf)>10 {
 		temp = strings.Split(buf,"\n")
-
 		for _, line := range temp {
 			temp2 := strings.Split(line," ")
 			num, err := strconv.ParseUint(strings.Replace(temp2[0], "0x", "", -1) , 16, 64)
@@ -400,14 +416,13 @@ func get_indirect_calls(r2p *r2.Pipe, funcs []func_data) ([]uint64){
 			smap = append(smap, uint64(num))
 			}
 		}
-
 	sort.SliceStable(smap, func(i, j int) bool {return smap[i] < smap[j]})
 	return smap
 }
 
 func get_func_space(r2p *r2.Pipe, addr uint64, funcs []func_data)([]bloc){
-	var blocs       []bloc
-	var rad_blocs   []rad_bloc
+	var blocs	[]bloc
+	var rad_blocs	[]rad_bloc
 
 	for _, f := range funcs {
 		if f.Offset == addr {
@@ -431,7 +446,6 @@ func get_func_space(r2p *r2.Pipe, addr uint64, funcs []func_data)([]bloc){
 	}
 	return blocs
 }
-
 
 func is_in_func(r2p *r2.Pipe, addr uint64, funcs []func_data) (uint64){
 
@@ -458,5 +472,4 @@ func func_has_indirects(r2p *r2.Pipe, indcall []uint64, faddr uint64, funcs []fu
 			}
 		}
 	return false
-
 }

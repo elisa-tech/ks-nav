@@ -1,9 +1,37 @@
+	/*
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Name: nav - Kernel source code analysis tool
+	 *   Description: Extract call trees for kernel API
+	 *
+	 *   Author: Alessandro Carminati <acarmina@redhat.com>
+	 *   Author: Maurizio Papini <mpapini@redhat.com>
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 *
+	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *
+	 *   This copyrighted material is made available to anyone wishing
+	 *   to use, modify, copy, or redistribute it subject to the terms
+	 *   and conditions of the GNU General Public License version 2.
+	 *
+	 *   This program is distributed in the hope that it will be
+	 *   useful, but WITHOUT ANY WARRANTY; without even the implied
+	 *   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+	 *   PURPOSE. See the GNU General Public License for more details.
+	 *
+	 *   You should have received a copy of the GNU General Public
+	 *   License along with this program; if not, write to the Free
+	 *   Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+	 *   Boston, MA 02110-1301, USA.
+	 *
+	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 */
 package main
 
 import (
 	"fmt"
 	"strings"
-//	"regexp"
 	"database/sql"
 	"path/filepath"
 	addr2line "github.com/elazarl/addr2line"
@@ -11,7 +39,7 @@ import (
 
 type workloads struct{
 	Addr	uint64
-	Name    string
+	Name	string
 	Query	string
 	DB	*sql.DB
 	}
@@ -42,11 +70,6 @@ func in_cache(Addr uint64, Addr2line_cache []Addr2line_items)(bool, string){
 		}
 	return false, ""
 }
-/*
-func print_query(s string){
-	fmt.Println(s)
-}
-*/
 
 func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_f){
 	var e	workloads
@@ -58,9 +81,6 @@ func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_
 		case "None":
 			insert_func(e.DB, e.Query, false)
 			break
-// "insert into files (file_name, instance_id_ref) Select '%%[1]s', %[1]d Where not exists (select * from files where file_name='%%[1]s');"+
-// "insert into symbols (symbol_name, address, type, file_ref_id, instance_id_ref) select '%[2]s', '%[3]s', 'direct', (select file_id from files where file_name='%%[1]s'), %[1]d;"+
-
 		default:
 			rs, _ := a.Resolve(e.Addr)
 			if len(rs)==0 {
@@ -72,7 +92,7 @@ func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_
 					break
 					}
 				}
-			/*go*/ insert_func(e.DB, qready, false)
+			insert_func(e.DB, qready, false)
 			break
 			}
 	}
