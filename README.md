@@ -98,7 +98,3 @@ Configuration is a file containing a JSON serialized conf object
 
 **NOTE:** Defaults  are designed to make the tool work out of the box, if 
 the executable is placed in the Linux kernel source code root directory.
-
-## Contributing
-
-## License
