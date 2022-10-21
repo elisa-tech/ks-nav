@@ -88,7 +88,3 @@ Configuration is a file containing a JSON serialized conf object
 |Excluded  |List of symbols/subsystem not to be expanded                              |string[]|["rcu_.*"]          |
 |MaxDepth  |Max number of levels to explore 0 no limit                                |integer |0                  |
 |Jout      |Type of output: GraphOnly, JsonOutputPlain, JsonOutputB64, JsonOutputGZB64|enum    | GraphOnly         |
-
-## Contributing
-
-## License
