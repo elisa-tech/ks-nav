@@ -204,7 +204,7 @@ func TestMaintainer(t *testing.T){
 			}
 		ss:=s[seek2data(s):]
 		items:=parse_maintainers(ss)
-		queries:=generate_queries(items, "Subsystem: %[1]s' FileName='%[2]s",0)
+		queries := generate_queries("MAINTAINERS", items, "Subsystem: %[1]s' FileName='%[2]s", 0)
 		if (f.subs!=len(items)) && (f.files!=len(queries)){
 			t.Error("Error validating number of files and subsystems in ", f.filename)
 			}

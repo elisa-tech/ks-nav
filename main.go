@@ -172,11 +172,11 @@ func main(){
 		if err!= nil {
 			panic(err)
 			}
-		ss:=s[seek2data(s):]
-		items:=parse_maintainers(ss)
-		queries:=generate_queries(items, "insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select '%[1]s', "+
-			"(select file_id from files where file_name='%[2]s' and file_instance_id_ref=%[3]d) as fn_id, %[3]d "+
-			"WHERE EXISTS ( select file_id from files where file_name='%[2]s' and file_instance_id_ref=%[3]d);", id)
+		ss := s[seek2data(s):]
+		items := parse_maintainers(ss)
+		queries := generate_queries(conf.Maintainers_fn, items, "insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select '%[1]s', "+
+			"(select file_id from files where file_name LIKE '%%%[2]s' and file_instance_id_ref=%[3]d) as fn_id, %[3]d "+
+			"WHERE EXISTS ( select file_id from files where file_name LIKE '%%%[2]s' and file_instance_id_ref=%[3]d);", id)
 		bar = pb.StartNew(len(queries))
 		for _,q :=range queries{
 			bar.Increment()
