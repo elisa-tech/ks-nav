@@ -75,9 +75,6 @@ type Cache struct {
 	SubSys		map[string]string
 }
 
-var check int = 0
-
-var chached int = 0
 
 // Connects the target db and returns the handle
 func Connect_db(t *Connect_token) (*sql.DB){
