@@ -147,7 +147,7 @@ type core_info struct{
 	Format		string		`json: "format"`
 }
 
-// local app datatype representing a xref object
+// Local app datatype representing a xref object
 type xref struct{
 	Type		string		`json: "type"`
 	From		uint64		`json: "from"`
@@ -168,19 +168,19 @@ type file_info struct{
 	Bin	bin_info
 }
 
-// local app datatype representing a xref_cache object
+// Local app datatype representing a xref_cache object
 type xref_cache struct{
 	Addr		uint64
 	Xr		[]uint64
 }
 
-// local app datatype representing a code block object
+// Local app datatype representing a code block object
 type bloc struct {
 	Start		uint64
 	End		uint64
 }
 
-// given an ID scans function data cache and returns function data
+// Given an ID scans function data cache and returns function data
 func get_function_by_addr(addr uint64, all_funcs []func_data)(*func_data){
 
 	for i, f := range all_funcs{
@@ -191,7 +191,7 @@ func get_function_by_addr(addr uint64, all_funcs []func_data)(*func_data){
 	return nil
 }
 
-// usese radare 2 to return relocation data for the current selected function
+// Uses radare 2 to return relocation data for the current selected function
 func get_all_relocdata(r2p *r2.Pipe)([]reloc_data){
 
 	var relocs   []reloc_data
@@ -207,7 +207,7 @@ func get_all_relocdata(r2p *r2.Pipe)([]reloc_data){
 	return relocs
 }
 
-// removes duplicates resulting by the exploration of a call tree
+// Removes duplicates resulting by the exploration of a call tree
 func removeSDup(intSlice []string) []string {
 
 	allKeys := make(map[string]bool)
@@ -221,7 +221,7 @@ func removeSDup(intSlice []string) []string {
 	return list
 }
 
-// gets all the relocation objects inside a given function
+// Gets all the relocation objects inside a given function
 func get_f_relocs(sym string, all_relocs []reloc_data, all_funcs []func_data) ([]string, error){
 	var fun func_data
 	var  res []string
@@ -242,7 +242,7 @@ func get_f_relocs(sym string, all_relocs []reloc_data, all_funcs []func_data) ([
 	return removeSDup(res), nil
 }
 
-// usese radare 2 to move the focus to a new function
+// Uses radare 2 to move the focus to a new function
 func Move(r2p *r2.Pipe,current uint64){
 	_, err := r2p.Cmd("s "+ strconv.FormatUint(current,10))
 	if err != nil {
@@ -250,7 +250,7 @@ func Move(r2p *r2.Pipe,current uint64){
 		}
 }
 
-// gets xreferences by both use the cache and the radare 2 operations
+// Gets xreferences by both use the cache and the radare 2 operations
 func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data, cache *[]xref_cache) ([]uint64){
 	var xrefs		[]xref
 	var res			[]uint64;
@@ -278,7 +278,7 @@ func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data,
 	return  res
 }
 
-// convert a given function name to its address
+// Convert a given function name to its address
 func Symb2Addr_r(s string, r2p *r2.Pipe) (uint64){
 	var f  []func_data
 	buf, err := r2p.Cmd("afij "+ s)
@@ -295,7 +295,7 @@ func Symb2Addr_r(s string, r2p *r2.Pipe) (uint64){
 	return 0
 }
 
-// removes duplicates in the list of address resulting by the exploration of the call trees
+// Removes duplicates in the list of address resulting by the exploration of the call trees
 func removeDuplicate(intSlice []uint64) []uint64 {
 
 	allKeys := make(map[uint64]bool)
@@ -309,7 +309,7 @@ func removeDuplicate(intSlice []uint64) []uint64 {
 	return list
 }
 
-// removea the items in the relocation list that are not functions
+// Removes the items in the relocation list that are not functions
 func remove_non_func(list []uint64, functions []func_data) []uint64 {
 
 	res := []uint64{}
@@ -321,7 +321,7 @@ func remove_non_func(list []uint64, functions []func_data) []uint64 {
 	return res
 }
 
-// initializes the radare 2 framework
+// Initializes the radare 2 framework
 func init_fw(r2p *r2.Pipe){
 	l := log.New(os.Stderr, "", 0)
 
@@ -340,7 +340,7 @@ func init_fw(r2p *r2.Pipe){
 
 }
 
-// checks if at a  given address sits a function
+// Checks if at a  given address sits a function
 func is_func(addr uint64, list []func_data) (bool){
 	i := sort.Search(len(list), func(i int) bool { return list[i].Offset >= addr })
 	if i < len(list) && list[i].Offset == addr && strings.Contains(list[i].Name, "sym."){
@@ -349,7 +349,7 @@ func is_func(addr uint64, list []func_data) (bool){
 	return false
 }
 
-// executes a radare 2 function to fetch big chunnk of functions data
+// Executes a radare 2 function to fetch big chunnk of functions data
 func get_all_funcdata(r2p *r2.Pipe)([]func_data){
 
 	var functions	[]func_data
@@ -395,7 +395,7 @@ func get_all_funcdata(r2p *r2.Pipe)([]func_data){
 	return functions
 }
 
-// convert a given address to function name
+// Converts a given address to function name
 func Addr2Sym(addr uint64, list []func_data) (string){
 	i := sort.Search(len(list), func(i int) bool { return list[i].Offset >= addr })
 	if i < len(list) && list[i].Offset == addr {
@@ -404,7 +404,7 @@ func Addr2Sym(addr uint64, list []func_data) (string){
 	return "Unknown"
 }
 
-// uses radare 2 to fetch the list of all the indirect calls in the binary data
+// Uses radare 2 to fetch the list of all the indirect calls in the binary data
 func get_indirect_calls(r2p *r2.Pipe, funcs []func_data) ([]uint64){
 	var smap	[]uint64
 
@@ -440,6 +440,7 @@ func get_indirect_calls(r2p *r2.Pipe, funcs []func_data) ([]uint64){
 	return smap
 }
 
+// Given a function address, generates the list of blocks belonging to the function
 func get_func_space(r2p *r2.Pipe, addr uint64, funcs []func_data)([]bloc){
 	var blocs	[]bloc
 	var rad_blocs	[]rad_bloc
@@ -467,7 +468,7 @@ func get_func_space(r2p *r2.Pipe, addr uint64, funcs []func_data)([]bloc){
 	return blocs
 }
 
-// checks an addres is in a given function space
+// Checks an address is in a given function space
 func is_in_func(r2p *r2.Pipe, addr uint64, funcs []func_data) (uint64){
 
 	for _, f := range funcs {
@@ -482,7 +483,7 @@ func is_in_func(r2p *r2.Pipe, addr uint64, funcs []func_data) (uint64){
 
 }
 
-// verifies function contains indirect calls
+// Verifies function contains indirect calls
 func func_has_indirects(r2p *r2.Pipe, indcall []uint64, faddr uint64, funcs []func_data) (bool){
 
 	blocs:=get_func_space(r2p, faddr, funcs)

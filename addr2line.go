@@ -38,7 +38,7 @@ import (
 	addr2line "github.com/elazarl/addr2line"
 )
 
-// represents one task for the addr to line subsystem.
+// Represents one task for the addr to line subsystem.
 type workloads struct{
 	Addr	uint64
 	Name	string
@@ -46,20 +46,20 @@ type workloads struct{
 	DB	*sql.DB
 	}
 
-// caches item elements
+// Caches item elements
 type Addr2line_items struct {
 	Addr		uint64
 	File_name	string
 	}
 
-// commandline handle functions prototype
+// Commandline handle functions prototype
 type ins_f func(*sql.DB, string, bool)
 
-// the adrr2line item cache
+// The adrr2line item cache
 var Addr2line_cache []Addr2line_items;
 
-//initializes the addr to line subsystem
-//prepares a channel for the addr2line resolver communication.
+// Initializes the addr to line subsystem
+// prepares a channel for the addr2line resolver communication.
 func addr2line_init(fn string) (chan workloads){
 	a, err := addr2line.New(fn)
 	if err != nil {
@@ -70,7 +70,7 @@ func addr2line_init(fn string) (chan workloads){
 	return adresses
 }
 
-//checks the current symbol is in cache, if present returns data from the cache.
+// Checks the current symbol is in cache, if present returns data from the cache.
 func in_cache(Addr uint64, Addr2line_cache []Addr2line_items)(bool, string){
 	for _,a := range Addr2line_cache {
 		if a.Addr == Addr {
@@ -80,7 +80,7 @@ func in_cache(Addr uint64, Addr2line_cache []Addr2line_items)(bool, string){
 	return false, ""
 }
 
-// the goroutine responsible to resolve queries.
+// The goroutine responsible to resolve queries.
 // it reads from a channel for workloads elements.
 // because it manages the database it can also receive
 // raw queries. Raw queries are workloads whose Name="None"
@@ -112,7 +112,7 @@ func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_
 	}
 }
 
-// sends a workload to the resolver.
+// Sends a workload to the resolver.
 func spawn_query(db *sql.DB, addr uint64, name string, addresses chan workloads, query string) {
 	addresses <- workloads{addr, name, query, db}
 }
