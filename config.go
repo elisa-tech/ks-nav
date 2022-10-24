@@ -9,7 +9,7 @@
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *   Copyright (c) 2022 Red Hat, Inc. All rights reserved.
 	 *
 	 *   This copyrighted material is made available to anyone wishing
 	 *   to use, modify, copy, or redistribute it subject to the terms
@@ -27,6 +27,7 @@
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 */
+
 package main
 
 import (
@@ -46,6 +47,7 @@ const app_descr	string="Descr: kernel symbol navigator"
 
 type Arg_func func(*configuration, []string) (error)
 
+// Command line switch elements
 type cmd_line_items struct {
 	id		int
 	Switch		string
@@ -55,6 +57,7 @@ type cmd_line_items struct {
 	Func		Arg_func
 }
 
+// Represents the application configuration
 type configuration struct {
 	DBURL		string
 	DBPort		int
@@ -70,6 +73,7 @@ type configuration struct {
 	cmdlineNeeds	map[string] bool
 }
 
+// Instance of default configuration values
 var	Default_config  configuration = configuration{
 	DBURL:		"dbs.hqhome163.com",
 	DBPort:		5432,
@@ -85,10 +89,18 @@ var	Default_config  configuration = configuration{
 	cmdlineNeeds:	map[string] bool{},
 	}
 
+// Inserts a commandline item item, which is composed by:
+// * switch string
+// * switch descriptio
+// * if the switch requires an additiona argument
+// * a pointer to the function that manages the switch
+// * the configuration that gets updated
 func push_cmd_line_item(Switch string, Help_str string, Has_arg bool, Needed bool, Func Arg_func, cmd_line *[]cmd_line_items){
 	*cmd_line = append(*cmd_line, cmd_line_items{id: len(*cmd_line)+1, Switch: Switch, Help_srt: Help_str, Has_arg: Has_arg, Needed: Needed, Func: Func})
 }
 
+// This function initializes configuration parser subsystem
+// Inserts all the commandline switches suppported by the application
 func cmd_line_item_init() ([]cmd_line_items){
 	var res	[]cmd_line_items
 
@@ -179,6 +191,7 @@ func func_Mode		(conf *configuration, mode []string)    (error){
 	return nil
 }
 
+// Uses commandline args to generate the help string
 func print_help(lines []cmd_line_items){
 
 	fmt.Println(app_name)
@@ -198,6 +211,7 @@ func print_help(lines []cmd_line_items){
 		}
 }
 
+// Used to parse the command line and generate the command line
 func args_parse(lines []cmd_line_items)(configuration, error){
 	var	extra		bool=false;
 	var	conf		configuration=Default_config

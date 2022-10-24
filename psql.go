@@ -9,7 +9,7 @@
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *   Copyright (c) 2022 Red Hat, Inc. All rights reserved.
 	 *
 	 *   This copyrighted material is made available to anyone wishing
 	 *   to use, modify, copy, or redistribute it subject to the terms
@@ -27,6 +27,7 @@
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 */
+
 package main
 
 import (
@@ -39,11 +40,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// Const values for configuration mode field.
 const (
 	PRINT_ALL int	= 1
 	PRINT_SUBSYS	= 2
 )
 
+// Sql connection configuration
 type Connect_token struct{
 	Host	string
 	Port	int
@@ -76,6 +79,7 @@ var check int = 0
 
 var chached int = 0
 
+// Connects the target db and returns the handle
 func Connect_db(t *Connect_token) (*sql.DB){
 	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", (*t).Host, (*t).Port, (*t).User, (*t).Pass, (*t).Dbname)
 	db, err := sql.Open("postgres", psqlconn)
@@ -85,6 +89,7 @@ func Connect_db(t *Connect_token) (*sql.DB){
 	return db
 }
 
+// Returns function details from a given id
 func get_entry_by_id(db *sql.DB, symbol_id int, instance int,cache map[int]Entry)(Entry, error){
 	var e		Entry
 	var s		sql.NullString
@@ -120,6 +125,7 @@ func get_entry_by_id(db *sql.DB, symbol_id int, instance int,cache map[int]Entry
 	return e, nil
 }
 
+// Returns the list of successors (called function) for a given function
 func get_successors_by_id(db *sql.DB, symbol_id int, instance int, cache Cache )([]Entry, error){
 	var e		Edge
 	var res		[]Entry
@@ -152,6 +158,7 @@ func get_successors_by_id(db *sql.DB, symbol_id int, instance int, cache Cache )
 	return res, nil
 }
 
+// Return id an item is already in the list
 func Not_in(list []int, v int) bool {
 
 	for _, a := range list {
@@ -162,6 +169,7 @@ func Not_in(list []int, v int) bool {
 	return true
 }
 
+// Removes duplicates resulting by the exploration of a call tree
 func removeDuplicate(list []Entry) []Entry {
 
 	sort.SliceStable(list, func(i, j int) bool { return list[i].Sym_id < list[j].Sym_id })
@@ -176,6 +184,7 @@ func removeDuplicate(list []Entry) []Entry {
 	return res
 }
 
+// Given a function returns the lager subsystem it belongs
 func get_subsys_from_symbol_name(db *sql.DB, symbol string, instance int, subsytems_cache map[string]string)(string, error){
 	var res string
 
@@ -202,6 +211,7 @@ func get_subsys_from_symbol_name(db *sql.DB, symbol string, instance int, subsyt
 	return res, nil
 }
 
+// Returns the id of a given function name
 func sym2num(db *sql.DB, symb string, instance int)(int, error){
 	var 	res	int=0
 	var	cnt 	int=0
@@ -226,6 +236,7 @@ func sym2num(db *sql.DB, symb string, instance int)(int, error){
 	return res, nil
 }
 
+// Checks if a given function needs to be explored
 func not_exluded(symbol string, excluded []string)bool{
 
 	for _,s:=range excluded{
@@ -236,6 +247,7 @@ func not_exluded(symbol string, excluded []string)bool{
 	return true
 }
 
+// Computes the call tree of a given function name
 func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, prod map[string]int, instance int, cache Cache, mode int, excluded []string, depth uint, maxdepth uint, dot_fmt string, output *string) {
 	var tmp,s,l,ll,r	string
 	var depthInc		uint	= 0
@@ -294,6 +306,7 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 		}
 }
 
+// Returns the subsystem list associated with a given function name
 func symbSubsys(db *sql.DB, symblist []int, instance int, cache Cache,)(string, error){
 	var out	string
 	var res	string

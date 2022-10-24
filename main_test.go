@@ -9,7 +9,7 @@
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *   Copyright (c) 2022 Red Hat, Inc. All rights reserved.
 	 *
 	 *   This copyrighted material is made available to anyone wishing
 	 *   to use, modify, copy, or redistribute it subject to the terms
@@ -27,6 +27,7 @@
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 */
+
 package main
 
 import (
@@ -36,6 +37,7 @@ import (
 	"runtime"
 	)
 
+// Utility function to compart two configuration struct instances
 func Compare_configs(c1 configuration, c2 configuration) (bool){
 
 	res:=true
@@ -56,6 +58,7 @@ func Compare_configs(c1 configuration, c2 configuration) (bool){
 	return res
 }
 
+// Tests the ability to extract the configuration from command line arguments
 func TestConfig(t *testing.T){
 
 var     Test_config  configuration = configuration{

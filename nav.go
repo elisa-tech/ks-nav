@@ -9,7 +9,7 @@
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *   Copyright (c) 2022 Red Hat, Inc. All rights reserved.
 	 *
 	 *   This copyrighted material is made available to anyone wishing
 	 *   to use, modify, copy, or redistribute it subject to the terms
@@ -27,6 +27,7 @@
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 */
+
 package main
 
 import (
