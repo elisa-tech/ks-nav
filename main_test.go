@@ -1,15 +1,15 @@
 	/*
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Name: nav - Kernel source code analysis tool
-	 *   Description: Extract call trees for kernel API
+	 *   Name: kern_bin_db - Kernel source code analysis tool database creator
+	 *   Description: Parses kernel source tree and binary images and builds the DB
 	 *
 	 *   Author: Alessandro Carminati <acarmina@redhat.com>
 	 *   Author: Maurizio Papini <mpapini@redhat.com>
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *   Copyright (c) 2022 Red Hat, Inc. All rights reserved.
 	 *
 	 *   This copyrighted material is made available to anyone wishing
 	 *   to use, modify, copy, or redistribute it subject to the terms
@@ -27,6 +27,7 @@
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 */
+
 package main
 
 import (
@@ -43,6 +44,7 @@ import (
 	"runtime"
 	)
 
+// tests Makefile parsing feature
 func TestParseFilesMakefile(t *testing.T){
 	var test_makefile =[]struct{
 		FileName	string
@@ -74,6 +76,7 @@ func TestParseFilesMakefile(t *testing.T){
 		}
 }
 
+// tests kernel build configuration feature
 func TestParseFilesConfig(t *testing.T){
 	var test_config =[]struct{
 		FileName	string
@@ -113,6 +116,7 @@ func TestParseFilesConfig(t *testing.T){
 		}
 }
 
+// untar utility, used to  present a fake kernel build root.
 func Untar(tarball, target string) error {
 	reader, err := os.Open(tarball)
 	if err != nil {
@@ -148,6 +152,7 @@ func Untar(tarball, target string) error {
 	return nil
 }
 
+// utility to copy test files.
 func cp(source string, destination string) error{
 
 	bytesRead, err := ioutil.ReadFile(source)
@@ -161,6 +166,7 @@ func cp(source string, destination string) error{
 	return nil
 }
 
+// tests the maintainer file paths extraction
 func TestMaintainer(t *testing.T){
 	var FakeLinuxTreeTest string =	"t_files/linux-fake.tar"
 	var Fakedir string =		"/tmp/linux-fake"
@@ -205,6 +211,8 @@ func TestMaintainer(t *testing.T){
 		}
 
 }
+
+// tests the ability to extract the configuration from command line arguments
 func TestConfig(t *testing.T){
 var	Default_config  configuration = configuration{
 	LinuxWDebug:	"vmlinux",

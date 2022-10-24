@@ -1,15 +1,15 @@
 	/*
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Name: nav - Kernel source code analysis tool
-	 *   Description: Extract call trees for kernel API
+	 *   Name: kern_bin_db - Kernel source code analysis tool database creator
+	 *   Description: Parses kernel source tree and binary images and builds the DB
 	 *
 	 *   Author: Alessandro Carminati <acarmina@redhat.com>
 	 *   Author: Maurizio Papini <mpapini@redhat.com>
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *   Copyright (c) 2022 Red Hat, Inc. All rights reserved.
 	 *
 	 *   This copyrighted material is made available to anyone wishing
 	 *   to use, modify, copy, or redistribute it subject to the terms
@@ -37,6 +37,7 @@ import (
 	"github.com/cheggaaa/pb/v3"
 	)
 
+// bitfield configuration mode constants
 const (
 	ENABLE_SYBOLSNFILES	= 1
 	ENABLE_XREFS		= 2

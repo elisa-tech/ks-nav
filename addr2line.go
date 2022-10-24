@@ -1,15 +1,15 @@
 	/*
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Name: nav - Kernel source code analysis tool
-	 *   Description: Extract call trees for kernel API
+	 *   Name: kern_bin_db - Kernel source code analysis tool database creator
+	 *   Description: Parses kernel source tree and binary images and builds the DB
 	 *
 	 *   Author: Alessandro Carminati <acarmina@redhat.com>
 	 *   Author: Maurizio Papini <mpapini@redhat.com>
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *   Copyright (c) 2022 Red Hat, Inc. All rights reserved.
 	 *
 	 *   This copyrighted material is made available to anyone wishing
 	 *   to use, modify, copy, or redistribute it subject to the terms
@@ -27,6 +27,7 @@
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 */
+
 package main
 
 import (
@@ -37,6 +38,7 @@ import (
 	addr2line "github.com/elazarl/addr2line"
 )
 
+// represents one task for the addr to line subsystem.
 type workloads struct{
 	Addr	uint64
 	Name	string
@@ -44,15 +46,20 @@ type workloads struct{
 	DB	*sql.DB
 	}
 
+// caches item elements
 type Addr2line_items struct {
 	Addr		uint64
 	File_name	string
 	}
 
+// commandline handle functions prototype
 type ins_f func(*sql.DB, string, bool)
 
+// the adrr2line item cache
 var Addr2line_cache []Addr2line_items;
 
+//initializes the addr to line subsystem
+//prepares a channel for the addr2line resolver communication.
 func addr2line_init(fn string) (chan workloads){
 	a, err := addr2line.New(fn)
 	if err != nil {
@@ -62,6 +69,8 @@ func addr2line_init(fn string) (chan workloads){
 	go workload(a, adresses, Insert_data)
 	return adresses
 }
+
+//checks the current symbol is in cache, if present returns data from the cache.
 func in_cache(Addr uint64, Addr2line_cache []Addr2line_items)(bool, string){
 	for _,a := range Addr2line_cache {
 		if a.Addr == Addr {
@@ -71,6 +80,11 @@ func in_cache(Addr uint64, Addr2line_cache []Addr2line_items)(bool, string){
 	return false, ""
 }
 
+// the goroutine responsible to resolve queries.
+// it reads from a channel for workloads elements.
+// because it manages the database it can also receive
+// raw queries. Raw queries are workloads whose Name="None"
+// if proper workloads, a resolution is triggered.
 func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_f){
 	var e	workloads
 	var qready string
@@ -98,7 +112,7 @@ func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_
 	}
 }
 
-
+// sends a workload to the resolver.
 func spawn_query(db *sql.DB, addr uint64, name string, addresses chan workloads, query string) {
 	addresses <- workloads{addr, name, query, db}
 }

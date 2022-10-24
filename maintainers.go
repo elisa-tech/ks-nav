@@ -1,15 +1,15 @@
 	/*
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Name: nav - Kernel source code analysis tool
-	 *   Description: Extract call trees for kernel API
+	 *   Name: kern_bin_db - Kernel source code analysis tool database creator
+	 *   Description: Parses kernel source tree and binary images and builds the DB
 	 *
 	 *   Author: Alessandro Carminati <acarmina@redhat.com>
 	 *   Author: Maurizio Papini <mpapini@redhat.com>
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *   Copyright (c) 2022 Red Hat, Inc. All rights reserved.
 	 *
 	 *   This copyrighted material is made available to anyone wishing
 	 *   to use, modify, copy, or redistribute it subject to the terms
@@ -27,6 +27,7 @@
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 */
+
 package main
 
 import (
@@ -39,11 +40,13 @@ import (
 	"fmt"
 	)
 
+// a maintainer file extracted item
 type m_item struct{
 	subsystem_name	string
 	wildcards	[]string
 }
 
+// Gets the maintainers file item from url (not used)
 func get_FromHttp(url string) ([]string, error) {
 
 	resp, err := http.Get(url)
@@ -58,6 +61,7 @@ func get_FromHttp(url string) ([]string, error) {
 	return strings.Split(string(buf), "\n") , nil
 }
 
+// Gets the maintainers file item from filesystem
 func get_FromFile(path string) ([]string, error) {
 	var lines []string
 
@@ -73,6 +77,7 @@ func get_FromFile(path string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
+// find the point into the maintainer file where interesting data starts.
 func seek2data(s []string) int{
 	var state int = 0
 	var i	int
@@ -98,6 +103,7 @@ func seek2data(s []string) int{
 	return res
 }
 
+// extracts significat data from maintainers
 func parse_maintainers(lines []string) []m_item{
 	var res []m_item
 	var it m_item
@@ -132,6 +138,7 @@ func parse_maintainers(lines []string) []m_item{
 	return res
 }
 
+// checks a path to be a directory
 func isdir(f string) bool {
 	file, err := os.Open(f)
 	if err != nil {
@@ -149,6 +156,7 @@ func isdir(f string) bool {
 	return false
 }
 
+// expands a path with wildcards in a list of file names
 func expand_file(f string) []string {
 	var res []string
 	if isdir(f) {
@@ -164,6 +172,7 @@ func expand_file(f string) []string {
 	return []string{f}
 }
 
+// explores directories and returns files
 func navigate(root string) []string {
 	var res []string
 	if isdir(root) {
@@ -176,8 +185,7 @@ func navigate(root string) []string {
 	return res
 }
 
-
-
+// returns a list of queries that can be used to insert files/subsystem data into database.
 func generate_queries(items []m_item, template_query string, id int) []string{
 	var res []string
 

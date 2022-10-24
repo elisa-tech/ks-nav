@@ -1,15 +1,15 @@
 	/*
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Name: nav - Kernel source code analysis tool
-	 *   Description: Extract call trees for kernel API
+	 *   Name: kern_bin_db - Kernel source code analysis tool database creator
+	 *   Description: Parses kernel source tree and binary images and builds the DB
 	 *
 	 *   Author: Alessandro Carminati <acarmina@redhat.com>
 	 *   Author: Maurizio Papini <mpapini@redhat.com>
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 *
-	 *   Copyright (c) 2008-2010 Red Hat, Inc. All rights reserved.
+	 *   Copyright (c) 2022 Red Hat, Inc. All rights reserved.
 	 *
 	 *   This copyrighted material is made available to anyone wishing
 	 *   to use, modify, copy, or redistribute it subject to the terms
@@ -27,6 +27,7 @@
 	 *
 	 * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	 */
+
 package main
 
 import (
@@ -41,16 +42,7 @@ import (
 	r2 "github.com/radareorg/r2pipe-go"
 )
 
-type sysc struct {
-	Addr		uint64
-	Name		string
-}
-
-type res struct{
-	Syscall		sysc
-	Path		[]uint64
-}
-
+// radare 2 datatype representing a relocation object
 type reloc_data struct {
 	Name		string		`json: "name"`
 	Demname		string		`json: "demname"`
@@ -61,6 +53,7 @@ type reloc_data struct {
 	is_ifunc	bool		`json: "is_ifunc"`
 }
 
+// radare 2 datatype representing a function object
 type func_data struct {
 	Offset		uint64		`json:"offset"`
 	Name		string		`json: "name"`
@@ -96,21 +89,29 @@ type func_data struct {
 	Difftype	string		`json: "difftype"`
 	Indirect	bool
 }
+
+// radare 2 datatype representing a reference object (e.g., xref, callref, and dataref)
 type ref_ struct{
 	Addr		uint64		`json: "addr"`
 	Type		string		`json: "type"`
 	At		uint64		`json: "at"`
 }
+
+// radare 2 datatype representing a stack variable object
 type stack_var_ struct{
 	Name		string		`json: "name"`
 	Kind		string		`json: "kind"`
 	Type		string		`json: "type"`
 	Ref		vars_ref	`json: "ref"`
 }
+
+// radare 2 datatype representing a global variable object
 type vars_ref struct{
 	Base		string		`json: "base"`
 	Offset		int32		`json: "offset"`
 }
+
+// radare 2 datatype representing a register variable object
 type reg_var_ struct{
 	Name		string		`json: "name"`
 	Kind		string		`json: "kind"`
@@ -118,25 +119,7 @@ type reg_var_ struct{
 	Ref		string		`json: "ref"`
 }
 
-type xref struct{
-	Type		string		`json: "type"`
-	From		uint64		`json: "from"`
-	To		uint64		`json: "to"`
-}
-type xref_cache struct{
-	Addr		uint64
-	Xr		[]uint64
-}
-
-type fref struct{
-	Addr		uint64
-	Name		string
-}
-type results struct{
-	Addr		uint64
-	Name		string
-	Path		[]fref
-}
+// radare 2 datatype representing a code block object
 type rad_bloc struct {
 	Jump		uint64		`json: "jump"`
 	Fail		uint64		`json: "fail"`
@@ -148,11 +131,8 @@ type rad_bloc struct {
 	ninstr		uint16		`json: "ninstr"`
 	traced		bool		`json: "traced"`
 }
-type bloc struct {
-	Start		uint64
-	End		uint64
-}
 
+// radare 2 datatype representing a binary info detail
 type bin_info struct{
 	Arch		string		`json: "arch"`
 	Bits		int		`json: "bits"`
@@ -160,20 +140,47 @@ type bin_info struct{
 	Endian		string		`json: "endian"`
 	Machine		string		`json: "machine"`
 }
+
+// radare 2 datatype representing a binary info detail
 type core_info struct{
 	Type		string		`json: "type"`
 	Format		string		`json: "format"`
 }
-type file_info struct{
-	Core	core_info
-	Bin	bin_info
+
+// local app datatype representing a xref object
+type xref struct{
+	Type		string		`json: "type"`
+	From		uint64		`json: "from"`
+	To		uint64		`json: "to"`
 }
+
+// radare 2 datatype representing a binary info detail
 type symb_data struct{
 	Name		string		`json: "name"`
 	Realname	string		`json: "realname"`
 	Size		int		`json: "size"`
 	Offset		uint64		`json: "offset"`
 }
+
+// radare 2 datatype representing a binary info object
+type file_info struct{
+	Core	core_info
+	Bin	bin_info
+}
+
+// local app datatype representing a xref_cache object
+type xref_cache struct{
+	Addr		uint64
+	Xr		[]uint64
+}
+
+// local app datatype representing a code block object
+type bloc struct {
+	Start		uint64
+	End		uint64
+}
+
+// given an ID scans function data cache and returns function data
 func get_function_by_addr(addr uint64, all_funcs []func_data)(*func_data){
 
 	for i, f := range all_funcs{
@@ -184,6 +191,7 @@ func get_function_by_addr(addr uint64, all_funcs []func_data)(*func_data){
 	return nil
 }
 
+// usese radare 2 to return relocation data for the current selected function
 func get_all_relocdata(r2p *r2.Pipe)([]reloc_data){
 
 	var relocs   []reloc_data
@@ -199,6 +207,7 @@ func get_all_relocdata(r2p *r2.Pipe)([]reloc_data){
 	return relocs
 }
 
+// removes duplicates resulting by the exploration of a call tree
 func removeSDup(intSlice []string) []string {
 
 	allKeys := make(map[string]bool)
@@ -212,6 +221,7 @@ func removeSDup(intSlice []string) []string {
 	return list
 }
 
+// gets all the relocation objects inside a given function
 func get_f_relocs(sym string, all_relocs []reloc_data, all_funcs []func_data) ([]string, error){
 	var fun func_data
 	var  res []string
@@ -232,6 +242,7 @@ func get_f_relocs(sym string, all_relocs []reloc_data, all_funcs []func_data) ([
 	return removeSDup(res), nil
 }
 
+// usese radare 2 to move the focus to a new function
 func Move(r2p *r2.Pipe,current uint64){
 	_, err := r2p.Cmd("s "+ strconv.FormatUint(current,10))
 	if err != nil {
@@ -239,6 +250,7 @@ func Move(r2p *r2.Pipe,current uint64){
 		}
 }
 
+// gets xreferences by both use the cache and the radare 2 operations
 func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data, cache *[]xref_cache) ([]uint64){
 	var xrefs		[]xref
 	var res			[]uint64;
@@ -266,6 +278,7 @@ func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data,
 	return  res
 }
 
+// convert a given function name to its address
 func Symb2Addr_r(s string, r2p *r2.Pipe) (uint64){
 	var f  []func_data
 	buf, err := r2p.Cmd("afij "+ s)
@@ -282,6 +295,7 @@ func Symb2Addr_r(s string, r2p *r2.Pipe) (uint64){
 	return 0
 }
 
+// removes duplicates in the list of address resulting by the exploration of the call trees
 func removeDuplicate(intSlice []uint64) []uint64 {
 
 	allKeys := make(map[uint64]bool)
@@ -295,6 +309,7 @@ func removeDuplicate(intSlice []uint64) []uint64 {
 	return list
 }
 
+// removea the items in the relocation list that are not functions
 func remove_non_func(list []uint64, functions []func_data) []uint64 {
 
 	res := []uint64{}
@@ -306,6 +321,7 @@ func remove_non_func(list []uint64, functions []func_data) []uint64 {
 	return res
 }
 
+// initializes the radare 2 framework
 func init_fw(r2p *r2.Pipe){
 	l := log.New(os.Stderr, "", 0)
 
@@ -324,6 +340,7 @@ func init_fw(r2p *r2.Pipe){
 
 }
 
+// checks if at a  given address sits a function
 func is_func(addr uint64, list []func_data) (bool){
 	i := sort.Search(len(list), func(i int) bool { return list[i].Offset >= addr })
 	if i < len(list) && list[i].Offset == addr && strings.Contains(list[i].Name, "sym."){
@@ -332,6 +349,7 @@ func is_func(addr uint64, list []func_data) (bool){
 	return false
 }
 
+// executes a radare 2 function to fetch big chunnk of functions data
 func get_all_funcdata(r2p *r2.Pipe)([]func_data){
 
 	var functions	[]func_data
@@ -377,6 +395,7 @@ func get_all_funcdata(r2p *r2.Pipe)([]func_data){
 	return functions
 }
 
+// convert a given address to function name
 func Addr2Sym(addr uint64, list []func_data) (string){
 	i := sort.Search(len(list), func(i int) bool { return list[i].Offset >= addr })
 	if i < len(list) && list[i].Offset == addr {
@@ -385,6 +404,7 @@ func Addr2Sym(addr uint64, list []func_data) (string){
 	return "Unknown"
 }
 
+// uses radare 2 to fetch the list of all the indirect calls in the binary data
 func get_indirect_calls(r2p *r2.Pipe, funcs []func_data) ([]uint64){
 	var smap	[]uint64
 
@@ -447,6 +467,7 @@ func get_func_space(r2p *r2.Pipe, addr uint64, funcs []func_data)([]bloc){
 	return blocs
 }
 
+// checks an addres is in a given function space
 func is_in_func(r2p *r2.Pipe, addr uint64, funcs []func_data) (uint64){
 
 	for _, f := range funcs {
@@ -461,6 +482,7 @@ func is_in_func(r2p *r2.Pipe, addr uint64, funcs []func_data) (uint64){
 
 }
 
+// verifies function contains indirect calls
 func func_has_indirects(r2p *r2.Pipe, indcall []uint64, faddr uint64, funcs []func_data) (bool){
 
 	blocs:=get_func_space(r2p, faddr, funcs)

@@ -5,7 +5,7 @@ contribute! :tada::+1:
 
 The following is a set of guidelines for contributing to kern_bin_db.
 The kern_bin_db utility is hosted in the 
-[nav repository](https://github.com/alessandrocarminati/kern_bin_db-) 
+[kern_bin_db repository](https://github.com/alessandrocarminati/kern_bin_db-) 
 on GitHub. 
 These are mostly guidelines, not rules. 
 Use your best judgment, and feel free to propose changes to 
