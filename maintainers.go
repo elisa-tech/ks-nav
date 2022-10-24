@@ -40,7 +40,7 @@ import (
 	"fmt"
 	)
 
-// a maintainer file extracted item
+// A maintainer file extracted item
 type m_item struct{
 	subsystem_name	string
 	wildcards	[]string
@@ -77,7 +77,7 @@ func get_FromFile(path string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
-// find the point into the maintainer file where interesting data starts.
+// Find the point into the maintainer file where interesting data starts.
 func seek2data(s []string) int{
 	var state int = 0
 	var i	int
@@ -103,7 +103,7 @@ func seek2data(s []string) int{
 	return res
 }
 
-// extracts significat data from maintainers
+// Extracts significant data from maintainers
 func parse_maintainers(lines []string) []m_item{
 	var res []m_item
 	var it m_item
@@ -138,7 +138,7 @@ func parse_maintainers(lines []string) []m_item{
 	return res
 }
 
-// checks a path to be a directory
+// Checks a path to be a directory
 func isdir(f string) bool {
 	file, err := os.Open(f)
 	if err != nil {
@@ -156,7 +156,7 @@ func isdir(f string) bool {
 	return false
 }
 
-// expands a path with wildcards in a list of file names
+// Expands a path with wildcards in a list of file names
 func expand_file(f string) []string {
 	var res []string
 	if isdir(f) {
@@ -172,7 +172,7 @@ func expand_file(f string) []string {
 	return []string{f}
 }
 
-// explores directories and returns files
+// Explores directories and returns files
 func navigate(root string) []string {
 	var res []string
 	if isdir(root) {
@@ -185,7 +185,7 @@ func navigate(root string) []string {
 	return res
 }
 
-// returns a list of queries that can be used to insert files/subsystem data into database.
+// Returns a list of queries that can be used to insert files/subsystem data into database.
 func generate_queries(items []m_item, template_query string, id int) []string{
 	var res []string
 

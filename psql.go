@@ -36,7 +36,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// sql connectio configuration
+// Sql connection configuration
 type Connect_token struct{
 	Host    string
 	Port    int
@@ -45,7 +45,7 @@ type Connect_token struct{
 	Dbname  string
 }
 
-//Connects the target db and returns the handle
+// Connects the target db and returns the handle
 func Connect_db(t *Connect_token) (*sql.DB){
 	fmt.Println("connect")
 	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", (*t).Host, (*t).Port, (*t).User, (*t).Pass, (*t).Dbname)
@@ -57,7 +57,7 @@ func Connect_db(t *Connect_token) (*sql.DB){
 	return db
 }
 
-// executes insert queries
+// Executes insert queries
 func Insert_data(db *sql.DB, query string, test bool){
 
 	if !test {
@@ -73,7 +73,7 @@ func Insert_data(db *sql.DB, query string, test bool){
 			}
 }
 
-//Executes insert query for instance table and returns the id allocated
+// Executes insert query for instance table and returns the id allocated
 func Insert_datawID(db *sql.DB, query string) int{
 	var res		int
 

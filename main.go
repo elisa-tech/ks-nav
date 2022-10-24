@@ -37,7 +37,7 @@ import (
 	"github.com/cheggaaa/pb/v3"
 	)
 
-// bitfield configuration mode constants
+// Bitfield configuration mode constants
 const (
 	ENABLE_SYBOLSNFILES	= 1
 	ENABLE_XREFS		= 2

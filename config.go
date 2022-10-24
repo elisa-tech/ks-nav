@@ -39,7 +39,7 @@ import (
 	"io/ioutil"
 	)
 
-// default config file
+// Default config file
 var conf_fn = "conf.json"
 
 type Arg_func func(*configuration, []string) (error)
@@ -51,7 +51,7 @@ type Secret struct {
 	Len int		`json:"len"`
 	}
 
-// command line switch elements
+// Command line switch elements
 type cmd_line_items struct {
 	id		int
 	Switch		string
@@ -60,7 +60,7 @@ type cmd_line_items struct {
 	Func		Arg_func
 }
 
-//represents the application configuration
+// Represents the application configuration
 type configuration struct {
 	LinuxWDebug	string
 	LinuxWODebug	string
@@ -77,7 +77,7 @@ type configuration struct {
 	Note		string
 }
 
-// instance of default configuration values
+// Instance of default configuration values
 var	Default_config  configuration = configuration{
 	LinuxWDebug:	"vmlinux",
 	LinuxWODebug:	"vmlinux.work",
@@ -94,7 +94,7 @@ var	Default_config  configuration = configuration{
 	Note:		"upstream",
 	}
 
-// inserts a commandline item item, which is composed by:
+// Inserts a commandline item item, which is composed by:
 // * switch string
 // * switch descriptio
 // * if the switch requires an additiona argument
@@ -178,7 +178,7 @@ func func_check		(conf *configuration, dummy []string)			(error){
 	return nil
 }
 
-// uses commandline args to generate the help string
+// Uses commandline args to generate the help string
 func print_help(lines []cmd_line_items){
 
 	for _,item := range lines{
@@ -196,7 +196,7 @@ func print_help(lines []cmd_line_items){
 		}
 }
 
-// used to parse the command line and generate the command line
+// Used to parse the command line and generate the command line
 func args_parse(lines []cmd_line_items)(configuration, error){
 	var	extra		bool=false;
 	var	conf		configuration=Default_config

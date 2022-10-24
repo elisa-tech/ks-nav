@@ -44,7 +44,7 @@ import (
 	"runtime"
 	)
 
-// tests Makefile parsing feature
+// Tests Makefile parsing feature
 func TestParseFilesMakefile(t *testing.T){
 	var test_makefile =[]struct{
 		FileName	string
@@ -76,7 +76,7 @@ func TestParseFilesMakefile(t *testing.T){
 		}
 }
 
-// tests kernel build configuration feature
+// Tests kernel build configuration feature
 func TestParseFilesConfig(t *testing.T){
 	var test_config =[]struct{
 		FileName	string
@@ -116,7 +116,7 @@ func TestParseFilesConfig(t *testing.T){
 		}
 }
 
-// untar utility, used to  present a fake kernel build root.
+// Untar utility, used to  present a fake kernel build root.
 func Untar(tarball, target string) error {
 	reader, err := os.Open(tarball)
 	if err != nil {
@@ -152,7 +152,7 @@ func Untar(tarball, target string) error {
 	return nil
 }
 
-// utility to copy test files.
+// Utility to copy test files.
 func cp(source string, destination string) error{
 
 	bytesRead, err := ioutil.ReadFile(source)
@@ -166,7 +166,7 @@ func cp(source string, destination string) error{
 	return nil
 }
 
-// tests the maintainer file paths extraction
+// Tests the maintainer file paths extraction
 func TestMaintainer(t *testing.T){
 	var FakeLinuxTreeTest string =	"t_files/linux-fake.tar"
 	var Fakedir string =		"/tmp/linux-fake"
@@ -212,7 +212,7 @@ func TestMaintainer(t *testing.T){
 
 }
 
-// tests the ability to extract the configuration from command line arguments
+// Tests the ability to extract the configuration from command line arguments
 func TestConfig(t *testing.T){
 var	Default_config  configuration = configuration{
 	LinuxWDebug:	"vmlinux",

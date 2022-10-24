@@ -34,7 +34,7 @@ import (
 	"os/exec"
 )
 
-// executes the strip operation on a new file to ease the operations Radare 2 performs on the binary image
+// Executes the strip operation on a new file to ease the operations Radare 2 performs on the binary image
 func strip(executable string, fn string, outfile string){
 	_, err := exec.LookPath(executable)
 	if err != nil {
