@@ -84,7 +84,7 @@ Configuration is a file containing a JSON serialized conf object
 |DBTargetDB|The identifier for the DB containing symbols                              |string  |kernel_bin         |
 |Symbol    |The symbol where start the navigation                                     |string  |NULL               |
 |Instance  |The interesting symbols instance identifier                               |integer |1                  |
-|Mode      |Mode of plotting: 1 symbols, 2 subsystems                                 |integer |2                  |
-|Excluded  |List of symbols/subsystem not to be expanded                              |string[]|["rcu_.*"]          |
+|Mode      |Mode of plotting: 1 symbols, 2 subsystems, 3 subsystems with labels       |integer |2                  |
+|Excluded  |List of symbols/subsystem not to be expanded                              |string[]|["rcu_.*"]         |
 |MaxDepth  |Max number of levels to explore 0 no limit                                |integer |0                  |
 |Jout      |Type of output: GraphOnly, JsonOutputPlain, JsonOutputB64, JsonOutputGZB64|enum    | GraphOnly         |

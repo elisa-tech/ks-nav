@@ -44,7 +44,19 @@ import (
 const (
 	PRINT_ALL int	= 1
 	PRINT_SUBSYS	= 2
+	PRINT_SUBSYS_WS = 3
+	SUBSYS_UNDEF	= "Undefined"
 )
+
+// parent node
+type Node struct {
+	Subsys		string
+	Symbol		string
+}
+type AdjM struct {
+	l		Node
+	r		Node
+}
 
 // Sql connection configuration
 type Connect_token struct{
@@ -248,8 +260,9 @@ func not_exluded(symbol string, excluded []string)bool{
 }
 
 // Computes the call tree of a given function name
-func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, prod map[string]int, instance int, cache Cache, mode int, excluded []string, depth uint, maxdepth uint, dot_fmt string, output *string) {
-	var tmp,s,l,ll,r	string
+func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, visited *[]int, AdjMap *[]AdjM, prod map[string]int, instance int, cache Cache, mode int, excluded []string, depth uint, maxdepth uint, dot_fmt string, output *string) {
+	var tmp, s		string
+	var l, r, ll		Node
 	var depthInc		uint	= 0
 
 	*visited=append(*visited, symbol_id)
@@ -260,33 +273,40 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 		for _, curr := range successors{
 			entry, err := get_entry_by_id(db, curr.Sym_id, instance, cache.Entries)
 			if err!=nil {
-				r="Unknown";
+				r.Symbol="Unknown";
 				} else {
-					r=entry.Symbol
+					r.Symbol=entry.Symbol
+					tmp, _ =get_subsys_from_symbol_name(db,r.Symbol, instance, cache.SubSys)
+					if tmp=="" {
+						r.Subsys=SUBSYS_UNDEF
+						}
 					}
 			switch mode {
 				case PRINT_ALL:
-					s=fmt.Sprintf(dot_fmt, l, r)
+					s=fmt.Sprintf(dot_fmt, l.Symbol, r.Symbol)
 					ll=r
 					depthInc = 1
 					break
-				case PRINT_SUBSYS:
-					if tmp, err=get_subsys_from_symbol_name(db,r, instance, cache.SubSys); r!=tmp {
+				case PRINT_SUBSYS, PRINT_SUBSYS_WS:
+					if tmp, err=get_subsys_from_symbol_name(db,r.Symbol, instance, cache.SubSys); r.Subsys!=tmp {
 						if tmp != "" {
-							r=tmp
+							r.Subsys=tmp
 							} else {
-								r="UNDEFINED SUBSYSTEM"
+								r.Subsys=SUBSYS_UNDEF
 								}
 						}
-					if l!=r {
-						s=fmt.Sprintf(dot_fmt, l, r)
+
+
+					if l.Subsys!=r.Subsys {
+						s=fmt.Sprintf(dot_fmt, l.Subsys, r.Subsys)
+						*AdjMap=append(*AdjMap, AdjM{l,r})
+						ll=l
 						depthInc = 1
 						} else {
 							s="";
 							}
 					ll=r
 					break
-
 				}
 			if _, ok := prod[s]; ok {
 				prod[s]++
@@ -299,7 +319,7 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly string, visited *[]int, 
 
 			if Not_in(*visited, curr.Sym_id){
 				if not_exluded(entry.Symbol, excluded) && (maxdepth == 0 || (maxdepth > 0 && depth < maxdepth)){
-					Navigate(db, curr.Sym_id, ll, visited, prod, instance, cache, mode, excluded, depth+depthInc, maxdepth, dot_fmt, output)
+					Navigate(db, curr.Sym_id, ll, visited, AdjMap, prod, instance, cache, mode, excluded, depth+depthInc, maxdepth, dot_fmt, output)
 					}
 				}
 			}
