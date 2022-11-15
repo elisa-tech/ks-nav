@@ -40,13 +40,17 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type OutMode int64
+
 // Const values for configuration mode field.
 const (
-	PRINT_ALL int	= 1
-	PRINT_SUBSYS	= 2
-	PRINT_SUBSYS_WS = 3
-	SUBSYS_UNDEF	= "Undefined"
+	_		OutMode		= iota
+	PRINT_ALL
+	PRINT_SUBSYS
+	PRINT_SUBSYS_WS
+	OutModeLast
 )
+const 	SUBSYS_UNDEF	= "Undefined"
 
 // parent node
 type Node struct {
@@ -260,7 +264,7 @@ func not_exluded(symbol string, excluded []string)bool{
 }
 
 // Computes the call tree of a given function name
-func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, visited *[]int, AdjMap *[]AdjM, prod map[string]int, instance int, cache Cache, mode int, excluded []string, depth uint, maxdepth uint, dot_fmt string, output *string) {
+func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, visited *[]int, AdjMap *[]AdjM, prod map[string]int, instance int, cache Cache, mode OutMode, excluded []string, depth uint, maxdepth uint, dot_fmt string, output *string) {
 	var tmp, s		string
 	var l, r, ll		Node
 	var depthInc		uint	= 0
@@ -307,6 +311,8 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, visited *[]int, Ad
 							}
 					ll=r
 					break
+				default:
+					panic(mode)
 				}
 			if _, ok := prod[s]; ok {
 				prod[s]++

@@ -66,7 +66,7 @@ type configuration struct {
 	DBTargetDB	string
 	Symbol		string
 	Instance	int
-	Mode		int
+	Mode		OutMode
 	Excluded	[]string
 	MaxDepth	uint
 	Jout		string
@@ -184,10 +184,10 @@ func func_Mode		(conf *configuration, mode []string)    (error){
 	if err!=nil {
 		return err
 		}
-	if s<1 || s>2 {
+	if OutMode(s)<PRINT_ALL || OutMode(s)>=OutModeLast {
 		return errors.New("unsupported mode")
 		}
-	(*conf).Mode=s
+	(*conf).Mode=OutMode(s)
 	return nil
 }
 
