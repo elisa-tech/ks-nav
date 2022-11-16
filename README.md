@@ -98,3 +98,20 @@ Configuration is a file containing a JSON serialized conf object
 
 **NOTE:** Defaults  are designed to make the tool work out of the box, if 
 the executable is placed in the Linux kernel source code root directory.
+
+# TODO
+* currently, kern_bin_db scans only the kernel binary image. Loadable 
+modules are not considered, which means that symbols defined in modules 
+are not considered. A useful extension would be to scan modules in a 
+given kernel tree and add symbols to the database.
+* in relation to the previous, it would be useful to track the symbol
+source (kernel image/module). The database does not currently support 
+this feature, which means that the database schema needs to be adapted.
+* Indirect calls ate difficult to follow, but the place in the source 
+where they are called can be easily spotted. It makes sense to note 
+this place for future automated/manual investigations. In addition, 
+it makes also sense to reserve a place in the same row of the same 
+table for a field that links another table, where possible references 
+are kept.
+In this way, the future nav version can expand indirect calls as a 
+finite number of calls.
