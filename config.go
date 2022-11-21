@@ -68,6 +68,7 @@ type configuration struct {
 	Instance	int
 	Mode		OutMode
 	Excluded	[]string
+	Target_sybsys	[]string
 	MaxDepth	uint
 	Jout		string
 	cmdlineNeeds	map[string] bool
@@ -84,6 +85,7 @@ var	Default_config  configuration = configuration{
 	Instance:	0,
 	Mode:		PRINT_SUBSYS,
 	Excluded:	[]string{"rcu_.*"},
+	Target_sybsys:	[]string{},
 	MaxDepth:	0,		//0: no limit
 	Jout:		"GraphOnly",
 	cmdlineNeeds:	map[string] bool{},

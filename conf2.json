@@ -8,7 +8,7 @@
 "Instance":1,
 "Mode":4,
 "Excluded": [],
-"Target_sybsys":["FILESYSTEMS (VFS and infrastructure)", "PER-CPU MEMORY ALLOCATOR"],
+"Target_sybsys":[],
 "MaxDepth":0,
 "Jout": "TextPlain"
 }

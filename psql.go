@@ -48,6 +48,7 @@ const (
 	PRINT_ALL
 	PRINT_SUBSYS
 	PRINT_SUBSYS_WS
+	PRINT_TARGETED
 	OutModeLast
 )
 const 	SUBSYS_UNDEF	= "Undefined"
@@ -264,7 +265,10 @@ func not_exluded(symbol string, excluded []string)bool{
 }
 
 // Computes the call tree of a given function name
-func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, visited *[]int, AdjMap *[]AdjM, prod map[string]int, instance int, cache Cache, mode OutMode, excluded []string, depth uint, maxdepth uint, dot_fmt string, output *string) {
+// TODO: refactory needed:
+// What is the problem: too many args.
+// suggestion: New version with input and output structs.
+func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, targets []string, visited *[]int, AdjMap *[]AdjM, prod map[string]int, instance int, cache Cache, mode OutMode, excluded []string, depth uint, maxdepth uint, dot_fmt string, output *string) {
 	var tmp, s		string
 	var l, r, ll		Node
 	var depthInc		uint	= 0
@@ -291,7 +295,7 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, visited *[]int, Ad
 					ll=r
 					depthInc = 1
 					break
-				case PRINT_SUBSYS, PRINT_SUBSYS_WS:
+				case PRINT_SUBSYS, PRINT_SUBSYS_WS, PRINT_TARGETED:
 					if tmp, err=get_subsys_from_symbol_name(db,r.Symbol, instance, cache.SubSys); r.Subsys!=tmp {
 						if tmp != "" {
 							r.Subsys=tmp
@@ -319,17 +323,31 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, visited *[]int, Ad
 				} else {
 					prod[s]=1
 					if s!="" {
-						(*output)=(*output)+s
+						if (mode != PRINT_TARGETED) || (intargets(targets, l.Subsys,r.Subsys)) {
+							(*output)=(*output)+s
+							}
 						}
 					}
 
 			if Not_in(*visited, curr.Sym_id){
 				if not_exluded(entry.Symbol, excluded) && (maxdepth == 0 || (maxdepth > 0 && depth < maxdepth)){
-					Navigate(db, curr.Sym_id, ll, visited, AdjMap, prod, instance, cache, mode, excluded, depth+depthInc, maxdepth, dot_fmt, output)
+					Navigate(db, curr.Sym_id, ll, targets, visited, AdjMap, prod, instance, cache, mode, excluded, depth+depthInc, maxdepth, dot_fmt, output)
 					}
 				}
 			}
 		}
+}
+
+//returns true if one of the nodes n1, n2 is a target node
+func intargets(targets []string, n1 string, n2 string) bool {
+
+//	fmt.Println("intargets call -> ",targets, n1, n2)
+	for _, t := range targets {
+		if (t == n1) || (t == n2) {
+			return true
+			}
+		}
+	return false
 }
 
 // Returns the subsystem list associated with a given function name

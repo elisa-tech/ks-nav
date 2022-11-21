@@ -66,6 +66,12 @@ var fmt_dot_header = []string {
 		"digraph G {\n",
 		}
 
+var fmt_dot_node_highlight_w_symb = "\"%[1]s\" [shape=record style=\"rounded,filled,bold\" fillcolor=yellow label=\"%[1]s|%[2]s\"]\n"
+var fmt_dot_node_highlight_wo_symb = "\"%[1]s\" [shape=record style=\"rounded,filled,bold\" fillcolor=yellow label=\"%[1]s\"]\n"
+
+var fmt_node_default = "node [shape=\"box\"];"
+
+
 func opt2num(s string) int{
         var opt = map[string]int{
                 "GraphOnly":1,
@@ -139,13 +145,32 @@ func generate_output(db *sql.DB, conf *configuration) (string, error){
 	if start_subsys=="" {
 		start_subsys=SUBSYS_UNDEF
 		}
-	Navigate(db, start, Node{start_subsys, entry_name}, &visited, &adjm, prod, (*conf).Instance, Cache{cache, cache2, cache3}, (*conf).Mode, (*conf).Excluded, 0, (*conf).MaxDepth, fmt_dot[opt2num((*conf).Jout)], &output)
 
-	if (*conf).Mode==PRINT_SUBSYS_WS {
+	 if ((*conf).Mode==PRINT_TARGETED) && len( (*conf).Target_sybsys)==0 {
+		targ_subsys_tmp, err := get_subsys_from_symbol_name(db, (*conf).Symbol, (*conf).Instance, cache3)
+		if err!= nil {
+			panic(err)
+			}
+		(*conf).Target_sybsys =append((*conf).Target_sybsys, targ_subsys_tmp)
+		}
+
+
+	Navigate(db, start, Node{start_subsys, entry_name}, (*conf).Target_sybsys, &visited, &adjm, prod, (*conf).Instance, Cache{cache, cache2, cache3}, (*conf).Mode, (*conf).Excluded, 0, (*conf).MaxDepth, fmt_dot[opt2num((*conf).Jout)], &output)
+
+	if ((*conf).Mode==PRINT_SUBSYS_WS) || ((*conf).Mode==PRINT_TARGETED) {
 		output=decorate(output, adjm)
 		}
 
 	GraphOutput=GraphOutput+output
+	if ((*conf).Mode==PRINT_TARGETED) {
+		for _, i := range (*conf).Target_sybsys {
+			if cache3[(*conf).Symbol] == i {
+				GraphOutput = GraphOutput + fmt.Sprintf(fmt_dot_node_highlight_w_symb, i, (*conf).Symbol)
+				} else {
+					GraphOutput = GraphOutput + fmt.Sprintf(fmt_dot_node_highlight_wo_symb, i)
+					}
+			}
+		}
 	GraphOutput=GraphOutput+"}"
 
 	symbdata, err := symbSubsys(db, visited, (*conf).Instance, Cache{cache, cache2, cache3})
@@ -190,6 +215,14 @@ func main() {
                 print_help(cmd_line_item_init());
                 os.Exit(-1)
                 }
+//////////////////////////////////////////////////////////////////////////////////debug start
+//	fmt.Println(conf)
+//	fmt.Println(PRINT_TARGETED)
+//	fmt.Println(conf.Mode)
+//	if conf.Mode == PRINT_TARGETED {
+//		fmt.Println("#############")
+//		}
+//////////////////////////////////////////////////////////////////////////////////debug end
 	if opt2num(conf.Jout)==0 {
 		fmt.Printf("unknown mode %s\n", conf.Jout)
 		os.Exit(-2)
