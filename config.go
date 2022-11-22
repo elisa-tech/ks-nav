@@ -69,7 +69,7 @@ type configuration struct {
 	Mode		OutMode
 	Excluded	[]string
 	Target_sybsys	[]string
-	MaxDepth	uint
+	MaxDepth	int
 	Jout		string
 	cmdlineNeeds	map[string] bool
 }
@@ -115,6 +115,7 @@ func cmd_line_item_init() ([]cmd_line_items){
 	push_cmd_line_item("-d", "Forecs use specified DBhost",			true,  false,	func_DBHost,	&res)
 	push_cmd_line_item("-p", "Forecs use specified DBPort",			true,  false,	func_DBPort,	&res)
 	push_cmd_line_item("-m", "Sets display mode 2=subsystems,1=all",	true,  false,	func_Mode,	&res)
+	push_cmd_line_item("-x", "Specify Max depth in call flow exploration",	true,  false,	func_depth,	&res)
 	push_cmd_line_item("-h", "This Help",					false, false,	func_help,	&res)
 
 	return res
@@ -169,6 +170,18 @@ func func_DBPort	(conf *configuration, port []string)	(error){
 		return err
 		}
 	(*conf).DBPort=s
+	return nil
+}
+
+func func_depth		(conf *configuration, depth []string)	(error){
+	s, err := strconv.Atoi(depth[0])
+	if err!=nil {
+		return err
+		}
+	if s<0 {
+		return errors.New("Depth must be >= 0")
+		}
+	(*conf).MaxDepth=s
 	return nil
 }
 

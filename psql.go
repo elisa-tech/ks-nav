@@ -268,10 +268,10 @@ func not_exluded(symbol string, excluded []string)bool{
 // TODO: refactory needed:
 // What is the problem: too many args.
 // suggestion: New version with input and output structs.
-func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, targets []string, visited *[]int, AdjMap *[]AdjM, prod map[string]int, instance int, cache Cache, mode OutMode, excluded []string, depth uint, maxdepth uint, dot_fmt string, output *string) {
+func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, targets []string, visited *[]int, AdjMap *[]AdjM, prod map[string]int, instance int, cache Cache, mode OutMode, excluded []string, depth int, maxdepth int, dot_fmt string, output *string) {
 	var tmp, s		string
 	var l, r, ll		Node
-	var depthInc		uint	= 0
+	var depthInc		int	= 0
 
 	*visited=append(*visited, symbol_id)
 	l=parent_dispaly
