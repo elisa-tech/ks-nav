@@ -46,6 +46,12 @@ type workloads struct {
 	DB    *sql.DB
 }
 
+// Context type
+type Context struct {
+	instance    *addr2line.Addr2line
+	ch_workload chan workloads
+}
+
 // Caches item elements
 type Addr2line_items struct {
 	Addr      uint64
@@ -60,14 +66,14 @@ var Addr2line_cache []Addr2line_items
 
 // Initializes the addr to line subsystem
 // prepares a channel for the addr2line resolver communication.
-func addr2line_init(fn string) (chan workloads, *addr2line.Addr2line) {
+func addr2line_init(fn string) *Context {
 	a, err := addr2line.New(fn)
 	if err != nil {
 		panic(err)
 	}
 	addresses := make(chan workloads, 16)
 	go workload(a, addresses, Insert_data)
-	return addresses, a
+	return &Context{instance: a, ch_workload: addresses}
 }
 
 // Checks the current symbol is in cache, if present returns data from the cache.
@@ -85,12 +91,12 @@ func in_cache(Addr uint64, Addr2line_cache []Addr2line_items) (bool, string) {
 // because it manages the database it can also receive
 // raw queries. Raw queries are workloads whose Name="None"
 // if proper workloads, a resolution is triggered.
-func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_f) {
+func workload(a *addr2line.Addr2line, ch chan workloads, insert_func ins_f) {
 	var e workloads
 	var qready string
 
 	for {
-		e = <-addresses
+		e = <-ch
 		switch e.Name {
 		case "None":
 			insert_func(e.DB, e.Query, false)
@@ -113,6 +119,11 @@ func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_
 }
 
 // Sends a workload to the resolver.
-func spawn_query(db *sql.DB, addr uint64, name string, addresses chan workloads, query string) {
-	addresses <- workloads{addr, name, query, db}
+func spawn_query(db *sql.DB, addr uint64, name string, context *Context, query string) {
+	context.ch_workload <- workloads{addr, name, query, db}
+}
+
+// Get filename and line given an offset (addr)
+func GetFileReference(context *Context, addr uint64) ([]addr2line.Result, error) {
+	return context.instance.Resolve(addr)
 }
