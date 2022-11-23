@@ -31,52 +31,52 @@
 package main
 
 import (
-	"fmt"
-	"strings"
 	"database/sql"
+	"fmt"
 	"path/filepath"
+	"strings"
+
 	addr2line "github.com/elazarl/addr2line"
 )
 
-// Represents one task for the addr to line subsystem.
-type workloads struct{
-	Addr	uint64
-	Name	string
-	Query	string
-	DB	*sql.DB
-	}
+type workloads struct {
+	Addr  uint64
+	Name  string
+	Query string
+	DB    *sql.DB
+}
 
 // Caches item elements
 type Addr2line_items struct {
-	Addr		uint64
-	File_name	string
-	}
+	Addr      uint64
+	File_name string
+}
 
 // Commandline handle functions prototype
 type ins_f func(*sql.DB, string, bool)
 
 // The adrr2line item cache
-var Addr2line_cache []Addr2line_items;
+var Addr2line_cache []Addr2line_items
 
 // Initializes the addr to line subsystem
 // prepares a channel for the addr2line resolver communication.
-func addr2line_init(fn string) (chan workloads){
+func addr2line_init(fn string) (chan workloads, *addr2line.Addr2line) {
 	a, err := addr2line.New(fn)
 	if err != nil {
-		panic( err)
-		}
-	adresses := make(chan workloads, 16)
-	go workload(a, adresses, Insert_data)
-	return adresses
+		panic(err)
+	}
+	addresses := make(chan workloads, 16)
+	go workload(a, addresses, Insert_data)
+	return addresses, a
 }
 
 // Checks the current symbol is in cache, if present returns data from the cache.
-func in_cache(Addr uint64, Addr2line_cache []Addr2line_items)(bool, string){
-	for _,a := range Addr2line_cache {
+func in_cache(Addr uint64, Addr2line_cache []Addr2line_items) (bool, string) {
+	for _, a := range Addr2line_cache {
 		if a.Addr == Addr {
 			return true, a.File_name
-			}
 		}
+	}
 	return false, ""
 }
 
@@ -85,8 +85,8 @@ func in_cache(Addr uint64, Addr2line_cache []Addr2line_items)(bool, string){
 // because it manages the database it can also receive
 // raw queries. Raw queries are workloads whose Name="None"
 // if proper workloads, a resolution is triggered.
-func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_f){
-	var e	workloads
+func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_f) {
+	var e workloads
 	var qready string
 
 	for {
@@ -97,18 +97,18 @@ func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_
 			break
 		default:
 			rs, _ := a.Resolve(e.Addr)
-			if len(rs)==0 {
-				qready=fmt.Sprintf(e.Query, "NONE")
-				}
-			for _, a:=range rs{
-				qready=fmt.Sprintf(e.Query, filepath.Clean(a.File))
+			if len(rs) == 0 {
+				qready = fmt.Sprintf(e.Query, "NONE")
+			}
+			for _, a := range rs {
+				qready = fmt.Sprintf(e.Query, filepath.Clean(a.File))
 				if a.Function == strings.ReplaceAll(e.Name, "sym.", "") {
 					break
-					}
 				}
+			}
 			insert_func(e.DB, qready, false)
 			break
-			}
+		}
 	}
 }
 
