@@ -186,25 +186,33 @@ func navigate(root string) []string {
 }
 
 // Returns a list of queries that can be used to insert files/subsystem data into database.
-func generate_queries(items []m_item, template_query string, id int) []string{
+func generate_queries(maintainers_fn string, items []m_item, template_query string, id int) []string {
 	var res []string
 
-	for _, item := range items{
+	maintainers_fn_abs, err := filepath.Abs(maintainers_fn)
+	if err != nil {
+		panic(err)
+	}
+
+	basepath := filepath.Dir(maintainers_fn_abs)
+	basepath_len := len(basepath)
+
+	for _, item := range items {
 		for _, wildcard_item := range item.wildcards {
-			files, err := filepath.Glob(wildcard_item)
+			files, err := filepath.Glob(filepath.Join(basepath, wildcard_item))
 			if err != nil {
 				panic(err)
-				}
-			for _, f := range files{
+			}
+			for _, f := range files {
 				if isdir(f) {
-					for _,x:= range navigate(f){
-						res=append(res,fmt.Sprintf(template_query, strings.ReplaceAll(item.subsystem_name, "'", "`"), filepath.Clean(x), id))
-						}
-					} else {
-						res=append(res,fmt.Sprintf(template_query, strings.ReplaceAll(item.subsystem_name, "'", "`"), filepath.Clean(f), id))
-						}
+					for _, x := range navigate(f) {
+						res = append(res, fmt.Sprintf(template_query, strings.ReplaceAll(item.subsystem_name, "'", "`"), filepath.Clean(x)[basepath_len:], id))
+					}
+				} else {
+					res = append(res, fmt.Sprintf(template_query, strings.ReplaceAll(item.subsystem_name, "'", "`"), filepath.Clean(f)[basepath_len:], id))
 				}
 			}
 		}
+	}
 	return res
 }

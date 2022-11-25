@@ -31,10 +31,12 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"os"
-	r2 "github.com/radareorg/r2pipe-go"
+	"path/filepath"
+	"strings"
+
 	"github.com/cheggaaa/pb/v3"
+	r2 "github.com/radareorg/r2pipe-go"
 	)
 
 // Bitfield configuration mode constants
@@ -53,6 +55,7 @@ func main(){
 	var err		error
 	var count	int
 	var id		int
+    var addr2line_prefix string = ""
 
 	conf, err := args_parse(cmd_line_item_init())
 	if err!=nil {
@@ -62,10 +65,10 @@ func main(){
 		}
 	fmt.Println("create stripped version")
 	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
-	addresses:=addr2line_init(conf.LinuxWDebug)
-	t:=Connect_token{ conf.DBURL, conf.DBPort,  conf.DBUser, conf.DBPassword, conf.DBTargetDB}
-	db:=Connect_db(&t)
-	if conf.Mode & (ENABLE_VERSION_CONFIG) != 0 {
+	context := addr2line_init(conf.LinuxWDebug)
+	t := Connect_token{conf.DBURL, conf.DBPort, conf.DBUser, conf.DBPassword, conf.DBTargetDB}
+	db := Connect_db(&t)
+	if conf.Mode&(ENABLE_VERSION_CONFIG) != 0 {
 		config, _ := get_FromFile(conf.KConfig_fn)
 		makefile, _ := get_FromFile(conf.KMakefile)
 		v, err:= get_version(makefile)
@@ -81,7 +84,7 @@ func main(){
 		for key,value :=range kconfig{
 			q:=fmt.Sprintf("insert into configs (config_symbol, config_value, config_instance_id_ref) values ('%s', '%s', %d);", key, value, id)
 			bar.Increment()
-			spawn_query(db, 0, "None", addresses, q )
+			spawn_query(db, 0, "None", context, q )
 			}
 		bar.Finish()
 		}
@@ -90,15 +93,15 @@ func main(){
 		r2p, err = r2.NewPipe(conf.LinuxWODebug)
 		if err != nil {
 			panic(err)
-			}
-		q:=fmt.Sprintf("insert into files (file_name, file_instance_id_ref) select 'NoFile',%d;", id)
-		spawn_query(db, 0, "None", addresses, q, )
-		q=fmt.Sprintf("insert into symbols (symbol_name,symbol_address,symbol_type,symbol_file_ref_id,symbol_instance_id_ref) "+
+		}
+		q := fmt.Sprintf("insert into files (file_name, file_instance_id_ref) select 'NoFile',%d;", id)
+		spawn_query(db, 0, "None", context, q)
+		q = fmt.Sprintf("insert into symbols (symbol_name,symbol_address,symbol_type,symbol_file_ref_id,symbol_instance_id_ref) "+
 			"select (select 'Indirect call'), '0x00000000', 'indirect', (select file_id from files where file_name ='NoFile' and file_instance_id_ref=%[1]d), %[1]d;", id)
-		spawn_query(db, 0, "None", addresses, q, )
-		q=fmt.Sprintf("insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select (select 'Indirect Calls'), "+
+		spawn_query(db, 0, "None", context, q)
+		q = fmt.Sprintf("insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select (select 'Indirect Calls'), "+
 			"(select file_id from files where file_name='NoFile' and file_instance_id_ref=%[1]d), %[1]d;", id)
-		spawn_query(db, 0, "None", addresses, q, )
+		spawn_query(db, 0, "None", context, q)
 		fmt.Println("initialize analysis")
 		init_fw(r2p)
 		funcs_data = get_all_funcdata(r2p)
@@ -131,12 +134,28 @@ func main(){
 					db,
 					a.Offset, 
 					strings.ReplaceAll(a.Name, "sym.", ""),
-					addresses,
+					context,
 					fmtstring)
-				}
 			}
-		bar.Finish()
-		}
+
+			// query for addr2line file prefix
+			if a.Name == "sym.start_kernel" {
+				var start_kernel_file_tail string = "/init/main.c"
+				results, err := GetFileReference(context, a.Offset)
+				if err != nil {
+					panic(err)
+				}
+				if len(results) > 0 {
+					r := results[0]
+					start_kernel_file := filepath.Clean(r.File)
+					addr2line_prefix = start_kernel_file[:len(start_kernel_file)-len(start_kernel_file_tail)]
+				    } else {
+					fmt.Printf("\nWARNING: cannot get addr2line prefix tags results may be affected!\n")
+				    }
+			    }
+		    }
+		    bar.Finish()
+        }
 	if conf.Mode & ENABLE_XREFS != 0 {
 		fmt.Println("Collecting indrcalls")
 		indcl:=get_indirect_calls(r2p, funcs_data)
@@ -152,7 +171,7 @@ func main(){
 						db,
 						0,
 						"None",
-						addresses,
+						context,
 						fmt.Sprintf(
 							"insert into xrefs (caller, callee, xref_instance_id_ref) "+
 							"select (Select symbol_id from symbols where symbol_address ='0x%08[1]x' and symbol_instance_id_ref=%[3]d), "+
@@ -166,21 +185,22 @@ func main(){
 			}
 		bar.Finish()
 		}
+	tags_query := fmt.Sprintf("insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select '%%[1]s', "+
+		"(select file_id from files where file_name='%[1]s%%[2]s' and file_instance_id_ref=%%[3]d) as fn_id, %%[3]d "+
+		"WHERE EXISTS ( select file_id from files where file_name='%[1]s%%[2]s' and file_instance_id_ref=%%[3]d);", addr2line_prefix)
 	if conf.Mode & ENABLE_MAINTAINERS != 0 {
 		fmt.Println("Collecting tags")
 		s,err:=get_FromFile(conf.Maintainers_fn)
 		if err!= nil {
 			panic(err)
 			}
-		ss:=s[seek2data(s):]
-		items:=parse_maintainers(ss)
-		queries:=generate_queries(items, "insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select '%[1]s', "+
-			"(select file_id from files where file_name='%[2]s' and file_instance_id_ref=%[3]d) as fn_id, %[3]d "+
-			"WHERE EXISTS ( select file_id from files where file_name='%[2]s' and file_instance_id_ref=%[3]d);", id)
+		ss := s[seek2data(s):]
+		items := parse_maintainers(ss)
+		queries := generate_queries(conf.Maintainers_fn, items, tags_query, id)
 		bar = pb.StartNew(len(queries))
 		for _,q :=range queries{
 			bar.Increment()
-			spawn_query(db, 0, "None", addresses, q, )
+			spawn_query(db, 0, "None", context, q, )
 			}
 		bar.Finish()
 		}
