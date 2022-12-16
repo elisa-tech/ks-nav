@@ -155,7 +155,7 @@ func main(){
 						fmt.Sprintf(
 							"insert into xrefs (caller, callee, xref_instance_id_ref) "+
 							"select (Select symbol_id from symbols where symbol_address ='0x%08[1]x' and symbol_instance_id_ref=%[3]d), "+
-							"(Select symbol_id from symbols where symbol_address ='0x%08[2]x' and symbol_instance_id_ref=%[3]d), %[3]d;"+
+							"(Select symbol_id from symbols where symbol_address ='0x%08[2]x' and symbol_instance_id_ref=%[3]d limit 1), %[3]d;"+
 							"",
 							a.Offset,
 							l,
