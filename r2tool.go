@@ -314,7 +314,7 @@ func init_fw(r2p *r2.Pipe){
 	if err != nil {
 		panic(err)
 		}
-	_, err = r2p.Cmd("aa")
+	_, err = r2p.Cmd("aaa")
 	if err != nil {
 		panic(err)
 		}
@@ -326,7 +326,7 @@ func init_fw(r2p *r2.Pipe){
 
 func is_func(addr uint64, list []func_data) (bool){
 	i := sort.Search(len(list), func(i int) bool { return list[i].Offset >= addr })
-	if i < len(list) && list[i].Offset == addr && strings.Contains(list[i].Name, "sym."){
+	if i < len(list) && list[i].Offset == addr && (strings.Contains(list[i].Name, "sym.")|| strings.Contains(list[i].Name, "__x86_indirect_thunk")){
 		return true;
 		}
 	return false
