@@ -206,10 +206,10 @@ func generate_queries(maintainers_fn string, items []m_item, template_query stri
 			for _, f := range files {
 				if isdir(f) {
 					for _, x := range navigate(f) {
-						res = append(res, fmt.Sprintf(template_query, strings.ReplaceAll(item.subsystem_name, "'", "`"), filepath.Clean(x)[basepath_len:], id))
+						res = append(res, fmt.Sprintf(template_query, strings.ReplaceAll(item.subsystem_name, "'", "`"), filepath.Clean(x)[basepath_len+1:], id))
 					}
 				} else {
-					res = append(res, fmt.Sprintf(template_query, strings.ReplaceAll(item.subsystem_name, "'", "`"), filepath.Clean(f)[basepath_len:], id))
+					res = append(res, fmt.Sprintf(template_query, strings.ReplaceAll(item.subsystem_name, "'", "`"), filepath.Clean(f)[basepath_len+1:], id))
 				}
 			}
 		}

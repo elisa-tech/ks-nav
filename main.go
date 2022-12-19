@@ -140,7 +140,7 @@ func main() {
 
 			// query for addr2line file prefix
 			if a.Name == "sym.start_kernel" {
-				var start_kernel_file_tail string = "/init/main.c"
+				var start_kernel_file_tail string = "init/main.c"
 				results, err := GetFileReference(context, a.Offset)
 				if err != nil {
 					panic(err)
@@ -148,7 +148,9 @@ func main() {
 				if len(results) > 0 {
 					r := results[0]
 					start_kernel_file := filepath.Clean(r.File)
-					addr2line_prefix = start_kernel_file[:len(start_kernel_file)-len(start_kernel_file_tail)]
+					if len(start_kernel_file) > len(start_kernel_file_tail) {
+						addr2line_prefix = start_kernel_file[:len(start_kernel_file)-len(start_kernel_file_tail)]
+					}
 				} else {
 					fmt.Printf("\nWARNING: cannot get addr2line prefix tags results may be affected!\n")
 				}
