@@ -203,12 +203,13 @@ func removeDuplicate(list []Entry) []Entry {
 
 // Given a function returns the lager subsystem it belongs
 func get_subsys_from_symbol_name(db *sql.DB, symbol string, instance int, subsytems_cache map[string]string)(string, error){
-	var res string
+	var ty,sub string
 
 	if res, ok := subsytems_cache[symbol]; ok {
 		return res, nil
 		}
-	query:="select subsys_name from (select count(*)as cnt, subsys_name from tags where subsys_name in (select subsys_name from symbols, "+
+	query:="select (select symbol_type from symbols where symbol_name=$1) as type, subsys_name from "+
+		"(select count(*) as cnt, subsys_name from tags where subsys_name in (select subsys_name from symbols, "+
 		"tags where symbols.symbol_file_ref_id=tags.tag_file_ref_id and symbols.symbol_name=$1 and symbols.symbol_instance_id_ref=$2) "+
 		"group by subsys_name order by cnt desc) as tbl;"
 
@@ -219,13 +220,17 @@ func get_subsys_from_symbol_name(db *sql.DB, symbol string, instance int, subsyt
 	defer rows.Close()
 
 	for rows.Next() {
-		if err := rows.Scan(&res); err != nil {
+		if err := rows.Scan(&ty,&sub); err != nil {
 			fmt.Println("this error hit1 ")
 			return "", err
 			}
 		}
-	subsytems_cache[symbol]=res
-	return res, nil
+
+	if ty== "indirect" {
+		sub=ty
+		}
+	subsytems_cache[symbol]=sub
+	return sub, nil
 }
 
 // Returns the id of a given function name

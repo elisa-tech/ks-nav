@@ -7,7 +7,8 @@
 "Symbol":"__arm64_sys_getppid",
 "Instance":1,
 "Mode":4,
-"Excluded": [],
+"Excluded_before": [],
+"Excluded_after": [".*rcu.*"],
 "Target_sybsys":[],
 "MaxDepth":1,
 "Jout": "TextPlain"
