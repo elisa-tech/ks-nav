@@ -155,7 +155,7 @@ func generate_output(db *sql.DB, conf *configuration) (string, error){
 		}
 
 
-	Navigate(db, start, Node{start_subsys, entry_name}, (*conf).Target_sybsys, &visited, &adjm, prod, (*conf).Instance, Cache{cache, cache2, cache3}, (*conf).Mode, (*conf).Excluded, 0, (*conf).MaxDepth, fmt_dot[opt2num((*conf).Jout)], &output)
+	Navigate(db, start, Node{start_subsys, entry_name}, (*conf).Target_sybsys, &visited, &adjm, prod, (*conf).Instance, Cache{cache, cache2, cache3}, (*conf).Mode, (*conf).Excluded_after, (*conf).Excluded_before, 0, (*conf).MaxDepth, fmt_dot[opt2num((*conf).Jout)], &output)
 
 	if ((*conf).Mode==PRINT_SUBSYS_WS) || ((*conf).Mode==PRINT_TARGETED) {
 		output=decorate(output, adjm)

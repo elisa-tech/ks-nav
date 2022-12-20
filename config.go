@@ -67,7 +67,8 @@ type configuration struct {
 	Symbol		string
 	Instance	int
 	Mode		OutMode
-	Excluded	[]string
+	Excluded_before	[]string
+	Excluded_after	[]string
 	Target_sybsys	[]string
 	MaxDepth	int
 	Jout		string
@@ -84,7 +85,8 @@ var	Default_config  configuration = configuration{
 	Symbol:		"",
 	Instance:	0,
 	Mode:		PRINT_SUBSYS,
-	Excluded:	[]string{"rcu_.*"},
+	Excluded_before:	[]string{},
+	Excluded_after:	[]string{},
 	Target_sybsys:	[]string{},
 	MaxDepth:	0,		//0: no limit
 	Jout:		"GraphOnly",

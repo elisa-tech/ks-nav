@@ -3,7 +3,7 @@
 "DBPort":5432,
 "DBUser":"alessandro",
 "DBPassword":"<password>",
-"DBTargetDB":"kernel_bin",
+"DBTargetDB":"kern_bin_new",
 "Symbol":"__arm64_sys_getppid",
 "Instance":1,
 "Mode":4,

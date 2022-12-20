@@ -268,10 +268,15 @@ func not_exluded(symbol string, excluded []string)bool{
 // TODO: refactory needed:
 // What is the problem: too many args.
 // suggestion: New version with input and output structs.
-func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, targets []string, visited *[]int, AdjMap *[]AdjM, prod map[string]int, instance int, cache Cache, mode OutMode, excluded []string, depth int, maxdepth int, dot_fmt string, output *string) {
+func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, targets []string, visited *[]int, AdjMap *[]AdjM, prod map[string]int, instance int, cache Cache, mode OutMode, excluded_after []string, excluded_before []string, depth int, maxdepth int, dot_fmt string, output *string) {
 	var tmp, s		string
 	var l, r, ll		Node
 	var depthInc		int	= 0
+
+//	entry, _ := get_entry_by_id(db, symbol_id, instance, cache.Entries)
+//	if not_exluded(entry.Symbol, excluded_before) {
+//			*visited=append(*visited, symbol_id)
+//			}
 
 	*visited=append(*visited, symbol_id)
 	l=parent_dispaly
@@ -279,59 +284,62 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, targets []string, 
 	successors=removeDuplicate(successors)
 	if err==nil {
 		for _, curr := range successors{
-			entry, err := get_entry_by_id(db, curr.Sym_id, instance, cache.Entries)
-			if err!=nil {
-				r.Symbol="Unknown";
-				} else {
-					r.Symbol=entry.Symbol
-					tmp, _ =get_subsys_from_symbol_name(db,r.Symbol, instance, cache.SubSys)
-					if tmp=="" {
-						r.Subsys=SUBSYS_UNDEF
+			if not_exluded(curr.Symbol, excluded_before) {
+				entry, err := get_entry_by_id(db, curr.Sym_id, instance, cache.Entries)
+//				entry, err = get_entry_by_id(db, curr.Sym_id, instance, cache.Entries)
+				if err!=nil {
+					r.Symbol="Unknown";
+					} else {
+						r.Symbol=entry.Symbol
+						tmp, _ =get_subsys_from_symbol_name(db,r.Symbol, instance, cache.SubSys)
+						if tmp=="" {
+							r.Subsys=SUBSYS_UNDEF
+							}
 						}
-					}
-			switch mode {
-				case PRINT_ALL:
-					s=fmt.Sprintf(dot_fmt, l.Symbol, r.Symbol)
-					ll=r
-					depthInc = 1
-					break
-				case PRINT_SUBSYS, PRINT_SUBSYS_WS, PRINT_TARGETED:
-					if tmp, err=get_subsys_from_symbol_name(db,r.Symbol, instance, cache.SubSys); r.Subsys!=tmp {
-						if tmp != "" {
-							r.Subsys=tmp
-							} else {
-								r.Subsys=SUBSYS_UNDEF
-								}
-						}
-
-
-					if l.Subsys!=r.Subsys {
-						s=fmt.Sprintf(dot_fmt, l.Subsys, r.Subsys)
-						*AdjMap=append(*AdjMap, AdjM{l,r})
-						ll=l
+				switch mode {
+					case PRINT_ALL:
+						s=fmt.Sprintf(dot_fmt, l.Symbol, r.Symbol)
+						ll=r
 						depthInc = 1
-						} else {
-							s="";
+						break
+					case PRINT_SUBSYS, PRINT_SUBSYS_WS, PRINT_TARGETED:
+						if tmp, err=get_subsys_from_symbol_name(db,r.Symbol, instance, cache.SubSys); r.Subsys!=tmp {
+							if tmp != "" {
+								r.Subsys=tmp
+								} else {
+									r.Subsys=SUBSYS_UNDEF
+									}
 							}
-					ll=r
-					break
-				default:
-					panic(mode)
-				}
-			if _, ok := prod[s]; ok {
-				prod[s]++
-				} else {
-					prod[s]=1
-					if s!="" {
-						if (mode != PRINT_TARGETED) || (intargets(targets, l.Subsys,r.Subsys)) {
-							(*output)=(*output)+s
+
+
+						if l.Subsys!=r.Subsys {
+							s=fmt.Sprintf(dot_fmt, l.Subsys, r.Subsys)
+							*AdjMap=append(*AdjMap, AdjM{l,r})
+							ll=l
+							depthInc = 1
+							} else {
+								s="";
+								}
+						ll=r
+						break
+					default:
+						panic(mode)
+					}
+				if _, ok := prod[s]; ok {
+					prod[s]++
+					} else {
+						prod[s]=1
+						if s!="" {
+							if (mode != PRINT_TARGETED) || (intargets(targets, l.Subsys,r.Subsys)) {
+								(*output)=(*output)+s
+								}
 							}
 						}
-					}
 
-			if Not_in(*visited, curr.Sym_id){
-				if not_exluded(entry.Symbol, excluded) && (maxdepth == 0 || (maxdepth > 0 && depth < maxdepth)){
-					Navigate(db, curr.Sym_id, ll, targets, visited, AdjMap, prod, instance, cache, mode, excluded, depth+depthInc, maxdepth, dot_fmt, output)
+				if Not_in(*visited, curr.Sym_id){
+					if (not_exluded(entry.Symbol, excluded_after) || not_exluded(entry.Symbol, excluded_before)) && (  maxdepth == 0  ||  (  (maxdepth > 0)   &&   (depth < maxdepth) ) ){
+						Navigate(db, curr.Sym_id, ll, targets, visited, AdjMap, prod, instance, cache, mode, excluded_before, excluded_before, depth+depthInc, maxdepth, dot_fmt, output)
+						}
 					}
 				}
 			}
