@@ -79,7 +79,7 @@ var	Default_config  configuration = configuration{
 	DBPort:		5432,
 	DBUser:		"alessandro",
 	DBPassword:	"<password>",
-	DBTargetDB:	"kernel_bin",
+	DBTargetDB:	"kern_bin_new",
 	Maintainers_fn:	"MAINTAINERS",
 	KConfig_fn:	"include/generated/autoconf.h",
 	KMakefile:	"Makefile",

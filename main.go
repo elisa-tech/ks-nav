@@ -34,6 +34,7 @@ import (
 	"strings"
 	"os"
 	r2 "github.com/radareorg/r2pipe-go"
+	addr2line "github.com/elazarl/addr2line"
 	"github.com/cheggaaa/pb/v3"
 	)
 
@@ -52,6 +53,7 @@ func main(){
 	var err		error
 	var count	int
 	var id		int
+	var a2l		*addr2line.Addr2line
 
 	conf, err := args_parse(cmd_line_item_init())
 	if err!=nil {
@@ -61,7 +63,7 @@ func main(){
 		}
 	fmt.Println("create stripped version")
 	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
-	addresses:=addr2line_init(conf.LinuxWDebug)
+	a2l, addresses:=addr2line_init(conf.LinuxWDebug)
 	t:=Connect_token{ conf.DBURL, conf.DBPort,  conf.DBUser, conf.DBPassword, conf.DBTargetDB}
 	db:=Connect_db(&t)
 	if conf.Mode & (ENABLE_VERSION_CONFIG) != 0 {
@@ -145,21 +147,38 @@ func main(){
 			bar.Increment()
 			if strings.Contains(a.Name, "sym."){
 				Move(r2p, a.Offset)
+/*
+				fmt.Println("###############################################################")
+				tmp1:=Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache)
+				fmt.Println(tmp1)
+				tmp2:=removeDuplicate(tmp1)
+				fmt.Println(tmp2)
+				xrefs:=remove_non_func(tmp2,funcs_data)
+				fmt.Println(xrefs)
+				fmt.Println("******************************************************************")
+*/
 				xrefs:=remove_non_func(removeDuplicate(Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache)),funcs_data)
 				for _, l :=range xrefs {
+//need to fetch addr2line data
+					source_ref:=resolve_addr(a2l, l.From)
 					spawn_query(
 						db,
 						0,
 						"None",
 						addresses,
 						fmt.Sprintf(
-							"insert into xrefs (caller, callee, xref_instance_id_ref) "+
-							"select (Select symbol_id from symbols where symbol_address ='0x%08[1]x' and symbol_instance_id_ref=%[3]d), "+
-							"(Select symbol_id from symbols where symbol_address ='0x%08[2]x' and symbol_instance_id_ref=%[3]d limit 1), %[3]d;"+
+							"insert into xrefs (caller, callee, ref_addr, source_line, xref_instance_id_ref) " +
+							"select (Select symbol_id from symbols where symbol_address ='0x%08[1]x' and symbol_instance_id_ref=%[3]d), " +
+							"(Select symbol_id from symbols where symbol_address ='0x%08[2]x' and symbol_instance_id_ref=%[3]d limit 1), " +
+							"'0x%08[5]x', " +
+							"'%[4]s', " +
+							"%[3]d;" +
 							"",
 							a.Offset,
-							l,
-							id))
+							l.To,
+							id,
+							source_ref,
+							l.From))
 					}
 				}
 			}

@@ -34,6 +34,7 @@ import (
 	"strings"
 	"database/sql"
 	"path/filepath"
+	"sync"
 	addr2line "github.com/elazarl/addr2line"
 )
 
@@ -52,15 +53,16 @@ type Addr2line_items struct {
 type ins_f func(*sql.DB, string, bool)
 
 var Addr2line_cache []Addr2line_items;
+var mu sync.Mutex
 
-func addr2line_init(fn string) (chan workloads){
+func addr2line_init(fn string) (*addr2line.Addr2line, chan workloads){
 	a, err := addr2line.New(fn)
 	if err != nil {
 		panic( err)
 		}
 	adresses := make(chan workloads, 16)
 	go workload(a, adresses, Insert_data)
-	return adresses
+	return a, adresses
 }
 func in_cache(Addr uint64, Addr2line_cache []Addr2line_items)(bool, string){
 	for _,a := range Addr2line_cache {
@@ -69,6 +71,22 @@ func in_cache(Addr uint64, Addr2line_cache []Addr2line_items)(bool, string){
 			}
 		}
 	return false, ""
+}
+
+func resolve_addr(a *addr2line.Addr2line, address uint64) string{
+	var res string = ""
+//m1 := regexp.MustCompile(`^([^ ]*) .*`)
+//fmt.Println(m1.ReplaceAllString("/home/alessandro/src/linux-5.18.4/./arch/x86/kernel/../include/asm/trace/./irq_vectors.h:41 (discriminator 6)", "$1"))
+	mu.Lock()
+	rs, _ := a.Resolve(address)
+	mu.Unlock()
+	if len(rs)==0 {
+		res="NONE"
+		}
+	for _, a:=range rs{
+		res=fmt.Sprintf("%s:%d",filepath.Clean(a.File), a.Line)
+		}
+	return  res
 }
 
 func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_f){
@@ -82,7 +100,9 @@ func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_
 			insert_func(e.DB, e.Query, false)
 			break
 		default:
+			mu.Lock()
 			rs, _ := a.Resolve(e.Addr)
+			mu.Unlock()
 			if len(rs)==0 {
 				qready=fmt.Sprintf(e.Query, "NONE")
 				}
@@ -97,7 +117,6 @@ func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_
 			}
 	}
 }
-
 
 func spawn_query(db *sql.DB, addr uint64, name string, addresses chan workloads, query string) {
 	addresses <- workloads{addr, name, query, db}

@@ -123,9 +123,10 @@ type xref struct{
 	From		uint64		`json: "from"`
 	To		uint64		`json: "to"`
 }
+
 type xref_cache struct{
 	Addr		uint64
-	Xr		[]uint64
+	Xr		[]xref
 }
 
 type fref struct{
@@ -239,9 +240,8 @@ func Move(r2p *r2.Pipe,current uint64){
 		}
 }
 
-func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data, cache *[]xref_cache) ([]uint64){
+func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data, cache *[]xref_cache) ([]xref){
 	var xrefs		[]xref
-	var res			[]uint64;
 
 	for _, item := range *cache  {
 		if item.Addr==current {
@@ -256,14 +256,18 @@ func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data,
 	if(error != nil){
 		fmt.Printf("Error while parsing data: %s", error)
 		}
-	for _, item := range xrefs  {
-		res=append(res,item.To)
+
+	blocs:=get_func_space(r2p, current, funcs)
+	for _, ic:= range indcall{
+		for _, b := range blocs {
+			if ic >= b.Start && ic <= b.End {
+				xrefs=append(xrefs,xref{"indirect",ic,0})
+				}
+			}
 		}
-	if func_has_indirects(r2p, indcall, current, funcs){
-		res=append(res,0)	//zero is null and it is used to indicate indirect calls.
-		}
-	*cache=append(*cache,xref_cache{current,res})
-	return  res
+
+	*cache=append(*cache,xref_cache{current,xrefs})
+	return  xrefs
 }
 
 func Symb2Addr_r(s string, r2p *r2.Pipe) (uint64){
@@ -282,24 +286,30 @@ func Symb2Addr_r(s string, r2p *r2.Pipe) (uint64){
 	return 0
 }
 
-func removeDuplicate(intSlice []uint64) []uint64 {
+func removeDuplicate(intSlice []xref) []xref {
+	var key uint64
 
 	allKeys := make(map[uint64]bool)
-	list := []uint64{}
+	list := []xref{}
 	for _, item := range intSlice {
-		if _, value := allKeys[item]; !value {
-			allKeys[item] = true
-			list = append(list, item)
-			}
+		if item.To != 0 {
+			key = item.To
+		} else {
+			key = item.From //key is used to distinguish the itmes, since indirectcall has always To==0 From is used
 		}
+		if _, value := allKeys[key]; !value {
+			allKeys[key] = true
+			list = append(list, item)
+		}
+	}
 	return list
 }
 
-func remove_non_func(list []uint64, functions []func_data) []uint64 {
+func remove_non_func(list []xref, functions []func_data) []xref {
 
-	res := []uint64{}
+	res := []xref{}
 	for _, item := range list {
-		if is_func(item, functions) || item==0 {
+		if is_func(item.To, functions) || item.To==0 {
 			res = append(res, item)
 			}
 		}
