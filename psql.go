@@ -51,7 +51,7 @@ const (
 	PRINT_TARGETED
 	OutModeLast
 )
-const 	SUBSYS_UNDEF	= "Undefined"
+const 	SUBSYS_UNDEF	= "The REST"
 
 // parent node
 type Node struct {
