@@ -75,8 +75,6 @@ func in_cache(Addr uint64, Addr2line_cache []Addr2line_items)(bool, string){
 
 func resolve_addr(a *addr2line.Addr2line, address uint64) string{
 	var res string = ""
-//m1 := regexp.MustCompile(`^([^ ]*) .*`)
-//fmt.Println(m1.ReplaceAllString("/home/alessandro/src/linux-5.18.4/./arch/x86/kernel/../include/asm/trace/./irq_vectors.h:41 (discriminator 6)", "$1"))
 	mu.Lock()
 	rs, _ := a.Resolve(address)
 	mu.Unlock()

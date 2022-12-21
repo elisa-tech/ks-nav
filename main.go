@@ -130,7 +130,7 @@ func main(){
 						)
 				spawn_query(
 					db,
-					a.Offset, 
+					a.Offset,
 					strings.ReplaceAll(a.Name, "sym.", ""),
 					addresses,
 					fmtstring)
@@ -147,19 +147,8 @@ func main(){
 			bar.Increment()
 			if strings.Contains(a.Name, "sym."){
 				Move(r2p, a.Offset)
-/*
-				fmt.Println("###############################################################")
-				tmp1:=Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache)
-				fmt.Println(tmp1)
-				tmp2:=removeDuplicate(tmp1)
-				fmt.Println(tmp2)
-				xrefs:=remove_non_func(tmp2,funcs_data)
-				fmt.Println(xrefs)
-				fmt.Println("******************************************************************")
-*/
-				xrefs:=remove_non_func(removeDuplicate(Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache)),funcs_data)
+				xrefs:=remove_non_func(Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache),funcs_data)
 				for _, l :=range xrefs {
-//need to fetch addr2line data
 					source_ref:=resolve_addr(a2l, l.From)
 					spawn_query(
 						db,
