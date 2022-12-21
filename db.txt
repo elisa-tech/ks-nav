@@ -14,3 +14,4 @@ create index on xrefs   using hash (callee);
 create index on files   using hash (file_name);
 create index on tags    using hash (tag_file_ref_id);
 create index on symbols using hash (symbol_file_ref_id);
+create index on symbols using btree (symbol_address COLLATE "default" ASC NULLS LAST, symbol_instance_id_ref ASC NULLS LAST);
