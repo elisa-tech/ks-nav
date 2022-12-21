@@ -97,6 +97,7 @@ func workload(a *addr2line.Addr2line, ch chan workloads, insert_func ins_f) {
 
 	for {
 		e = <-ch
+
 		switch e.Name {
 		case "None":
 			insert_func(e.DB, e.Query, false)
@@ -125,5 +126,6 @@ func spawn_query(db *sql.DB, addr uint64, name string, context *Context, query s
 
 // Get filename and line given an offset (addr)
 func GetFileReference(context *Context, addr uint64) ([]addr2line.Result, error) {
-	return context.instance.Resolve(addr)
+	res, err := context.instance.Resolve(addr)
+	return res, err
 }
