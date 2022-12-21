@@ -91,8 +91,9 @@ func decorate_line(l string, r string, adjm []AdjM) string {
 
 	for _, item := range adjm {
 		if (item.l.Subsys==l) && (item.r.Subsys==r) {
-			if ! strings.Contains(res, item.r.Symbol) {
-				 res=res+item.r.Symbol+",\\n"
+			tmp:=fmt.Sprintf("%s([%s]%s),\\n",item.r.Symbol, item.r.Address_ref, item.r.Source_ref)
+			if ! strings.Contains(res, tmp) {
+				 res=res+fmt.Sprintf("%s([%s]%s),\\n",item.r.Symbol, item.r.Address_ref, item.r.Source_ref)
 				}
 			}
 		}
@@ -102,7 +103,6 @@ func decorate_line(l string, r string, adjm []AdjM) string {
 
 func decorate(dot_str string, adjm []AdjM) string{
 	var res string
-
 
 	dot_body:= strings.Split(dot_str, "\n")
 	for i, line := range dot_body{
@@ -155,7 +155,7 @@ func generate_output(db *sql.DB, conf *configuration) (string, error){
 		}
 
 
-	Navigate(db, start, Node{start_subsys, entry_name}, (*conf).Target_sybsys, &visited, &adjm, prod, (*conf).Instance, Cache{cache, cache2, cache3}, (*conf).Mode, (*conf).Excluded_after, (*conf).Excluded_before, 0, (*conf).MaxDepth, fmt_dot[opt2num((*conf).Jout)], &output)
+	Navigate(db, start, Node{start_subsys, entry_name, "enty point", "0x0"}, (*conf).Target_sybsys, &visited, &adjm, prod, (*conf).Instance, Cache{cache, cache2, cache3}, (*conf).Mode, (*conf).Excluded_after, (*conf).Excluded_before, 0, (*conf).MaxDepth, fmt_dot[opt2num((*conf).Jout)], &output)
 
 	if ((*conf).Mode==PRINT_SUBSYS_WS) || ((*conf).Mode==PRINT_TARGETED) {
 		output=decorate(output, adjm)
@@ -215,14 +215,6 @@ func main() {
                 print_help(cmd_line_item_init());
                 os.Exit(-1)
                 }
-//////////////////////////////////////////////////////////////////////////////////debug start
-//	fmt.Println(conf)
-//	fmt.Println(PRINT_TARGETED)
-//	fmt.Println(conf.Mode)
-//	if conf.Mode == PRINT_TARGETED {
-//		fmt.Println("#############")
-//		}
-//////////////////////////////////////////////////////////////////////////////////debug end
 	if opt2num(conf.Jout)==0 {
 		fmt.Printf("unknown mode %s\n", conf.Jout)
 		os.Exit(-2)

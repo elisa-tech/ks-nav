@@ -57,6 +57,8 @@ const 	SUBSYS_UNDEF	= "The REST"
 type Node struct {
 	Subsys		string
 	Symbol		string
+	Source_ref	string
+	Address_ref	string
 }
 type AdjM struct {
 	l		Node
@@ -79,11 +81,15 @@ type Entry struct {
 	Type		string
 	Subsys		[]string
 	Fn		string
+	Source_ref	string
+	Address_ref	string
 }
 
 type Edge struct {
-	Caller	int
-	Callee	int
+	Caller		int
+	Callee		int
+	Source_ref	string
+	Address_ref	string
 }
 
 type Cache struct {
@@ -152,7 +158,7 @@ func get_successors_by_id(db *sql.DB, symbol_id int, instance int, cache Cache )
 		return res, nil
 		}
 
-	query:="select caller, callee from xrefs where caller =$1 and xref_instance_id_ref=$2"
+	query:="select caller, callee, source_line, ref_addr from xrefs where caller =$1 and xref_instance_id_ref=$2"
 	rows, err := db.Query(query, symbol_id, instance)
 	if err!= nil {
 		panic(err)
@@ -160,12 +166,14 @@ func get_successors_by_id(db *sql.DB, symbol_id int, instance int, cache Cache )
 	defer rows.Close()
 
 	for rows.Next() {
-		if err := rows.Scan(&e.Caller, &e.Callee); err != nil {
-			fmt.Println("this error hit1 ")
+		if err := rows.Scan(&e.Caller, &e.Callee, &e.Source_ref, &e.Address_ref); err != nil {
+			fmt.Println("get_successors_by_id: this error hit1 ", err)
 			return nil, err
 			}
-		successors,_ := get_entry_by_id(db, e.Callee, instance, cache.Entries)
-		res=append(res, successors )
+		successor,_ := get_entry_by_id(db, e.Callee, instance, cache.Entries)
+		successor.Source_ref = e.Source_ref
+		successor.Address_ref = e.Address_ref
+		res=append(res, successor )
 		}
 	if err = rows.Err(); err != nil {
 		fmt.Println("this error hit2 ")
@@ -221,7 +229,7 @@ func get_subsys_from_symbol_name(db *sql.DB, symbol string, instance int, subsyt
 
 	for rows.Next() {
 		if err := rows.Scan(&ty,&sub); err != nil {
-			fmt.Println("this error hit1 ")
+			fmt.Println("get_subsys_from_symbol_name: this error hit1 ")
 			return "", err
 			}
 		}
@@ -278,29 +286,23 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, targets []string, 
 	var l, r, ll		Node
 	var depthInc		int	= 0
 
-//	entry, _ := get_entry_by_id(db, symbol_id, instance, cache.Entries)
-//	if not_exluded(entry.Symbol, excluded_before) {
-//			*visited=append(*visited, symbol_id)
-//			}
-
 	*visited=append(*visited, symbol_id)
 	l=parent_dispaly
 	successors, err:=get_successors_by_id(db, symbol_id, instance, cache);
-	successors=removeDuplicate(successors)
+	if mode == PRINT_ALL {
+		successors=removeDuplicate(successors)
+		}
 	if err==nil {
 		for _, curr := range successors{
 			if not_exluded(curr.Symbol, excluded_before) {
-				entry, err := get_entry_by_id(db, curr.Sym_id, instance, cache.Entries)
-//				entry, err = get_entry_by_id(db, curr.Sym_id, instance, cache.Entries)
-				if err!=nil {
-					r.Symbol="Unknown";
-					} else {
-						r.Symbol=entry.Symbol
-						tmp, _ =get_subsys_from_symbol_name(db,r.Symbol, instance, cache.SubSys)
-						if tmp=="" {
-							r.Subsys=SUBSYS_UNDEF
-							}
-						}
+				r.Symbol=curr.Symbol
+				r.Source_ref = curr.Source_ref
+				r.Address_ref = curr.Address_ref
+				tmp, _ =get_subsys_from_symbol_name(db,r.Symbol, instance, cache.SubSys)
+				if tmp=="" {
+					r.Subsys=SUBSYS_UNDEF
+					}
+
 				switch mode {
 					case PRINT_ALL:
 						s=fmt.Sprintf(dot_fmt, l.Symbol, r.Symbol)
@@ -316,11 +318,9 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, targets []string, 
 									}
 							}
 
-
 						if l.Subsys!=r.Subsys {
 							s=fmt.Sprintf(dot_fmt, l.Subsys, r.Subsys)
 							*AdjMap=append(*AdjMap, AdjM{l,r})
-							ll=l
 							depthInc = 1
 							} else {
 								s="";
@@ -342,7 +342,7 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, targets []string, 
 						}
 
 				if Not_in(*visited, curr.Sym_id){
-					if (not_exluded(entry.Symbol, excluded_after) || not_exluded(entry.Symbol, excluded_before)) && (  maxdepth == 0  ||  (  (maxdepth > 0)   &&   (depth < maxdepth) ) ){
+					if (not_exluded(curr.Symbol, excluded_after) || not_exluded(curr.Symbol, excluded_before)) && (  maxdepth == 0  ||  (  (maxdepth > 0)   &&   (depth < maxdepth) ) ){
 						Navigate(db, curr.Sym_id, ll, targets, visited, AdjMap, prod, instance, cache, mode, excluded_before, excluded_before, depth+depthInc, maxdepth, dot_fmt, output)
 						}
 					}
@@ -354,7 +354,6 @@ func Navigate(db *sql.DB, symbol_id int, parent_dispaly Node, targets []string, 
 //returns true if one of the nodes n1, n2 is a target node
 func intargets(targets []string, n1 string, n2 string) bool {
 
-//	fmt.Println("intargets call -> ",targets, n1, n2)
 	for _, t := range targets {
 		if (t == n1) || (t == n2) {
 			return true
