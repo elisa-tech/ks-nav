@@ -42,6 +42,16 @@ import (
 	"strings"
 )
 
+type sysc struct {
+	Addr uint64
+	Name string
+}
+
+type res struct {
+	Syscall sysc
+	Path    []uint64
+}
+
 // radare 2 datatype representing a relocation object
 type reloc_data struct {
 	Name     string `json: "name"`
@@ -119,6 +129,27 @@ type reg_var_ struct {
 	Ref  string `json: "ref"`
 }
 
+type xref struct {
+	Type string `json: "type"`
+	From uint64 `json: "from"`
+	To   uint64 `json: "to"`
+}
+
+type xref_cache struct {
+	Addr uint64
+	Xr   []xref
+}
+
+type fref struct {
+	Addr uint64
+	Name string
+}
+type results struct {
+	Addr uint64
+	Name string
+	Path []fref
+}
+
 // radare 2 datatype representing a code block object
 type rad_bloc struct {
 	Jump    uint64 `json: "jump"`
@@ -130,6 +161,10 @@ type rad_bloc struct {
 	Outputs uint8  `json: "outputs"`
 	ninstr  uint16 `json: "ninstr"`
 	traced  bool   `json: "traced"`
+}
+type bloc struct {
+	Start uint64
+	End   uint64
 }
 
 // radare 2 datatype representing a binary info detail
@@ -146,12 +181,9 @@ type core_info struct {
 	Type   string `json: "type"`
 	Format string `json: "format"`
 }
-
-// Local app datatype representing a xref object
-type xref struct {
-	Type string `json: "type"`
-	From uint64 `json: "from"`
-	To   uint64 `json: "to"`
+type file_info struct {
+	Core core_info
+	Bin  bin_info
 }
 
 // radare 2 datatype representing a binary info detail
@@ -162,25 +194,6 @@ type symb_data struct {
 	Offset   uint64 `json: "offset"`
 }
 
-// radare 2 datatype representing a binary info object
-type file_info struct {
-	Core core_info
-	Bin  bin_info
-}
-
-// Local app datatype representing a xref_cache object
-type xref_cache struct {
-	Addr uint64
-	Xr   []uint64
-}
-
-// Local app datatype representing a code block object
-type bloc struct {
-	Start uint64
-	End   uint64
-}
-
-// Given an ID scans function data cache and returns function data
 func get_function_by_addr(addr uint64, all_funcs []func_data) *func_data {
 
 	for i, f := range all_funcs {
@@ -251,9 +264,8 @@ func Move(r2p *r2.Pipe, current uint64) {
 }
 
 // Gets xreferences by both use the cache and the radare 2 operations
-func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data, cache *[]xref_cache) []uint64 {
+func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data, cache *[]xref_cache) []xref {
 	var xrefs []xref
-	var res []uint64
 
 	for _, item := range *cache {
 		if item.Addr == current {
@@ -268,17 +280,20 @@ func Getxrefs(r2p *r2.Pipe, current uint64, indcall []uint64, funcs []func_data,
 	if error != nil {
 		fmt.Printf("Error while parsing data: %s", error)
 	}
-	for _, item := range xrefs {
-		res = append(res, item.To)
+
+	blocs := get_func_space(r2p, current, funcs)
+	for _, ic := range indcall {
+		for _, b := range blocs {
+			if ic >= b.Start && ic <= b.End {
+				xrefs = append(xrefs, xref{"indirect", ic, 0})
+			}
+		}
 	}
-	if func_has_indirects(r2p, indcall, current, funcs) {
-		res = append(res, 0) //zero is null and it is used to indicate indirect calls.
-	}
-	*cache = append(*cache, xref_cache{current, res})
-	return res
+
+	*cache = append(*cache, xref_cache{current, xrefs})
+	return xrefs
 }
 
-// Convert a given function name to its address
 func Symb2Addr_r(s string, r2p *r2.Pipe) uint64 {
 	var f []func_data
 	buf, err := r2p.Cmd("afij " + s)
@@ -296,13 +311,19 @@ func Symb2Addr_r(s string, r2p *r2.Pipe) uint64 {
 }
 
 // Removes duplicates in the list of address resulting by the exploration of the call trees
-func removeDuplicate(intSlice []uint64) []uint64 {
+func removeDuplicate(intSlice []xref) []xref {
+	var key uint64
 
 	allKeys := make(map[uint64]bool)
-	list := []uint64{}
+	list := []xref{}
 	for _, item := range intSlice {
-		if _, value := allKeys[item]; !value {
-			allKeys[item] = true
+		if item.To != 0 {
+			key = item.To
+		} else {
+			key = item.From //key is used to distinguish the itmes, since indirectcall has always To==0 From is used
+		}
+		if _, value := allKeys[key]; !value {
+			allKeys[key] = true
 			list = append(list, item)
 		}
 	}
@@ -310,11 +331,11 @@ func removeDuplicate(intSlice []uint64) []uint64 {
 }
 
 // Removes the items in the relocation list that are not functions
-func remove_non_func(list []uint64, functions []func_data) []uint64 {
+func remove_non_func(list []xref, functions []func_data) []xref {
 
-	res := []uint64{}
+	res := []xref{}
 	for _, item := range list {
-		if is_func(item, functions) || item == 0 {
+		if is_func(item.To, functions) || item.To == 0 {
 			res = append(res, item)
 		}
 	}
@@ -330,7 +351,7 @@ func init_fw(r2p *r2.Pipe) {
 	if err != nil {
 		panic(err)
 	}
-	_, err = r2p.Cmd("aa")
+	_, err = r2p.Cmd("aaa")
 	if err != nil {
 		panic(err)
 	}
@@ -341,7 +362,7 @@ func init_fw(r2p *r2.Pipe) {
 // Checks if at a  given address sits a function
 func is_func(addr uint64, list []func_data) bool {
 	i := sort.Search(len(list), func(i int) bool { return list[i].Offset >= addr })
-	if i < len(list) && list[i].Offset == addr && strings.Contains(list[i].Name, "sym.") {
+	if i < len(list) && list[i].Offset == addr && (strings.Contains(list[i].Name, "sym.") || strings.Contains(list[i].Name, "__x86_indirect_thunk")) {
 		return true
 	}
 	return false

@@ -32,10 +32,10 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/cheggaaa/pb/v3"
+	addr2line "github.com/elazarl/addr2line"
 	r2 "github.com/radareorg/r2pipe-go"
 )
 
@@ -56,6 +56,7 @@ func main() {
 	var count int
 	var id int
 	var addr2line_prefix string = ""
+	var a2l *addr2line.Addr2line
 
 	conf, err := args_parse(cmd_line_item_init())
 	if err != nil {
@@ -65,7 +66,7 @@ func main() {
 	}
 	fmt.Println("create stripped version")
 	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
-	context := addr2line_init(conf.LinuxWDebug)
+	a2l, addresses := addr2line_init(conf.LinuxWDebug)
 	t := Connect_token{conf.DBURL, conf.DBPort, conf.DBUser, conf.DBPassword, conf.DBTargetDB}
 	db := Connect_db(&t)
 	if conf.Mode&(ENABLE_VERSION_CONFIG) != 0 {
@@ -84,7 +85,7 @@ func main() {
 		for key, value := range kconfig {
 			q := fmt.Sprintf("insert into configs (config_symbol, config_value, config_instance_id_ref) values ('%s', '%s', %d);", key, value, id)
 			bar.Increment()
-			spawn_query(db, 0, "None", context, q)
+			spawn_query(db, 0, "None", addresses, q)
 		}
 		bar.Finish()
 	}
@@ -95,13 +96,13 @@ func main() {
 			panic(err)
 		}
 		q := fmt.Sprintf("insert into files (file_name, file_instance_id_ref) select 'NoFile',%d;", id)
-		spawn_query(db, 0, "None", context, q)
+		spawn_query(db, 0, "None", addresses, q)
 		q = fmt.Sprintf("insert into symbols (symbol_name,symbol_address,symbol_type,symbol_file_ref_id,symbol_instance_id_ref) "+
 			"select (select 'Indirect call'), '0x00000000', 'indirect', (select file_id from files where file_name ='NoFile' and file_instance_id_ref=%[1]d), %[1]d;", id)
-		spawn_query(db, 0, "None", context, q)
+		spawn_query(db, 0, "None", addresses, q)
 		q = fmt.Sprintf("insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select (select 'Indirect Calls'), "+
 			"(select file_id from files where file_name='NoFile' and file_instance_id_ref=%[1]d), %[1]d;", id)
-		spawn_query(db, 0, "None", context, q)
+		spawn_query(db, 0, "None", addresses, q)
 		fmt.Println("initialize analysis")
 		init_fw(r2p)
 		funcs_data = get_all_funcdata(r2p)
@@ -134,25 +135,19 @@ func main() {
 					db,
 					a.Offset,
 					strings.ReplaceAll(a.Name, "sym.", ""),
-					context,
+					addresses,
 					fmtstring)
 			}
 
 			// query for addr2line file prefix
 			if a.Name == "sym.start_kernel" {
 				var start_kernel_file_tail string = "init/main.c"
-				results, err := GetFileReference(context, a.Offset)
-				if err != nil {
-					panic(err)
+				start_kernel_file := resolve_addr(a2l, a.Offset)
+				if start_kernel_file == "NONE" {
+					panic("Error resolving start_kernel!")
 				}
-				if len(results) > 0 {
-					r := results[0]
-					start_kernel_file := filepath.Clean(r.File)
-					if len(start_kernel_file) > len(start_kernel_file_tail) {
-						addr2line_prefix = start_kernel_file[:len(start_kernel_file)-len(start_kernel_file_tail)]
-					}
-				} else {
-					fmt.Printf("\nWARNING: cannot get addr2line prefix tags results may be affected!\n")
+				if len(start_kernel_file) > len(start_kernel_file_tail) {
+					addr2line_prefix = start_kernel_file[:len(start_kernel_file)-len(start_kernel_file_tail)]
 				}
 			}
 		}
@@ -167,21 +162,27 @@ func main() {
 			bar.Increment()
 			if strings.Contains(a.Name, "sym.") {
 				Move(r2p, a.Offset)
-				xrefs := remove_non_func(removeDuplicate(Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache)), funcs_data)
+				xrefs := remove_non_func(Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache), funcs_data)
 				for _, l := range xrefs {
+					source_ref := resolve_addr(a2l, l.From)
 					spawn_query(
 						db,
 						0,
 						"None",
-						context,
+						addresses,
 						fmt.Sprintf(
-							"insert into xrefs (caller, callee, xref_instance_id_ref) "+
+							"insert into xrefs (caller, callee, ref_addr, source_line, xref_instance_id_ref) "+
 								"select (Select symbol_id from symbols where symbol_address ='0x%08[1]x' and symbol_instance_id_ref=%[3]d), "+
-								"(Select symbol_id from symbols where symbol_address ='0x%08[2]x' and symbol_instance_id_ref=%[3]d), %[3]d;"+
+								"(Select symbol_id from symbols where symbol_address ='0x%08[2]x' and symbol_instance_id_ref=%[3]d limit 1), "+
+								"'0x%08[5]x', "+
+								"'%[4]s', "+
+								"%[3]d;"+
 								"",
 							a.Offset,
-							l,
-							id))
+							l.To,
+							id,
+							source_ref,
+							l.From))
 				}
 			}
 		}
@@ -202,7 +203,7 @@ func main() {
 		bar = pb.StartNew(len(queries))
 		for _, q := range queries {
 			bar.Increment()
-			spawn_query(db, 0, "None", context, q)
+			spawn_query(db, 0, "None", addresses, q)
 		}
 		bar.Finish()
 	}
