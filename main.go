@@ -142,12 +142,12 @@ func main() {
 			// query for addr2line file prefix
 			if a.Name == "sym.start_kernel" {
 				var start_kernel_file_tail string = "init/main.c"
-				start_kernel_file := resolve_addr(a2l, a.Offset)
-				if start_kernel_file == "NONE" {
+				start_kernel_file := strings.Split(resolve_addr(a2l, a.Offset), ":")
+				if start_kernel_file[0] == "NONE" {
 					panic("Error resolving start_kernel!")
 				}
-				if len(start_kernel_file) > len(start_kernel_file_tail) {
-					addr2line_prefix = start_kernel_file[:len(start_kernel_file)-len(start_kernel_file_tail)]
+				if len(start_kernel_file[0]) > len(start_kernel_file_tail) {
+					addr2line_prefix = start_kernel_file[0][:len(start_kernel_file)-len(start_kernel_file_tail)]
 				}
 			}
 		}
