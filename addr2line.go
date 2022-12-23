@@ -61,7 +61,6 @@ type Addr2line_items struct {
 // Commandline handle functions prototype
 type ins_f func(*sql.DB, string, bool)
 
-var Addr2line_cache []Addr2line_items
 var mu sync.Mutex
 
 func addr2line_init(fn string) (*addr2line.Addr2line, chan workloads) {
@@ -72,14 +71,6 @@ func addr2line_init(fn string) (*addr2line.Addr2line, chan workloads) {
 	adresses := make(chan workloads, 16)
 	go workload(a, adresses, Insert_data)
 	return a, adresses
-}
-func in_cache(Addr uint64, Addr2line_cache []Addr2line_items) (bool, string) {
-	for _, a := range Addr2line_cache {
-		if a.Addr == Addr {
-			return true, a.File_name
-		}
-	}
-	return false, ""
 }
 
 func resolve_addr(a *addr2line.Addr2line, address uint64) string {
