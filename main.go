@@ -35,7 +35,6 @@ import (
 	"strings"
 
 	"github.com/cheggaaa/pb/v3"
-	addr2line "github.com/elazarl/addr2line"
 	r2 "github.com/radareorg/r2pipe-go"
 )
 
@@ -56,7 +55,6 @@ func main() {
 	var count int
 	var id int
 	var addr2line_prefix string = ""
-	var a2l *addr2line.Addr2line
 
 	conf, err := args_parse(cmd_line_item_init())
 	if err != nil {
@@ -66,7 +64,7 @@ func main() {
 	}
 	fmt.Println("create stripped version")
 	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
-	a2l, addresses := addr2line_init(conf.LinuxWDebug)
+	context := addr2line_init(conf.LinuxWDebug)
 	t := Connect_token{conf.DBURL, conf.DBPort, conf.DBUser, conf.DBPassword, conf.DBTargetDB}
 	db := Connect_db(&t)
 	if conf.Mode&(ENABLE_VERSION_CONFIG) != 0 {
@@ -85,7 +83,7 @@ func main() {
 		for key, value := range kconfig {
 			q := fmt.Sprintf("insert into configs (config_symbol, config_value, config_instance_id_ref) values ('%s', '%s', %d);", key, value, id)
 			bar.Increment()
-			spawn_query(db, 0, "None", addresses, q)
+			spawn_query(db, 0, "None", context.ch_workload, q)
 		}
 		bar.Finish()
 	}
@@ -96,13 +94,13 @@ func main() {
 			panic(err)
 		}
 		q := fmt.Sprintf("insert into files (file_name, file_instance_id_ref) select 'NoFile',%d;", id)
-		spawn_query(db, 0, "None", addresses, q)
+		spawn_query(db, 0, "None", context.ch_workload, q)
 		q = fmt.Sprintf("insert into symbols (symbol_name,symbol_address,symbol_type,symbol_file_ref_id,symbol_instance_id_ref) "+
 			"select (select 'Indirect call'), '0x00000000', 'indirect', (select file_id from files where file_name ='NoFile' and file_instance_id_ref=%[1]d), %[1]d;", id)
-		spawn_query(db, 0, "None", addresses, q)
+		spawn_query(db, 0, "None", context.ch_workload, q)
 		q = fmt.Sprintf("insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select (select 'Indirect Calls'), "+
 			"(select file_id from files where file_name='NoFile' and file_instance_id_ref=%[1]d), %[1]d;", id)
-		spawn_query(db, 0, "None", addresses, q)
+		spawn_query(db, 0, "None", context.ch_workload, q)
 		fmt.Println("initialize analysis")
 		init_fw(r2p)
 		funcs_data = get_all_funcdata(r2p)
@@ -135,14 +133,14 @@ func main() {
 					db,
 					a.Offset,
 					strings.ReplaceAll(a.Name, "sym.", ""),
-					addresses,
+					context.ch_workload,
 					fmtstring)
 			}
 
 			// query for addr2line file prefix
 			if a.Name == "sym.start_kernel" {
 				var start_kernel_file_tail string = "init/main.c"
-				start_kernel_file := strings.Split(resolve_addr(a2l, a.Offset), ":")
+				start_kernel_file := strings.Split(resolve_addr(context, a.Offset), ":")
 				if start_kernel_file[0] == "NONE" {
 					panic("Error resolving start_kernel!")
 				}
@@ -164,12 +162,12 @@ func main() {
 				Move(r2p, a.Offset)
 				xrefs := remove_non_func(Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache), funcs_data)
 				for _, l := range xrefs {
-					source_ref := resolve_addr(a2l, l.From)
+					source_ref := resolve_addr(context, l.From)
 					spawn_query(
 						db,
 						0,
 						"None",
-						addresses,
+						context.ch_workload,
 						fmt.Sprintf(
 							"insert into xrefs (caller, callee, ref_addr, source_line, xref_instance_id_ref) "+
 								"select (Select symbol_id from symbols where symbol_address ='0x%08[1]x' and symbol_instance_id_ref=%[3]d), "+
@@ -203,7 +201,7 @@ func main() {
 		bar = pb.StartNew(len(queries))
 		for _, q := range queries {
 			bar.Increment()
-			spawn_query(db, 0, "None", addresses, q)
+			spawn_query(db, 0, "None", context.ch_workload, q)
 		}
 		bar.Finish()
 	}

@@ -33,10 +33,11 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	addr2line "github.com/elazarl/addr2line"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	addr2line "github.com/elazarl/addr2line"
 )
 
 type workloads struct {
@@ -48,8 +49,9 @@ type workloads struct {
 
 // Context type
 type Context struct {
-	instance    *addr2line.Addr2line
+	a2l         *addr2line.Addr2line
 	ch_workload chan workloads
+	mu          sync.Mutex
 }
 
 // Caches item elements
@@ -61,32 +63,24 @@ type Addr2line_items struct {
 // Commandline handle functions prototype
 type ins_f func(*sql.DB, string, bool)
 
-var Addr2line_cache []Addr2line_items
-var mu sync.Mutex
-
-func addr2line_init(fn string) (*addr2line.Addr2line, chan workloads) {
+func addr2line_init(fn string) *Context {
 	a, err := addr2line.New(fn)
 	if err != nil {
 		panic(err)
 	}
-	adresses := make(chan workloads, 16)
-	go workload(a, adresses, Insert_data)
-	return a, adresses
-}
-func in_cache(Addr uint64, Addr2line_cache []Addr2line_items) (bool, string) {
-	for _, a := range Addr2line_cache {
-		if a.Addr == Addr {
-			return true, a.File_name
-		}
-	}
-	return false, ""
+	addresses := make(chan workloads, 16)
+	context := &Context{a2l: a, ch_workload: addresses}
+
+	go workload(context, Insert_data)
+
+	return context
 }
 
-func resolve_addr(a *addr2line.Addr2line, address uint64) string {
+func resolve_addr(context *Context, address uint64) string {
 	var res string = ""
-	mu.Lock()
-	rs, _ := a.Resolve(address)
-	mu.Unlock()
+	context.mu.Lock()
+	rs, _ := context.a2l.Resolve(address)
+	context.mu.Unlock()
 	if len(rs) == 0 {
 		res = "NONE"
 	}
@@ -96,20 +90,20 @@ func resolve_addr(a *addr2line.Addr2line, address uint64) string {
 	return res
 }
 
-func workload(a *addr2line.Addr2line, addresses chan workloads, insert_func ins_f) {
+func workload(context *Context, insert_func ins_f) {
 	var e workloads
 	var qready string
 
 	for {
-		e = <-addresses
+		e = <-context.ch_workload
 		switch e.Name {
 		case "None":
 			insert_func(e.DB, e.Query, false)
 			break
 		default:
-			mu.Lock()
-			rs, _ := a.Resolve(e.Addr)
-			mu.Unlock()
+			context.mu.Lock()
+			rs, _ := context.a2l.Resolve(e.Addr)
+			context.mu.Unlock()
 			if len(rs) == 0 {
 				qready = fmt.Sprintf(e.Query, "NONE")
 			}
