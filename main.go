@@ -64,9 +64,8 @@ func main() {
 	}
 	fmt.Println("create stripped version")
 	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
-	context := addr2line_init(conf.LinuxWDebug)
 	t := Connect_token{conf.DBURL, conf.DBPort, conf.DBUser, conf.DBPassword, conf.DBTargetDB}
-	db := Connect_db(&t)
+	context := A2L_resolver__init(conf.LinuxWDebug, Connect_db(&t), false)
 	if conf.Mode&(ENABLE_VERSION_CONFIG) != 0 {
 		config, _ := get_FromFile(conf.KConfig_fn)
 		makefile, _ := get_FromFile(conf.KMakefile)
@@ -74,7 +73,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(v)
+//		fmt.Println(v)
+
 		q := fmt.Sprintf(Insert_Instance_Q, v.Version, v.Patchlevel, v.Sublevel, v.Extraversion, conf.Note)
 		id = Insert_datawID(db, q)
 		kconfig := parse_config(config)
@@ -93,11 +93,11 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		q := fmt.Sprintf(Insert_Files_Q, id)
+		q := fmt.Sprintf(Insert_Files_Ind_Q, id)
 		spawn_query(db, 0, "None", context.ch_workload, q)
-		q = fmt.Sprintf(Insert_Symbols_Q, id)
+		q = fmt.Sprintf(Insert_Symbols_Ind_Q, id)
 		spawn_query(db, 0, "None", context.ch_workload, q)
-		q = fmt.Sprintf(Insert_Tags_Q, id)
+		q = fmt.Sprintf(Insert_Tags_Ind_Q, id)
 		spawn_query(db, 0, "None", context.ch_workload, q)
 		fmt.Println("initialize analysis")
 		init_fw(r2p)
@@ -117,7 +117,7 @@ func main() {
 			}
 			if strings.Contains(a.Name, "sym.") || a.Indirect {
 				fmtstring := fmt.Sprintf(
-					Insert_Mixed_Q,
+					Insert_Symbols_Files_Q,
 					id,
 					strings.ReplaceAll(a.Name, "sym.", ""),
 					fmt.Sprintf("0x%08x", a.Offset),
