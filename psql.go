@@ -36,6 +36,15 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const Insert_Instance_Q	string =	"insert into instances (version_string, note) values ('%d.%d.%d%s', '%s');"
+const Insert_Config_Q	string =	"insert into configs (config_symbol, config_value, config_instance_id_ref) values ('%s', '%s', %d);"
+const Insert_Files_Q	string =	"insert into files (file_name, file_instance_id_ref) select 'NoFile',%d;"
+const Insert_Symbols_Q	string =	"insert into symbols (symbol_name,symbol_address,symbol_type,symbol_file_ref_id,symbol_instance_id_ref) "+"select (select 'Indirect call'), '0x00000000', 'indirect', (select file_id from files where file_name ='NoFile' and file_instance_id_ref=%[1]d), %[1]d;"
+const Insert_Tags_Q	string =	"insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select (select 'Indirect Calls'), "+"(select file_id from files where file_name='NoFile' and file_instance_id_ref=%[1]d), %[1]d;"
+const Insert_Mixed_Q	string =	"insert into files (file_name, file_instance_id_ref) Select '%%[1]s', %[1]d Where not exists "+"(select * from files where file_name='%%[1]s' and file_instance_id_ref=%[1]d);"+"insert into symbols (symbol_name, symbol_address, symbol_type, symbol_file_ref_id, symbol_instance_id_ref) "+"select '%[2]s', '%[3]s', '%[4]s', (select file_id from files where file_name='%%[1]s' and file_instance_id_ref=%[1]d), %[1]d;"
+const Insert_Xrefs_Q	string =	"insert into xrefs (caller, callee, ref_addr, source_line, xref_instance_id_ref) "+"select (Select symbol_id from symbols where symbol_address ='0x%08[1]x' and symbol_instance_id_ref=%[3]d), "+"(Select symbol_id from symbols where symbol_address ='0x%08[2]x' and symbol_instance_id_ref=%[3]d limit 1), "+"'0x%08[5]x', "+"'%[4]s', "+"%[3]d;"
+const Insert_Tags2_Q	string =	"insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select '%%[1]s', "+"(select file_id from files where file_name='%[1]s%%[2]s' and file_instance_id_ref=%%[3]d) as fn_id, %%[3]d "+"WHERE EXISTS ( select file_id from files where file_name='%[1]s%%[2]s' and file_instance_id_ref=%%[3]d);"
+
 // Sql connection configuration
 type Connect_token struct {
 	Host   string

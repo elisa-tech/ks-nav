@@ -75,13 +75,13 @@ func main() {
 			panic(err)
 		}
 		fmt.Println(v)
-		q := fmt.Sprintf("insert into instances (version_string, note) values ('%d.%d.%d%s', '%s');", v.Version, v.Patchlevel, v.Sublevel, v.Extraversion, conf.Note)
+		q := fmt.Sprintf(Insert_Instance_Q, v.Version, v.Patchlevel, v.Sublevel, v.Extraversion, conf.Note)
 		id = Insert_datawID(db, q)
 		kconfig := parse_config(config)
 		fmt.Println("store config")
 		bar = pb.StartNew(len(kconfig))
 		for key, value := range kconfig {
-			q := fmt.Sprintf("insert into configs (config_symbol, config_value, config_instance_id_ref) values ('%s', '%s', %d);", key, value, id)
+			q := fmt.Sprintf(Insert_Config_Q, key, value, id)
 			bar.Increment()
 			spawn_query(db, 0, "None", context.ch_workload, q)
 		}
@@ -93,13 +93,11 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		q := fmt.Sprintf("insert into files (file_name, file_instance_id_ref) select 'NoFile',%d;", id)
+		q := fmt.Sprintf(Insert_Files_Q, id)
 		spawn_query(db, 0, "None", context.ch_workload, q)
-		q = fmt.Sprintf("insert into symbols (symbol_name,symbol_address,symbol_type,symbol_file_ref_id,symbol_instance_id_ref) "+
-			"select (select 'Indirect call'), '0x00000000', 'indirect', (select file_id from files where file_name ='NoFile' and file_instance_id_ref=%[1]d), %[1]d;", id)
+		q = fmt.Sprintf(Insert_Symbols_Q, id)
 		spawn_query(db, 0, "None", context.ch_workload, q)
-		q = fmt.Sprintf("insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select (select 'Indirect Calls'), "+
-			"(select file_id from files where file_name='NoFile' and file_instance_id_ref=%[1]d), %[1]d;", id)
+		q = fmt.Sprintf(Insert_Tags_Q, id)
 		spawn_query(db, 0, "None", context.ch_workload, q)
 		fmt.Println("initialize analysis")
 		init_fw(r2p)
@@ -119,11 +117,7 @@ func main() {
 			}
 			if strings.Contains(a.Name, "sym.") || a.Indirect {
 				fmtstring := fmt.Sprintf(
-					"insert into files (file_name, file_instance_id_ref) Select '%%[1]s', %[1]d Where not exists "+
-						"(select * from files where file_name='%%[1]s' and file_instance_id_ref=%[1]d);"+
-						"insert into symbols (symbol_name, symbol_address, symbol_type, symbol_file_ref_id, symbol_instance_id_ref) "+
-						"select '%[2]s', '%[3]s', '%[4]s', (select file_id from files where file_name='%%[1]s' and file_instance_id_ref=%[1]d), %[1]d;"+
-						"",
+					Insert_Mixed_Q,
 					id,
 					strings.ReplaceAll(a.Name, "sym.", ""),
 					fmt.Sprintf("0x%08x", a.Offset),
@@ -169,13 +163,7 @@ func main() {
 						"None",
 						context.ch_workload,
 						fmt.Sprintf(
-							"insert into xrefs (caller, callee, ref_addr, source_line, xref_instance_id_ref) "+
-								"select (Select symbol_id from symbols where symbol_address ='0x%08[1]x' and symbol_instance_id_ref=%[3]d), "+
-								"(Select symbol_id from symbols where symbol_address ='0x%08[2]x' and symbol_instance_id_ref=%[3]d limit 1), "+
-								"'0x%08[5]x', "+
-								"'%[4]s', "+
-								"%[3]d;"+
-								"",
+							Insert_Xrefs_Q,
 							a.Offset,
 							l.To,
 							id,
@@ -186,9 +174,7 @@ func main() {
 		}
 		bar.Finish()
 	}
-	tags_query := fmt.Sprintf("insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select '%%[1]s', "+
-		"(select file_id from files where file_name='%[1]s%%[2]s' and file_instance_id_ref=%%[3]d) as fn_id, %%[3]d "+
-		"WHERE EXISTS ( select file_id from files where file_name='%[1]s%%[2]s' and file_instance_id_ref=%%[3]d);", addr2line_prefix)
+	tags_query := fmt.Sprintf(Insert_Tags2_Q,addr2line_prefix)
 	if conf.Mode&ENABLE_MAINTAINERS != 0 {
 		fmt.Println("Collecting tags")
 		s, err := get_FromFile(conf.Maintainers_fn)
