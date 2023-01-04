@@ -46,11 +46,7 @@ type Connect_token struct {
 	Dbname string
 }
 
-type Context struct {
-        db              *sql.DB
-	Ch_workload	chan Workload
-
-type Insert_Instance_A struct {
+type Insert_Instance_Args struct {
 	Version		int
 	Patchlevel	int
 	Sublevel	int
@@ -58,34 +54,38 @@ type Insert_Instance_A struct {
 	Note		string
 }
 
-type Insert_Config_A struct {
+type Insert_Config_Args struct {
 	Config_key	string
 	Config_val	string
 	Instance_no	int
 }
-type Insert_Files_Ind_A struct {
+type Insert_Files_Ind_Args struct {
 	Id		int
 }
-type Insert_Symbols_Ind_A struct {
+type Insert_Symbols_Ind_Args struct {
 	Id		int
 }
-type Insert_Tags_Ind_A struct {
+type Insert_Tags_Ind_Args struct {
 	Id		int
 }
 
-type Insert_Symbols_Files_A struct {
+type Insert_Symbols_Files_Args struct {
 	Id		int
 	Symbol_Name	string
 	Symbol_Offset	string
 	Symbol_Type	string
 }
 
-type Insert_Xrefs_A struct {
+type Insert_Xrefs_Args struct {
 	Caller_Offset	uint64
 	Calling_Offset	uint64
 	Callee_Offset	uint64
 	Id		int
 	Source_line	string
+}
+
+type Insert_Tags_Args struct {
+	addr2line_prefix string
 }
 
 // Connects the target db and returns the handle
