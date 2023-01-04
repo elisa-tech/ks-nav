@@ -57,8 +57,9 @@ type Workload_Type int64
 const (
 	_               Workload_Type         = iota
 	GENERATE_QUERY
+	EXECUTE_QUERY_ONLY
 	GENERATE_QUERY_AND_EXECUTE
-	GENERATE_QUERY_AND_EXECUTE_W_ARGS
+	GENERATE_QUERY_AND_EXECUTE_W_A2l
 	Workload_Type_Last
 )
 
@@ -135,7 +136,7 @@ func workload(context *Context, insert_func ins_f) {
 		case GENERATE_QUERY_AND_EXECUTE:
 			insert_func(context.DB, e.Query_str, false)
 			break
-		case GENERATE_QUERY_AND_EXECUTE_W_ARG:
+		case GENERATE_QUERY_AND_EXECUTE_W_A2L:
 			context.mu.Lock()
 			rs, _ := context.a2l.Resolve(e.Addr2ln_offset)
 			context.mu.Unlock()
@@ -171,18 +172,22 @@ func Generate_Query_Str(Arg_struct interface{} )error{
 		(*Q_WL).Query_str = fmt.Sprintf(Query_fmts[5], arg.Id, arg.Symbol_Name, arg.Symbol_Offset, arg.Symbol_Type)
 	case Insert_Xrefs_Args:
 		(*Q_WL).Query_str = fmt.Sprintf(Query_fmts[6], arg.Caller_Offset, arg.Callee_Offset, arg.Id, arg.Source_line, arg.Calling_Offset)
+	case Insert_Tags_Args:
+		(*Q_WL).Query_str = fmt.Sprintf(Query_fmts[7], arg.addr2line_prefix)
 	default:
 		err = errors.New("GENERATE_QUERY: Unknown workload argument")
 	}
 }
 
-func spawn_query(ctx *Context, Q_WL *Workload) error {
+func query_mgmt(ctx *Context, Q_WL *Workload) error {
 	var err error
 
 	switch (*Q_WL).Workload_type {
 	case GENERATE_QUERY:
 		err = Generate_Query_Str((*Q_WL).Query_args)
-	case GENERATE_QUERY_AND_EXECUTE, GENERATE_QUERY_AND_EXECUTE_W_ARGS:
+	case EXECUTE_QUERY_ONLY:
+		(*ctx).ch_workload <- *Q_WL
+	case GENERATE_QUERY_AND_EXECUTE, GENERATE_QUERY_AND_EXECUTE_W_A2L:
 		err = Generate_Query_Str()
 		if err == nil {
 			(*ctx).ch_workload <- *Q_WL
