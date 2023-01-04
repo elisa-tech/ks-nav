@@ -36,7 +36,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-
+	"errors"
 	addr2line "github.com/elazarl/addr2line"
 )
 
@@ -59,7 +59,7 @@ const (
 	GENERATE_QUERY
 	EXECUTE_QUERY_ONLY
 	GENERATE_QUERY_AND_EXECUTE
-	GENERATE_QUERY_AND_EXECUTE_W_A2l
+	GENERATE_QUERY_AND_EXECUTE_W_A2L
 	Workload_Type_Last
 )
 
@@ -67,7 +67,6 @@ type Workload struct {
 	Addr2ln_offset	uint64
 	Addr2ln_name	string
 	Query_str	string
-	Statement       *sql.Stmt
 	Query_args	interface{}
 	Workload_type	Workload_Type
 }
@@ -75,7 +74,7 @@ type Workload struct {
 // Context type
 type Context struct {
 	a2l		*addr2line.Addr2line
-	ch_workload	chan Workloads
+	ch_workload	chan Workload
 	mu		sync.Mutex
 	DB		*sql.DB
 }
@@ -96,12 +95,12 @@ func Fake_Insert_data(context *Context, query string){
 	Test_result=append(Test_result)
 }
 
-func A2L_resolver__init(fn string, DB_inst *psql.DB, test bool) *Context {
+func A2L_resolver__init(fn string, DB_inst *sql.DB, test bool) *Context {
 	a, err := addr2line.New(fn)
 	if err != nil {
 		panic(err)
 	}
-	addresses := make(chan workloads, 16)
+	addresses := make(chan Workload, 16)
 	context := &Context{a2l: a, ch_workload: addresses, DB: DB_inst}
 
 	if !test {
@@ -127,14 +126,14 @@ func resolve_addr(context *Context, address uint64) string {
 }
 
 func workload(context *Context, insert_func ins_f) {
-	var e workloads
+	var e Workload
 	var qready string
 
 	for {
 		e = <-context.ch_workload
 		switch e.Workload_type {
-		case GENERATE_QUERY_AND_EXECUTE:
-			insert_func(context.DB, e.Query_str, false)
+		case GENERATE_QUERY_AND_EXECUTE, EXECUTE_QUERY_ONLY:
+			insert_func(context, e.Query_str)
 			break
 		case GENERATE_QUERY_AND_EXECUTE_W_A2L:
 			context.mu.Lock()
@@ -149,15 +148,17 @@ func workload(context *Context, insert_func ins_f) {
 				break
 					}
 			}
-			insert_func(context.DB, qready, false)
+			insert_func(context, qready)
 			break
 		default:
 		}
 	}
 }
 
-func Generate_Query_Str(Arg_struct interface{} )error{
-	switch arg := Arg_struct.(type) {
+func Generate_Query_Str(Q_WL *Workload)error{
+	var err error = nil
+
+	switch arg := (*Q_WL).Query_args.(type) {
 	case Insert_Instance_Args:
 		(*Q_WL).Query_str = fmt.Sprintf(Query_fmts[0], arg.Version, arg.Patchlevel, arg.Sublevel, arg.Extraversion, arg.Note)
 	case Insert_Config_Args:
@@ -177,6 +178,7 @@ func Generate_Query_Str(Arg_struct interface{} )error{
 	default:
 		err = errors.New("GENERATE_QUERY: Unknown workload argument")
 	}
+	return err
 }
 
 func query_mgmt(ctx *Context, Q_WL *Workload) error {
@@ -184,11 +186,11 @@ func query_mgmt(ctx *Context, Q_WL *Workload) error {
 
 	switch (*Q_WL).Workload_type {
 	case GENERATE_QUERY:
-		err = Generate_Query_Str((*Q_WL).Query_args)
+		err = Generate_Query_Str(Q_WL)
 	case EXECUTE_QUERY_ONLY:
 		(*ctx).ch_workload <- *Q_WL
 	case GENERATE_QUERY_AND_EXECUTE, GENERATE_QUERY_AND_EXECUTE_W_A2L:
-		err = Generate_Query_Str()
+		err = Generate_Query_Str(Q_WL)
 		if err == nil {
 			(*ctx).ch_workload <- *Q_WL
 			}

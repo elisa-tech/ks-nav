@@ -47,9 +47,9 @@ type Connect_token struct {
 }
 
 type Insert_Instance_Args struct {
-	Version		int
-	Patchlevel	int
-	Sublevel	int
+	Version		int64
+	Patchlevel	int64
+	Sublevel	int64
 	Extraversion	string
 	Note		string
 }
@@ -103,7 +103,7 @@ func Connect_db(t *Connect_token) *sql.DB {
 // Executes insert queries
 func Insert_data(context *Context, query string) {
 
-	_, err := (*context).db.Exec(query)
+	_, err := (*context).DB.Exec(query)
 	if err != nil {
 		fmt.Println("##################################################")
 		fmt.Println(query)
@@ -116,14 +116,14 @@ func Insert_data(context *Context, query string) {
 func Insert_datawID(context *Context, query string) int {
 	var res int
 
-	_, err := (*context).db.Exec(query)
+	_, err := (*context).DB.Exec(query)
 	if err != nil {
 		fmt.Println("##################################################")
 		fmt.Println(query)
 		fmt.Println("##################################################")
 		panic(err)
 	}
-	rows, err := (*context).db.Query("SELECT currval('instances_instance_id_seq');")
+	rows, err := (*context).DB.Query("SELECT currval('instances_instance_id_seq');")
 	if err != nil {
 		panic(err)
 	}
