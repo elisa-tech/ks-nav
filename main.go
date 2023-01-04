@@ -55,6 +55,7 @@ func main() {
 	var count int
 	var id int
 	var addr2line_prefix string = ""
+	var wl *Workload
 
 	conf, err := args_parse(cmd_line_item_init())
 	if err != nil {
@@ -73,17 +74,17 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		wl:=Workload{Workload_type: GENERATE_QUERY, Query_args: Insert_Instance_Args{v.Version, v.Patchlevel, v.Sublevel, v.Extraversion, conf.Note}}
-		query_mgmt(&context, &wl}
-		id = Insert_datawID(db, wl.Query_str)
+		wl=&Workload{Workload_type: GENERATE_QUERY, Query_args: Insert_Instance_Args{v.Version, v.Patchlevel, v.Sublevel, v.Extraversion, conf.Note}}
+		query_mgmt(context, wl)
+		id = Insert_datawID(context, (*wl).Query_str)
 		kconfig := parse_config(config)
 
 		fmt.Println("store config")
 		bar = pb.StartNew(len(kconfig))
-		wl.Workload_type = GENERATE_QUERY_AND_EXECUTE
+		(*wl).Workload_type = GENERATE_QUERY_AND_EXECUTE
 		for key, value := range kconfig {
-			wl.Query_args = Insert_Config_Args{key, value, id}
-			query_mgmt(&context, &wl)
+			(*wl).Query_args = Insert_Config_Args{key, value, id}
+			query_mgmt(context, wl)
 			bar.Increment()
 		}
 		bar.Finish()
@@ -94,13 +95,13 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		wl.Workload_type = GENERATE_QUERY_AND_EXECUTE
-		wl.Query_args = Insert_Files_Ind_Args{id}
-		query_mgmt(&context, &wl)
-		wl.Query_args = Insert_Symbols_Ind_Args{id}
-		query_mgmt(&context, &wl)
-		wl.Query_args = Insert_Tags_Ind_Args{id}
-		query_mgmt(&context, &wl)
+		(*wl).Workload_type = GENERATE_QUERY_AND_EXECUTE
+		(*wl).Query_args = Insert_Files_Ind_Args{id}
+		query_mgmt(context, wl)
+		(*wl).Query_args = Insert_Symbols_Ind_Args{id}
+		query_mgmt(context, wl)
+		(*wl).Query_args = Insert_Tags_Ind_Args{id}
+		query_mgmt(context, wl)
 		fmt.Println("initialize analysis")
 		init_fw(r2p)
 		funcs_data = get_all_funcdata(r2p)
@@ -118,13 +119,18 @@ func main() {
 				symbtype = "indirect"
 			}
 			if strings.Contains(a.Name, "sym.") || a.Indirect {
-				wl=Workload{
+				wl=&Workload{
 					Workload_type:	GENERATE_QUERY_AND_EXECUTE_W_A2L,
 					Addr2ln_offset:	a.Offset,
 					Addr2ln_name:	strings.ReplaceAll(a.Name, "sym.", ""),
-					Query_args:	Insert_Symbols_Files_Args{id, strings.ReplaceAll(a.Name, "sym.", ""), fmt.Sprintf("0x%08x", a.Offset), symbtype}
+					Query_args:	Insert_Symbols_Files_Args{
+						Id:		id,
+						Symbol_Name:	strings.ReplaceAll(a.Name, "sym.", ""),
+						Symbol_Offset:	fmt.Sprintf("0x%08x", a.Offset),
+						Symbol_Type:	symbtype,
+						},
 					}
-				query_mgmt(&context, &wl)
+				query_mgmt(context, wl)
 			}
 
 			// query for addr2line file prefix
@@ -153,17 +159,17 @@ func main() {
 				xrefs := remove_non_func(Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache), funcs_data)
 				for _, l := range xrefs {
 					source_ref := resolve_addr(context, l.From)
-					wl.Workload_type = GENERATE_QUERY_AND_EXECUTE
-					wl.Query_args = Insert_Xrefs_Args{Caller_Offset: a.Offset, Callee_Offset: l.To, Id: id, Source_line: source_ref, Calling_Offset: l.From}
-					query_mgmt(&context, &wl)
+					(*wl).Workload_type = GENERATE_QUERY_AND_EXECUTE
+					(*wl).Query_args = Insert_Xrefs_Args{Caller_Offset: a.Offset, Callee_Offset: l.To, Id: id, Source_line: source_ref, Calling_Offset: l.From}
+					query_mgmt(context, wl)
 				}
 			}
 		}
 		bar.Finish()
 	}
-	wl.Workload_type = GENERATE_QUERY
-	wl.Query_args = Insert_Tags_Args{addr2line_prefix}
-	query_mgmt(&context, &wl)
+	(*wl).Workload_type = GENERATE_QUERY
+	(*wl).Query_args = Insert_Tags_Args{addr2line_prefix}
+	query_mgmt(context, wl)
 	if conf.Mode&ENABLE_MAINTAINERS != 0 {
 		fmt.Println("Collecting tags")
 		s, err := get_FromFile(conf.Maintainers_fn)
@@ -172,13 +178,13 @@ func main() {
 		}
 		ss := s[seek2data(s):]
 		items := parse_maintainers(ss)
-		queries := generate_queries(conf.Maintainers_fn, items, wl.Query_str, id)
+		queries := generate_queries(conf.Maintainers_fn, items, (*wl).Query_str, id)
 		bar = pb.StartNew(len(queries))
-		wl.Workload_type = EXECUTE_QUERY_ONLY
+		(*wl).Workload_type = EXECUTE_QUERY_ONLY
 		for _, q := range queries {
 			bar.Increment()
-			wl.Query_str = q
-			query_mgmt(&context, &wl)
+			(*wl).Query_str = q
+			query_mgmt(context, wl)
 		}
 		bar.Finish()
 	}
