@@ -6,4 +6,6 @@ amd64: nav.go
 	GOARCH="amd64" GOOS="linux" go build
 upx:	nav
 	upx nav
+test:
+	go test
 
