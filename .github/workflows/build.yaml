@@ -1,0 +1,48 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Install radare2-dev package
+        run: |
+          sudo apt-get install --assume-yes libradare2-dev
+
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Run unit tests
+        run: make test
+
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+    needs: [test]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Install radare2-dev package
+        run: |
+          sudo apt-get install --assume-yes libradare2-dev
+
+      - name: Build
+        run: make
