@@ -1,0 +1,40 @@
+name: Build
+on:
+  push:
+    branches:
+      - nav-kernel-bin
+  pull_request:
+    branches:
+      - nav-kernel-bin
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Run unit tests
+        run: make test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Build
+        run: make
