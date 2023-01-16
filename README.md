@@ -8,6 +8,17 @@ Such database can help manual source code analysis, easing the source code,
 and allowing automated checks such as the scan for recursive function and 
 similar queries.
 
+## Prerequisites
+In order to develop this project you need to install the radare2 dev package:
+
+#### Fedora
+```azure
+$ sudo dnf install radare2-devel
+```
+#### Arch Linux 
+```azure
+$ sudo pacman -S radare2
+```
 ## Build
 
 kern_bin_db is implemented in Golang. Golang application are usually easy 
