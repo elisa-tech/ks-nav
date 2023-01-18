@@ -106,21 +106,21 @@ func cmdLineItemInit() []cmdLineItems {
 	var res []cmdLineItems
 
 	pushCmdLineItem("-j", "Force Json output with subsystems data", true, false, funcOutType, &res)
-	pushCmdLineItem("-s", "Specifies Symbol", true, true, funcSymbol, &res)
-	pushCmdLineItem("-i", "Specifies Instance", true, true, funcInstance, &res)
+	pushCmdLineItem("-s", "Specifies symbol", true, true, funcSymbol, &res)
+	pushCmdLineItem("-i", "Specifies instance", true, true, funcInstance, &res)
 	pushCmdLineItem("-f", "Specifies config file", true, false, funcJconf, &res)
 	pushCmdLineItem("-u", "Forces use specified database userid", true, false, funcDBUser, &res)
 	pushCmdLineItem("-p", "Forces use specified password", true, false, funcDBPass, &res)
 	pushCmdLineItem("-d", "Forces use specified DBHost", true, false, funcDBHost, &res)
 	pushCmdLineItem("-p", "Forces use specified DBPort", true, false, funcDBPort, &res)
-	pushCmdLineItem("-m", "Sets display Mode 2=subsystems,1=all", true, false, funcMode, &res)
-	pushCmdLineItem("-h", "This Help", false, false, funcHelp, &res)
+	pushCmdLineItem("-m", "Sets display mode 2=subsystems,1=all", true, false, funcMode, &res)
+	pushCmdLineItem("-h", "This help", false, false, funcHelp, &res)
 
 	return res
 }
 
 func funcHelp(conf *configuration, fn []string) error {
-	return errors.New("command Help")
+	return errors.New("command help")
 }
 
 func funcOutType(conf *configuration, JOut []string) error {
@@ -186,7 +186,7 @@ func funcMode(conf *configuration, mode []string) error {
 		return err
 	}
 	if s < 1 || s > 2 {
-		return errors.New("unsupported Mode")
+		return errors.New("unsupported mode")
 	}
 	(*conf).Mode = s
 	return nil

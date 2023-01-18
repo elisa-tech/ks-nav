@@ -83,25 +83,25 @@ func TestConfig(t *testing.T) {
 	}
 
 	if !compareConfigs(conf, defaultConfig) {
-		t.Error("unexpected change in default config")
+		t.Error("Unexpected change in default config")
 	}
 
 	os.Args = []string{"nav", "-i", "1", "-s"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err == nil {
-		t.Error("error Missing switch argument not detected", conf)
+		t.Error("Missing switch argument not detected", conf)
 	}
 
 	os.Args = []string{"nav", "-i", "a", "-s", "symb"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err == nil {
-		t.Error("error switch arg type mismatch not detected", conf)
+		t.Error("Switch arg type mismatch not detected", conf)
 	}
 
 	os.Args = []string{"nav", "-i", "a", "-s", "symb", "-f"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err == nil {
-		t.Error("error Missing optional switch argument not detected", conf)
+		t.Error("Missing optional switch argument not detected", conf)
 	}
 
 	_, filename, _, _ := runtime.Caller(0)
@@ -110,10 +110,10 @@ func TestConfig(t *testing.T) {
 	os.Args = []string{"nav", "-i", "1", "-s", "symb", "-f", current + "/t_files/dummy.json"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err == nil {
-		t.Error("undetected missing file", conf)
+		t.Error("Undetected missing file", conf)
 	}
 	if !compareConfigs(conf, defaultConfig) {
-		t.Error("unexpected change in default config")
+		t.Error("Unexpected change in default config")
 	}
 
 	os.Args = []string{"nav", "-i", "1", "-s", "symb", "-f", current + "/t_files/test1.json"}
@@ -122,7 +122,7 @@ func TestConfig(t *testing.T) {
 		t.Error("Unexpected conf error while reading from existing file", err, current+"/t_files/test1.json")
 	}
 	if !compareConfigs(conf, TestConfig) {
-		t.Error("unexpected difference between actual and loaded config", conf, TestConfig)
+		t.Error("Unexpected difference between actual and loaded config", conf, TestConfig)
 	}
 
 	tmp := TestConfig
@@ -133,7 +133,7 @@ func TestConfig(t *testing.T) {
 		t.Error("Unexpected conf error while reading from existing file", err, current+"/t_files/test1.json")
 	}
 	if !compareConfigs(conf, tmp) {
-		t.Error("unexpected difference between actual and loaded modified config", conf, TestConfig)
+		t.Error("Unexpected difference between actual and loaded modified config", conf, TestConfig)
 	}
 
 }

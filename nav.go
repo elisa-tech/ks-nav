@@ -92,14 +92,14 @@ func generateOutput(db *sql.DB, conf *configuration) (string, error) {
 
 	start, err := sym2num(db, (*conf).Symbol, (*conf).Instance)
 	if err != nil {
-		fmt.Println("Symbol not found")
+		fmt.Println("symbol not found")
 		return "", err
 	}
 
 	graphOutput = fmtDotHeader[opt2num((*conf).Jout)]
 	entry, err := getEntryByID(db, start, (*conf).Instance, cache2)
 	if err != nil {
-		entryName = "Unknown"
+		entryName = "unknown"
 		return "", err
 	} else {
 		entryName = entry.symbol
@@ -136,7 +136,7 @@ func generateOutput(db *sql.DB, conf *configuration) (string, error) {
 		jsonOutput = fmt.Sprintf(jsonOutputFMT, b64dot, (*conf).Jout, symbdata)
 
 	default:
-		return "", errors.New("unknown output Mode")
+		return "", errors.New("unknown output mode")
 	}
 	return jsonOutput, nil
 }

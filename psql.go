@@ -255,7 +255,7 @@ func navigate(db *sql.DB, symbol_id int, parentDisplay string, visited *[]int, p
 		for _, curr := range successors {
 			entry, err := getEntryByID(db, curr.symID, instance, cache.entries)
 			if err != nil {
-				r = "Unknown"
+				r = "unknown"
 			} else {
 				r = entry.symbol
 			}
@@ -270,7 +270,7 @@ func navigate(db *sql.DB, symbol_id int, parentDisplay string, visited *[]int, p
 					if tmp != "" {
 						r = tmp
 					} else {
-						r = "UNDEFINED SUBSYSTEM"
+						r = "undefined subsystem"
 					}
 				}
 				if l != r {
