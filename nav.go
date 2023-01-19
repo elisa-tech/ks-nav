@@ -68,10 +68,10 @@ var fmtDotHeader = []string{
 
 func opt2num(s string) int {
 	var opt = map[string]int{
-		"GraphOnly":       1,
-		"JsonOutputPlain": 2,
-		"JsonOutputB64":   3,
-		"JsonOutputGZB64": 4,
+		"graphOnly":       1,
+		"jsonOutputPlain": 2,
+		"jsonOutputB64":   3,
+		"jsonOutputGZB64": 4,
 	}
 	val, ok := opt[s]
 	if !ok {
