@@ -19,8 +19,8 @@ If you have issues or if you want to purpose a new feature, feel
 free to just open issue or a pull request.
 
 # Opening a PR
-
-To ensure that the code base stays clean and consistent, we are adhering to the following 
+￼
+To ensure that the code base stays clean and consistent, we are adhering to the following
 rules:
 
 * Follow Go conventions where applicable (e.g. naming using camelCase or PascalCase)

@@ -28,7 +28,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-package main
+package main // import "golang.org/x/tools/cmd/gorename"
 
 import (
 	"bytes"
@@ -38,17 +38,18 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 const (
-	graphOnly	int	= iota
+	graphOnly	int = iota
 	jsonOutputPlain
 	jsonOutputB64
 	jsonOutputGZB64
 	outputLast
 )
 
-const	jsonOutputFMT	string = "{\"graph\": \"%s\",\"graph_type\":\"%s\",\"symbols\": [%s]}"
+const jsonOutputFMT string = "{\"graph\": \"%s\",\"graph_type\":\"%s\",\"symbols\": [%s]}"
 
 var fmtDot = []string{
 	"",
@@ -66,6 +67,11 @@ var fmtDotHeader = []string{
 	"digraph G {\n",
 }
 
+var fmtDotNodeHighlightWSymb = "\"%[1]s\" [shape=record style=\"rounded,filled,bold\" fillcolor=yellow label=\"%[1]s|%[2]s\"]\n"
+var fmtDotNodeHighlightWoSymb = "\"%[1]s\" [shape=record style=\"rounded,filled,bold\" fillcolor=yellow label=\"%[1]s\"]\n"
+
+var fmtNodeDefault = "node [shape=\"box\"];"
+
 func opt2num(s string) int {
 	var opt = map[string]int{
 		"graphOnly":       1,
@@ -80,6 +86,34 @@ func opt2num(s string) int {
 	return val
 }
 
+func decorateLine(l string, r string, adjm []adjM) string {
+	var res string = " [label=\""
+
+	for _, item := range adjm {
+		if (item.l.subsys == l) && (item.r.subsys == r) {
+			tmp := fmt.Sprintf("%s([%s]%s),\\n", item.r.symbol, item.r.addressRef, item.r.sourceRef)
+			if !strings.Contains(res, tmp) {
+				res = res + fmt.Sprintf("%s([%s]%s),\\n", item.r.symbol, item.r.addressRef, item.r.sourceRef)
+			}
+		}
+	}
+	res = res + "\"]"
+	return res
+}
+
+func decorate(dot_str string, adjm []adjM) string {
+	var res string
+
+	dot_body := strings.Split(dot_str, "\n")
+	for i, line := range dot_body {
+		split := strings.Split(line, "->")
+		if len(split) == 2 {
+			res = res + dot_body[i] + decorateLine(strings.TrimSpace(strings.Replace(split[0], "\"", "", -1)), strings.TrimSpace(strings.Replace(split[1], "\"", "", -1)), adjm) + "\n"
+		}
+	}
+	return res
+}
+
 func generateOutput(db *sql.DB, conf *configuration) (string, error) {
 	var graphOutput string
 	var jsonOutput string
@@ -87,43 +121,70 @@ func generateOutput(db *sql.DB, conf *configuration) (string, error) {
 	var visited []int
 	var entryName string
 	var output string
+	var adjm []adjM
 
-	cache1 := make(map[int][]entry)
+	cache := make(map[int][]entry)
 	cache2 := make(map[int]entry)
 	cache3 := make(map[string]string)
 
-	start, err := sym2num(db, (*conf).Symbol, (*conf).Instance)
+	start, err := sym2num(db, (*conf).symbol, (*conf).instance)
 	if err != nil {
 		fmt.Println("symbol not found")
 		return "", err
 	}
 
-	graphOutput = fmtDotHeader[opt2num((*conf).Jout)]
-	entry, err := getEntryByID(db, start, (*conf).Instance, cache2)
+	graphOutput = fmtDotHeader[opt2num((*conf).jout)]
+	entry, err := getEntryById(db, start, (*conf).instance, cache2)
 	if err != nil {
-		entryName = "unknown"
+		entryName = "Unknown"
 		return "", err
 	} else {
 		entryName = entry.symbol
 	}
+	start_subsys, _ := getSubsysFromSymbolName(db, entryName, (*conf).instance, cache3)
+	if start_subsys == "" {
+		start_subsys = SUBSYS_UNDEF
+	}
 
-	navigate(db, start, entryName, &visited, prod, (*conf).Instance, cache{cache1, cache2, cache3}, (*conf).Mode, (*conf).Excluded, 0, (*conf).MaxDepth, fmtDot[opt2num((*conf).Jout)], &output)
+	if ((*conf).mode == printTargeted) && len((*conf).targetSybsys) == 0 {
+		targ_subsys_tmp, err := getSubsysFromSymbolName(db, (*conf).symbol, (*conf).instance, cache3)
+		if err != nil {
+			panic(err)
+		}
+		(*conf).targetSybsys = append((*conf).targetSybsys, targ_subsys_tmp)
+	}
+
+	navigate(db, start, node{start_subsys, entryName, "enty point", "0x0"}, (*conf).targetSybsys, &visited, &adjm, prod, (*conf).instance, Cache{cache, cache2, cache3}, (*conf).mode, (*conf).excludedAfter, (*conf).excludedBefore, 0, (*conf).maxDepth, fmtDot[opt2num((*conf).jout)], &output)
+
+	if ((*conf).mode == printSubsysWs) || ((*conf).mode == printTargeted) {
+		output = decorate(output, adjm)
+	}
+
 	graphOutput = graphOutput + output
+	if (*conf).mode == printTargeted {
+		for _, i := range (*conf).targetSybsys {
+			if cache3[(*conf).symbol] == i {
+				graphOutput = graphOutput + fmt.Sprintf(fmtDotNodeHighlightWSymb, i, (*conf).symbol)
+			} else {
+				graphOutput = graphOutput + fmt.Sprintf(fmtDotNodeHighlightWoSymb, i)
+			}
+		}
+	}
 	graphOutput = graphOutput + "}"
 
-	symbdata, err := symbSubsys(db, visited, (*conf).Instance, cache{cache1, cache2, cache3})
+	symbdata, err := symbSubsys(db, visited, (*conf).instance, Cache{cache, cache2, cache3})
 	if err != nil {
 		return "", err
 	}
 
-	switch opt2num((*conf).Jout) {
+	switch opt2num((*conf).jout) {
 	case graphOnly:
 		jsonOutput = graphOutput
 	case jsonOutputPlain:
-		jsonOutput = fmt.Sprintf(jsonOutputFMT, graphOutput, (*conf).Jout, symbdata)
+		jsonOutput = fmt.Sprintf(jsonOutputFMT, graphOutput, (*conf).jout, symbdata)
 	case jsonOutputB64:
 		b64dot := base64.StdEncoding.EncodeToString([]byte(graphOutput))
-		jsonOutput = fmt.Sprintf(jsonOutputFMT, b64dot, (*conf).Jout, symbdata)
+		jsonOutput = fmt.Sprintf(jsonOutputFMT, b64dot, (*conf).jout, symbdata)
 
 	case jsonOutputGZB64:
 		var b bytes.Buffer
@@ -135,10 +196,10 @@ func generateOutput(db *sql.DB, conf *configuration) (string, error) {
 			return "", errors.New("gzip failed")
 		}
 		b64dot := base64.StdEncoding.EncodeToString(b.Bytes())
-		jsonOutput = fmt.Sprintf(jsonOutputFMT, b64dot, (*conf).Jout, symbdata)
+		jsonOutput = fmt.Sprintf(jsonOutputFMT, b64dot, (*conf).jout, symbdata)
 
 	default:
-		return "", errors.New("unknown output mode")
+		return "", errors.New("Unknown output mode")
 	}
 	return jsonOutput, nil
 }
@@ -153,12 +214,12 @@ func main() {
 		printHelp(cmdLineItemInit())
 		os.Exit(-1)
 	}
-	if opt2num(conf.Jout) == 0 {
-		fmt.Printf("unknown Mode %s\n", conf.Jout)
+	if opt2num(conf.jout) == 0 {
+		fmt.Printf("unknown mode %s\n", conf.jout)
 		os.Exit(-2)
 	}
-	t := connectToken{conf.DBURL, conf.DBPort, conf.DBUser, conf.DBPassword, conf.DBTargetDB}
-	db := connectDB(&t)
+	t := connectToken{conf.dbUrl, conf.dbPort, conf.dbUser, conf.dbPassword, conf.dbTargetDB}
+	db := connectDb(&t)
 
 	output, err := generateOutput(db, &conf)
 	if err != nil {

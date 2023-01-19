@@ -28,7 +28,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-package main
+package main // import "golang.org/x/tools/cmd/gorename"
 
 import (
 	"os"
@@ -37,42 +37,47 @@ import (
 	"testing"
 )
 
-// Utility function to compare two configuration struct instances
+// Utility function to compart two configuration struct instances
 func compareConfigs(c1 configuration, c2 configuration) bool {
 
 	res := true
-	res = res && c1.DBURL == c2.DBURL
-	res = res && c1.DBPort == c2.DBPort
-	res = res && c1.DBUser == c2.DBUser
-	res = res && c1.DBPassword == c2.DBPassword
-	res = res && c1.DBTargetDB == c2.DBTargetDB
-	res = res && c1.Symbol == c2.Symbol
-	res = res && c1.Instance == c2.Instance
-	res = res && c1.Mode == c2.Mode
-	res = res && c1.MaxDepth == c2.MaxDepth
-	res = res && c1.Jout == c2.Jout
-	res = res && len(c1.Excluded) == len(c2.Excluded)
-	for i, item := range c1.Excluded {
-		res = res && item == c2.Excluded[i]
+	res = res && c1.dbUrl == c2.dbUrl
+	res = res && c1.dbPort == c2.dbPort
+	res = res && c1.dbUser == c2.dbUser
+	res = res && c1.dbPassword == c2.dbPassword
+	res = res && c1.dbTargetDB == c2.dbTargetDB
+	res = res && c1.symbol == c2.symbol
+	res = res && c1.instance == c2.instance
+	res = res && c1.mode == c2.mode
+	res = res && c1.maxDepth == c2.maxDepth
+	res = res && c1.jout == c2.jout
+	res = res && len(c1.excludedBefore) == len(c2.excludedBefore)
+	for i, item := range c1.excludedBefore {
+		res = res && item == c2.excludedBefore[i]
+	}
+	res = res && len(c1.excludedAfter) == len(c2.excludedAfter)
+	for i, item := range c1.excludedAfter {
+		res = res && item == c2.excludedAfter[i]
 	}
 	return res
 }
 
 // Tests the ability to extract the configuration from command line arguments
-func TestConfig(t *testing.T) {
+func testConfig(t *testing.T) {
 
-	var TestConfig configuration = configuration{
-		DBURL:        "dummy",
-		DBPort:       1234,
-		DBUser:       "dummy",
-		DBPassword:   "dummy",
-		DBTargetDB:   "dummy",
-		Symbol:       "dummy",
-		Instance:     1234,
-		Mode:         1234,
-		Excluded:     []string{"dummy1", "dummy2", "dummy3"},
-		MaxDepth:     1234, //0: no limit
-		Jout:         "JsonOutputPlain",
+	var testConfig configuration = configuration{
+		dbUrl:		"dummy",
+		dbPort:		1234,
+		dbUser:		"dummy",
+		dbPassword:	"dummy",
+		dbTargetDB:	"dummy",
+		symbol:		"dummy",
+		instance:	1234,
+		mode:		1234,
+		excludedBefore:	[]string{"dummy1", "dummy2", "dummy3"},
+		excludedAfter:	[]string{"dummyA", "dummyB", "dummyC"},
+		maxDepth:	1234, //0: no limit
+		jout:		"jsonOutputPlain",
 		cmdlineNeeds: map[string]bool{},
 	}
 
@@ -83,25 +88,25 @@ func TestConfig(t *testing.T) {
 	}
 
 	if !compareConfigs(conf, defaultConfig) {
-		t.Error("Unexpected change in default config")
+		t.Error("unexpected change in default config")
 	}
 
 	os.Args = []string{"nav", "-i", "1", "-s"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err == nil {
-		t.Error("Missing switch argument not detected", conf)
+		t.Error("error Missing switch argument not detected", conf)
 	}
 
 	os.Args = []string{"nav", "-i", "a", "-s", "symb"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err == nil {
-		t.Error("Switch arg type mismatch not detected", conf)
+		t.Error("error switch arg type mismatch not detected", conf)
 	}
 
 	os.Args = []string{"nav", "-i", "a", "-s", "symb", "-f"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err == nil {
-		t.Error("Missing optional switch argument not detected", conf)
+		t.Error("error Missing optional switch argument not detected", conf)
 	}
 
 	_, filename, _, _ := runtime.Caller(0)
@@ -110,10 +115,10 @@ func TestConfig(t *testing.T) {
 	os.Args = []string{"nav", "-i", "1", "-s", "symb", "-f", current + "/t_files/dummy.json"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err == nil {
-		t.Error("Undetected missing file", conf)
+		t.Error("undetected missing file", conf)
 	}
 	if !compareConfigs(conf, defaultConfig) {
-		t.Error("Unexpected change in default config")
+		t.Error("unexpected change in default config")
 	}
 
 	os.Args = []string{"nav", "-i", "1", "-s", "symb", "-f", current + "/t_files/test1.json"}
@@ -121,19 +126,19 @@ func TestConfig(t *testing.T) {
 	if err != nil {
 		t.Error("Unexpected conf error while reading from existing file", err, current+"/t_files/test1.json")
 	}
-	if !compareConfigs(conf, TestConfig) {
-		t.Error("Unexpected difference between actual and loaded config", conf, TestConfig)
+	if !compareConfigs(conf, testConfig) {
+		t.Error("unexpected difference between actual and loaded config", conf, testConfig)
 	}
 
-	tmp := TestConfig
-	tmp.DBUser = "new"
+	tmp := testConfig
+	tmp.dbUser = "new"
 	os.Args = []string{"nav", "-i", "1", "-s", "symb", "-f", current + "/t_files/test1.json", "-u", "new"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err != nil {
 		t.Error("Unexpected conf error while reading from existing file", err, current+"/t_files/test1.json")
 	}
 	if !compareConfigs(conf, tmp) {
-		t.Error("Unexpected difference between actual and loaded modified config", conf, TestConfig)
+		t.Error("unexpected difference between actual and loaded modified config", conf, testConfig)
 	}
 
 }

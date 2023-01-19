@@ -3,13 +3,12 @@
 "DBPort":5432,
 "DBUser":"alessandro",
 "DBPassword":"<password>",
-"DBTargetDB":"kern_bin_new",
+"DBTargetDB":"kernel_bin",
 "Symbol":"__arm64_sys_getppid",
 "Instance":1,
 "Mode":4,
-"Excluded_before": [],
-"Excluded_after": [".*rcu.*"],
+"Excluded": [],
 "Target_sybsys":[],
-"MaxDepth":1,
+"MaxDepth":0,
 "Jout": "TextPlain"
 }
