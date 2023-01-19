@@ -48,20 +48,20 @@ const (
 
 // Sql connection configuration
 type connectToken struct {
-	host   string
-	port   int
-	user   string
-	pass   string
-	DBName string
+	host		string
+	port		int
+	user		string
+	pass		string
+	DBName		string
 }
 
 type entry struct {
-	symID     int
-	symbol    string
-	exported  bool
-	entryType string
-	subSys    []string
-	fn        string
+	symID		int
+	symbol		string
+	exported	bool
+	entryType	string
+	subSys		[]string
+	fn		string
 }
 
 type edge struct {
@@ -70,9 +70,9 @@ type edge struct {
 }
 
 type cache struct {
-	successors map[int][]entry
-	entries    map[int]entry
-	subSys     map[string]string
+	successors	map[int][]entry
+	entries		map[int]entry
+	subSys		map[string]string
 }
 
 // Connects the target db and returns the handle

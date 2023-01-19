@@ -50,44 +50,44 @@ type argFunc func(*configuration, []string) error
 
 // Command line switch elements
 type cmdLineItems struct {
-	id        int
-	switchStr string
-	helpStr   string
-	hasArg    bool
-	needed    bool
-	function  argFunc
+	id		int
+	switchStr	string
+	helpStr		string
+	hasArg		bool
+	needed		bool
+	function	argFunc
 }
 
 // Represents the application configuration
 type configuration struct {
-	DBURL        string
-	DBPort       int
-	DBUser       string
-	DBPassword   string
-	DBTargetDB   string
-	Symbol       string
-	Instance     int
-	Mode         int
-	Excluded     []string
-	MaxDepth     uint
-	Jout         string
+	DBURL		string
+	DBPort		int
+	DBUser		string
+	DBPassword	string
+	DBTargetDB	string
+	Symbol		string
+	Instance	int
+	Mode		int
+	Excluded	[]string
+	MaxDepth	uint
+	Jout		string
 	cmdlineNeeds map[string]bool
 }
 
 // Instance of default configuration values
 var defaultConfig configuration = configuration{
-	DBURL:        "dbs.hqhome163.com",
-	DBPort:       5432,
-	DBUser:       "alessandro",
-	DBPassword:   "<password>",
-	DBTargetDB:   "kernel_bin",
-	Symbol:       "",
-	Instance:     0,
-	Mode:         printSubsys,
-	Excluded:     []string{"rcu_.*"},
-	MaxDepth:     0, //0: no limit
-	Jout:         "graphOnly",
-	cmdlineNeeds: map[string]bool{},
+	DBURL:		"dbs.hqhome163.com",
+	DBPort:		5432,
+	DBUser:		"alessandro",
+	DBPassword:	"<password>",
+	DBTargetDB:	"kernel_bin",
+	Symbol:		"",
+	Instance:	0,
+	Mode:		printSubsys,
+	Excluded:	[]string{"rcu_.*"},
+	MaxDepth:	0, //0: no limit
+	Jout:		"graphOnly",
+	cmdlineNeeds:	map[string]bool{},
 }
 
 // Inserts a commandline item, which is composed by:
