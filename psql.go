@@ -42,8 +42,9 @@ import (
 
 // Const values for configuration Mode field.
 const (
-	printAll    int = 1
-	printSubsys     = 2
+	printAll	int = iota
+	printSubsys
+	printLast
 )
 
 // Sql connection configuration

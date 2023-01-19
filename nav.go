@@ -41,12 +41,14 @@ import (
 )
 
 const (
-	graphOnly       int    = 1
-	jsonOutputPlain int    = 2
-	jsonOutputB64   int    = 3
-	jsonOutputGZB64 int    = 4
-	jsonOutputFMT   string = "{\"graph\": \"%s\",\"graph_type\":\"%s\",\"symbols\": [%s]}"
+	graphOnly	int	= iota
+	jsonOutputPlain
+	jsonOutputB64
+	jsonOutputGZB64
+	outputLast
 )
+
+const	jsonOutputFMT	string = "{\"graph\": \"%s\",\"graph_type\":\"%s\",\"symbols\": [%s]}"
 
 var fmtDot = []string{
 	"",
