@@ -51,9 +51,13 @@ func compareConfigs(c1 configuration, c2 configuration) bool {
 	res = res && c1.mode == c2.mode
 	res = res && c1.maxDepth == c2.maxDepth
 	res = res && c1.jout == c2.jout
-	res = res && len(c1.Excluded) == len(c2.Excluded)
-	for i, item := range c1.Excluded {
-		res = res && item == c2.Excluded[i]
+	res = res && len(c1.excludedBefore) == len(c2.excludedBefore)
+	for i, item := range c1.excludedBefore {
+		res = res && item == c2.excludedBefore[i]
+	}
+	res = res && len(c1.excludedAfter) == len(c2.excludedAfter)
+	for i, item := range c1.excludedAfter {
+		res = res && item == c2.excludedAfter[i]
 	}
 	return res
 }
@@ -62,17 +66,18 @@ func compareConfigs(c1 configuration, c2 configuration) bool {
 func testConfig(t *testing.T) {
 
 	var testConfig configuration = configuration{
-		dbUrl:        "dummy",
-		dbPort:       1234,
-		dbUser:       "dummy",
-		dbPassword:   "dummy",
-		dbTargetDB:   "dummy",
-		symbol:       "dummy",
-		instance:     1234,
-		mode:         1234,
-		Excluded:     []string{"dummy1", "dummy2", "dummy3"},
-		maxDepth:     1234, //0: no limit
-		jout:         "JsonOutputPlain",
+		dbUrl:		"dummy",
+		dbPort:		1234,
+		dbUser:		"dummy",
+		dbPassword:	"dummy",
+		dbTargetDB:	"dummy",
+		symbol:		"dummy",
+		instance:	1234,
+		mode:		1234,
+		excludedBefore:	[]string{"dummy1", "dummy2", "dummy3"},
+		excludedAfter:	[]string{"dummyA", "dummyB", "dummyC"},
+		maxDepth:	1234, //0: no limit
+		jout:		"jsonOutputPlain",
 		cmdlineNeeds: map[string]bool{},
 	}
 
