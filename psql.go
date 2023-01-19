@@ -56,10 +56,10 @@ const SUBSYS_UNDEF = "The REST"
 
 // parent node
 type node struct {
-	subsys     string
-	symbol     string
-	sourceRef  string
-	addressRef string
+	subsys		string
+	symbol		string
+	sourceRef	string
+	addressRef	string
 }
 type adjM struct {
 	l node
@@ -68,35 +68,35 @@ type adjM struct {
 
 // Sql connection configuration
 type connectToken struct {
-	host   string
-	port   int
-	user   string
-	pass   string
-	dbname string
+	host		string
+	port		int
+	user		string
+	pass		string
+	dbname		string
 }
 
 type entry struct {
-	symId      int
-	symbol     string
-	exported   bool
-	entryType  string
-	subsys     []string
-	fn         string
-	sourceRef  string
-	addressRef string
+	symId		int
+	symbol		string
+	exported	bool
+	entryType	string
+	subsys		[]string
+	fn		string
+	sourceRef	string
+	addressRef	string
 }
 
 type edge struct {
-	caller     int
-	callee     int
-	sourceRef  string
-	addressRef string
+	caller		int
+	callee		int
+	sourceRef	string
+	addressRef	string
 }
 
 type Cache struct {
-	successors map[int][]entry
-	entries    map[int]entry
-	subSys     map[string]string
+	successors	map[int][]entry
+	entries		map[int]entry
+	subSys		map[string]string
 }
 
 var check int = 0

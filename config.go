@@ -50,48 +50,48 @@ type argFunc func(*configuration, []string) error
 
 // Command line switch elements
 type cmdLineItems struct {
-	id        int
-	switchStr string
-	helpStr   string
-	hasArg    bool
-	needed    bool
-	function  argFunc
+	id		int
+	switchStr	string
+	helpStr		string
+	hasArg		bool
+	needed		bool
+	function	argFunc
 }
 
 // Represents the application configuration
 type configuration struct {
-	dbUrl          string
-	dbPort         int
-	dbUser         string
-	dbPassword     string
-	dbTargetDB     string
-	symbol         string
-	instance       int
-	mode           outMode
-	excludedBefore []string
-	excludedAfter  []string
-	targetSybsys   []string
-	maxDepth       int
-	jout           string
-	cmdlineNeeds   map[string]bool
+	dbUrl		string
+	dbPort		int
+	dbUser		string
+	dbPassword	string
+	dbTargetDB	string
+	symbol		string
+	instance	int
+	mode		outMode
+	excludedBefore	[]string
+	excludedAfter	[]string
+	targetSybsys	[]string
+	maxDepth	int
+	jout		string
+	cmdlineNeeds	map[string]bool
 }
 
 // Instance of default configuration values
 var defaultConfig configuration = configuration{
-	dbUrl:          "dbs.hqhome163.com",
-	dbPort:         5432,
-	dbUser:         "alessandro",
-	dbPassword:     "<password>",
-	dbTargetDB:     "kernel_bin",
-	symbol:         "",
-	instance:       0,
-	mode:           printSubsys,
-	excludedBefore: []string{},
-	excludedAfter:  []string{},
-	targetSybsys:   []string{},
-	maxDepth:       0, //0: no limit
-	jout:           "GraphOnly",
-	cmdlineNeeds:   map[string]bool{},
+	dbUrl:		"dbs.hqhome163.com",
+	dbPort:		5432,
+	dbUser:		"alessandro",
+	dbPassword:	"<password>",
+	dbTargetDB:	"kernel_bin",
+	symbol:		"",
+	instance:	0,
+	mode:		printSubsys,
+	excludedBefore:	[]string{},
+	excludedAfter:	[]string{},
+	targetSybsys:	[]string{},
+	maxDepth:	0, //0: no limit
+	jout:		"GraphOnly",
+	cmdlineNeeds:	map[string]bool{},
 }
 
 // Inserts a commandline item item, which is composed by:
