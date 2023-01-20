@@ -28,7 +28,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-package main // import "golang.org/x/tools/cmd/gorename"
+package main
 
 import (
 	"encoding/json"
@@ -50,48 +50,48 @@ type argFunc func(*configuration, []string) error
 
 // Command line switch elements
 type cmdLineItems struct {
-	id		int
-	switchStr	string
-	helpStr		string
-	hasArg		bool
-	needed		bool
-	function	argFunc
+	id        int
+	switchStr string
+	helpStr   string
+	hasArg    bool
+	needed    bool
+	function  argFunc
 }
 
 // Represents the application configuration
 type configuration struct {
-	dbUrl		string
-	dbPort		int
-	dbUser		string
-	dbPassword	string
-	dbTargetDB	string
-	symbol		string
-	instance	int
-	mode		outMode
-	excludedBefore	[]string
-	excludedAfter	[]string
-	targetSybsys	[]string
-	maxDepth	int
-	jout		string
-	cmdlineNeeds	map[string]bool
+	dbUrl          string
+	dbPort         int
+	dbUser         string
+	dbPassword     string
+	dbTargetDB     string
+	symbol         string
+	instance       int
+	mode           outMode
+	excludedBefore []string
+	excludedAfter  []string
+	targetSybsys   []string
+	maxDepth       int
+	jout           string
+	cmdlineNeeds   map[string]bool
 }
 
 // Instance of default configuration values
 var defaultConfig configuration = configuration{
-	dbUrl:		"dbs.hqhome163.com",
-	dbPort:		5432,
-	dbUser:		"alessandro",
-	dbPassword:	"<password>",
-	dbTargetDB:	"kernel_bin",
-	symbol:		"",
-	instance:	0,
-	mode:		printSubsys,
-	excludedBefore:	[]string{},
-	excludedAfter:	[]string{},
-	targetSybsys:	[]string{},
-	maxDepth:	0, //0: no limit
-	jout:		"GraphOnly",
-	cmdlineNeeds:	map[string]bool{},
+	dbUrl:          "dbs.hqhome163.com",
+	dbPort:         5432,
+	dbUser:         "alessandro",
+	dbPassword:     "<password>",
+	dbTargetDB:     "kernel_bin",
+	symbol:         "",
+	instance:       0,
+	mode:           printSubsys,
+	excludedBefore: []string{},
+	excludedAfter:  []string{},
+	targetSybsys:   []string{},
+	maxDepth:       0, //0: no limit
+	jout:           "GraphOnly",
+	cmdlineNeeds:   map[string]bool{},
 }
 
 // Inserts a commandline item, which is composed by:
@@ -125,7 +125,7 @@ func cmdLineItemInit() []cmdLineItems {
 }
 
 func funcHelp(conf *configuration, fn []string) error {
-	return errors.New("Command Help")
+	return errors.New("Command help")
 }
 
 func funcOuttype(conf *configuration, jout []string) error {
@@ -203,7 +203,7 @@ func funcMode(conf *configuration, mode []string) error {
 		return err
 	}
 	if outMode(s) < printAll || outMode(s) >= OutModeLast {
-		return errors.New("unsupported mode")
+		return errors.New("Unsupported mode")
 	}
 	(*conf).mode = outMode(s)
 	return nil

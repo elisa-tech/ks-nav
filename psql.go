@@ -28,7 +28,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-package main // import "golang.org/x/tools/cmd/gorename"
+package main
 
 import (
 	"database/sql"
@@ -56,10 +56,10 @@ const SUBSYS_UNDEF = "The REST"
 
 // parent node
 type node struct {
-	subsys		string
-	symbol		string
-	sourceRef	string
-	addressRef	string
+	subsys     string
+	symbol     string
+	sourceRef  string
+	addressRef string
 }
 type adjM struct {
 	l node
@@ -68,35 +68,35 @@ type adjM struct {
 
 // Sql connection configuration
 type connectToken struct {
-	host		string
-	port		int
-	user		string
-	pass		string
-	dbname		string
+	host   string
+	port   int
+	user   string
+	pass   string
+	dbname string
 }
 
 type entry struct {
-	symId		int
-	symbol		string
-	exported	bool
-	entryType	string
-	subsys		[]string
-	fn		string
-	sourceRef	string
-	addressRef	string
+	symId      int
+	symbol     string
+	exported   bool
+	entryType  string
+	subsys     []string
+	fn         string
+	sourceRef  string
+	addressRef string
 }
 
 type edge struct {
-	caller		int
-	callee		int
-	sourceRef	string
-	addressRef	string
+	caller     int
+	callee     int
+	sourceRef  string
+	addressRef string
 }
 
 type Cache struct {
-	successors	map[int][]entry
-	entries		map[int]entry
-	subSys		map[string]string
+	successors map[int][]entry
+	entries    map[int]entry
+	subSys     map[string]string
 }
 
 // Connects the target db and returns the handle
@@ -129,7 +129,7 @@ func getEntryById(db *sql.DB, symbolId int, instance int, cache map[int]entry) (
 
 	for rows.Next() {
 		if err := rows.Scan(&e.symId, &e.symbol, &s, &e.fn); err != nil {
-			fmt.Println("this error hit3")
+			fmt.Println("getEntryById: error while scan query rows")
 			fmt.Println(err)
 			return e, err
 		}
@@ -138,7 +138,7 @@ func getEntryById(db *sql.DB, symbolId int, instance int, cache map[int]entry) (
 		}
 	}
 	if err = rows.Err(); err != nil {
-		fmt.Println("this error hit")
+		fmt.Println("getEntryById: error in access query rows")
 		return e, err
 	}
 	cache[symbolId] = e
@@ -163,7 +163,7 @@ func getSuccessorsById(db *sql.DB, symbolId int, instance int, cache Cache) ([]e
 
 	for rows.Next() {
 		if err := rows.Scan(&e.caller, &e.callee, &e.sourceRef, &e.addressRef); err != nil {
-			fmt.Println("get_successors_by_id: this error hit1 ", err)
+			fmt.Println("get_successors_by_id: error while scan query rows", err)
 			return nil, err
 		}
 		successor, _ := getEntryById(db, e.callee, instance, cache.entries)
@@ -172,7 +172,7 @@ func getSuccessorsById(db *sql.DB, symbolId int, instance int, cache Cache) ([]e
 		res = append(res, successor)
 	}
 	if err = rows.Err(); err != nil {
-		fmt.Println("this error hit2 ")
+		fmt.Println("get_successors_by_id: error in access query rows")
 		return nil, err
 	}
 	cache.successors[symbolId] = res
@@ -225,7 +225,7 @@ func getSubsysFromSymbolName(db *sql.DB, symbol string, instance int, subsytemsC
 
 	for rows.Next() {
 		if err := rows.Scan(&ty, &sub); err != nil {
-			fmt.Println("get_subsys_from_symbol_name: this error hit1 ")
+			fmt.Println("get_subsys_from_symbol_name: error while scan query rows")
 			return "", err
 		}
 	}
@@ -251,13 +251,13 @@ func sym2num(db *sql.DB, symb string, instance int) (int, error) {
 	for rows.Next() {
 		cnt++
 		if err := rows.Scan(&res); err != nil {
-			fmt.Println("this error hit7")
+			fmt.Println("sym2num: error while scan query rows")
 			fmt.Println(err)
 			return res, err
 		}
 	}
 	if cnt != 1 {
-		return res, errors.New("id is not unique")
+		return res, errors.New("Duplicate id in the DB")
 	}
 	return res, nil
 }
@@ -370,13 +370,13 @@ func symbSubsys(db *sql.DB, symblist []int, instance int, cache Cache) (string, 
 		query := fmt.Sprintf("select subsys_name from tags where tag_file_ref_id= (select symbol_file_ref_id from symbols where symbol_id=%d);", symbid)
 		rows, err := db.Query(query)
 		if err != nil {
-			return "", errors.New("symbSubsys query failed")
+			return "", errors.New("symbSubsys: query failed")
 		}
 		defer rows.Close()
 
 		for rows.Next() {
 			if err := rows.Scan(&res); err != nil {
-				return "", errors.New("symbSubsys query browsing failed")
+				return "", errors.New("symbSubsys: error while scan query rows")
 			}
 			out = out + fmt.Sprintf("\"%s\",", res)
 		}

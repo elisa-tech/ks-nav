@@ -28,7 +28,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-package main // import "golang.org/x/tools/cmd/gorename"
+package main
 
 import (
 	"os"
@@ -66,19 +66,19 @@ func compareConfigs(c1 configuration, c2 configuration) bool {
 func testConfig(t *testing.T) {
 
 	var testConfig configuration = configuration{
-		dbUrl:		"dummy",
-		dbPort:		1234,
-		dbUser:		"dummy",
-		dbPassword:	"dummy",
-		dbTargetDB:	"dummy",
-		symbol:		"dummy",
-		instance:	1234,
-		mode:		1234,
-		excludedBefore:	[]string{"dummy1", "dummy2", "dummy3"},
-		excludedAfter:	[]string{"dummyA", "dummyB", "dummyC"},
-		maxDepth:	1234, //0: no limit
-		jout:		"jsonOutputPlain",
-		cmdlineNeeds: map[string]bool{},
+		dbUrl:          "dummy",
+		dbPort:         1234,
+		dbUser:         "dummy",
+		dbPassword:     "dummy",
+		dbTargetDB:     "dummy",
+		symbol:         "dummy",
+		instance:       1234,
+		mode:           1234,
+		excludedBefore: []string{"dummy1", "dummy2", "dummy3"},
+		excludedAfter:  []string{"dummyA", "dummyB", "dummyC"},
+		maxDepth:       1234, //0: no limit
+		jout:           "jsonOutputPlain",
+		cmdlineNeeds:   map[string]bool{},
 	}
 
 	os.Args = []string{"nav"}
@@ -88,25 +88,25 @@ func testConfig(t *testing.T) {
 	}
 
 	if !compareConfigs(conf, defaultConfig) {
-		t.Error("unexpected change in default config")
+		t.Error("Unexpected change in default config")
 	}
 
 	os.Args = []string{"nav", "-i", "1", "-s"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err == nil {
-		t.Error("error Missing switch argument not detected", conf)
+		t.Error("Error Missing switch argument not detected", conf)
 	}
 
 	os.Args = []string{"nav", "-i", "a", "-s", "symb"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err == nil {
-		t.Error("error switch arg type mismatch not detected", conf)
+		t.Error("Error switch arg type mismatch not detected", conf)
 	}
 
 	os.Args = []string{"nav", "-i", "a", "-s", "symb", "-f"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err == nil {
-		t.Error("error Missing optional switch argument not detected", conf)
+		t.Error("Error Missing optional switch argument not detected", conf)
 	}
 
 	_, filename, _, _ := runtime.Caller(0)
@@ -115,10 +115,10 @@ func testConfig(t *testing.T) {
 	os.Args = []string{"nav", "-i", "1", "-s", "symb", "-f", current + "/t_files/dummy.json"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err == nil {
-		t.Error("undetected missing file", conf)
+		t.Error("Undetected missing file", conf)
 	}
 	if !compareConfigs(conf, defaultConfig) {
-		t.Error("unexpected change in default config")
+		t.Error("Unexpected change in default config")
 	}
 
 	os.Args = []string{"nav", "-i", "1", "-s", "symb", "-f", current + "/t_files/test1.json"}
@@ -127,7 +127,7 @@ func testConfig(t *testing.T) {
 		t.Error("Unexpected conf error while reading from existing file", err, current+"/t_files/test1.json")
 	}
 	if !compareConfigs(conf, testConfig) {
-		t.Error("unexpected difference between actual and loaded config", conf, testConfig)
+		t.Error("Unexpected difference between actual and loaded config", conf, testConfig)
 	}
 
 	tmp := testConfig
@@ -138,7 +138,7 @@ func testConfig(t *testing.T) {
 		t.Error("Unexpected conf error while reading from existing file", err, current+"/t_files/test1.json")
 	}
 	if !compareConfigs(conf, tmp) {
-		t.Error("unexpected difference between actual and loaded modified config", conf, testConfig)
+		t.Error("Unexpected difference between actual and loaded modified config", conf, testConfig)
 	}
 
 }

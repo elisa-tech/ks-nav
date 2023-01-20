@@ -28,7 +28,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-package main // import "golang.org/x/tools/cmd/gorename"
+package main
 
 import (
 	"bytes"
@@ -42,7 +42,7 @@ import (
 )
 
 const (
-	graphOnly	int = iota
+	graphOnly int = iota
 	jsonOutputPlain
 	jsonOutputB64
 	jsonOutputGZB64
@@ -129,7 +129,7 @@ func generateOutput(db *sql.DB, conf *configuration) (string, error) {
 
 	start, err := sym2num(db, (*conf).symbol, (*conf).instance)
 	if err != nil {
-		fmt.Println("symbol not found")
+		fmt.Println("Symbol not found")
 		return "", err
 	}
 
@@ -190,10 +190,10 @@ func generateOutput(db *sql.DB, conf *configuration) (string, error) {
 		var b bytes.Buffer
 		gz := gzip.NewWriter(&b)
 		if _, err := gz.Write([]byte(graphOutput)); err != nil {
-			return "", errors.New("gzip failed")
+			return "", errors.New("Gzip failed")
 		}
 		if err := gz.Close(); err != nil {
-			return "", errors.New("gzip failed")
+			return "", errors.New("Gzip failed")
 		}
 		b64dot := base64.StdEncoding.EncodeToString(b.Bytes())
 		jsonOutput = fmt.Sprintf(jsonOutputFMT, b64dot, (*conf).jout, symbdata)
@@ -215,7 +215,7 @@ func main() {
 		os.Exit(-1)
 	}
 	if opt2num(conf.jout) == 0 {
-		fmt.Printf("unknown mode %s\n", conf.jout)
+		fmt.Printf("Unknown mode %s\n", conf.jout)
 		os.Exit(-2)
 	}
 	t := connectToken{conf.dbUrl, conf.dbPort, conf.dbUser, conf.dbPassword, conf.dbTargetDB}
@@ -223,7 +223,7 @@ func main() {
 
 	output, err := generateOutput(db, &conf)
 	if err != nil {
-		fmt.Println("internal error", err)
+		fmt.Println("Internal error", err)
 		os.Exit(-3)
 	}
 	fmt.Println(output)
