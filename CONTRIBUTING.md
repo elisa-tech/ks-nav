@@ -25,4 +25,9 @@ rules:
 
 * Follow Go conventions where applicable (e.g. naming using camelCase or PascalCase)
 * Use `go fmt` to format the code 
-* Linting rules TBA
+* To sanity-check your code before submitting a PR, use [golangci-lint](https://golangci-lint.run/)
+```
+golangci-lint run
+```
+The provided `.golangci.yaml` file describes the linting rules that are used in this codebase. If you have
+a good reason to skip a rule, you can add a `//nolint:rule` comment to the line that you want to skip.
