@@ -39,8 +39,6 @@ import (
 	"strconv"
 )
 
-var confFn = "conf.json"
-
 const (
 	appName  string = "App Name: nav"
 	appDescr string = "Descr: kernel symbol navigator"
@@ -60,37 +58,37 @@ type cmdLineItems struct {
 
 // Represents the application configuration
 type configuration struct {
-	dbUrl          string
-	dbPort         int
-	dbUser         string
-	dbPassword     string
-	dbTargetDB     string
-	symbol         string
-	instance       int
-	mode           outMode
-	excludedBefore []string
-	excludedAfter  []string
-	targetSybsys   []string
-	maxDepth       int
-	jout           string
+	DBUrl          string
+	DBPort         int
+	DBUser         string
+	DBPassword     string
+	DBTargetDB     string
+	Symbol         string
+	Instance       int
+	Mode           outMode
+	ExcludedBefore []string
+	ExcludedAfter  []string
+	TargetSybsys   []string
+	MaxDepth       int
+	Jout           string
 	cmdlineNeeds   map[string]bool
 }
 
 // Instance of default configuration values
 var defaultConfig configuration = configuration{
-	dbUrl:          "dbs.hqhome163.com",
-	dbPort:         5432,
-	dbUser:         "alessandro",
-	dbPassword:     "<password>",
-	dbTargetDB:     "kernel_bin",
-	symbol:         "",
-	instance:       0,
-	mode:           printSubsys,
-	excludedBefore: []string{},
-	excludedAfter:  []string{},
-	targetSybsys:   []string{},
-	maxDepth:       0, //0: no limit
-	jout:           "GraphOnly",
+	DBUrl:          "dbs.hqhome163.com",
+	DBPort:         5432,
+	DBUser:         "alessandro",
+	DBPassword:     "<password>",
+	DBTargetDB:     "kernel_bin",
+	Symbol:         "",
+	Instance:       0,
+	Mode:           printSubsys,
+	ExcludedBefore: []string{},
+	ExcludedAfter:  []string{},
+	TargetSybsys:   []string{},
+	MaxDepth:       0, //0: no limit
+	Jout:           "GraphOnly",
 	cmdlineNeeds:   map[string]bool{},
 }
 
@@ -129,7 +127,7 @@ func funcHelp(conf *configuration, fn []string) error {
 }
 
 func funcOuttype(conf *configuration, jout []string) error {
-	(*conf).jout = jout[0]
+	(*conf).Jout = jout[0]
 	return nil
 }
 
@@ -148,22 +146,22 @@ func funcJconf(conf *configuration, fn []string) error {
 }
 
 func funcSymbol(conf *configuration, fn []string) error {
-	(*conf).symbol = fn[0]
+	(*conf).Symbol = fn[0]
 	return nil
 }
 
 func funcDBUser(conf *configuration, user []string) error {
-	(*conf).dbUser = user[0]
+	(*conf).DBUser = user[0]
 	return nil
 }
 
 func funcDBPass(conf *configuration, pass []string) error {
-	(*conf).dbPassword = pass[0]
+	(*conf).DBPassword = pass[0]
 	return nil
 }
 
 func funcDBHost(conf *configuration, host []string) error {
-	(*conf).dbUrl = host[0]
+	(*conf).DBUrl = host[0]
 	return nil
 }
 
@@ -172,7 +170,7 @@ func funcDBPort(conf *configuration, port []string) error {
 	if err != nil {
 		return err
 	}
-	(*conf).dbPort = s
+	(*conf).DBPort = s
 	return nil
 }
 
@@ -184,7 +182,7 @@ func funcDepth(conf *configuration, depth []string) error {
 	if s < 0 {
 		return errors.New("Depth must be >= 0")
 	}
-	(*conf).maxDepth = s
+	(*conf).MaxDepth = s
 	return nil
 }
 
@@ -193,7 +191,7 @@ func funcInstance(conf *configuration, instance []string) error {
 	if err != nil {
 		return err
 	}
-	(*conf).instance = s
+	(*conf).Instance = s
 	return nil
 }
 
@@ -205,7 +203,7 @@ func funcMode(conf *configuration, mode []string) error {
 	if outMode(s) < printAll || outMode(s) >= OutModeLast {
 		return errors.New("Unsupported mode")
 	}
-	(*conf).mode = outMode(s)
+	(*conf).Mode = outMode(s)
 	return nil
 }
 

@@ -41,23 +41,23 @@ import (
 func compareConfigs(c1 configuration, c2 configuration) bool {
 
 	res := true
-	res = res && c1.dbUrl == c2.dbUrl
-	res = res && c1.dbPort == c2.dbPort
-	res = res && c1.dbUser == c2.dbUser
-	res = res && c1.dbPassword == c2.dbPassword
-	res = res && c1.dbTargetDB == c2.dbTargetDB
-	res = res && c1.symbol == c2.symbol
-	res = res && c1.instance == c2.instance
-	res = res && c1.mode == c2.mode
-	res = res && c1.maxDepth == c2.maxDepth
-	res = res && c1.jout == c2.jout
-	res = res && len(c1.excludedBefore) == len(c2.excludedBefore)
-	for i, item := range c1.excludedBefore {
-		res = res && item == c2.excludedBefore[i]
+	res = res && c1.DBUrl == c2.DBUrl
+	res = res && c1.DBPort == c2.DBPort
+	res = res && c1.DBUser == c2.DBUser
+	res = res && c1.DBPassword == c2.DBPassword
+	res = res && c1.DBTargetDB == c2.DBTargetDB
+	res = res && c1.Symbol == c2.Symbol
+	res = res && c1.Instance == c2.Instance
+	res = res && c1.Mode == c2.Mode
+	res = res && c1.MaxDepth == c2.MaxDepth
+	res = res && c1.Jout == c2.Jout
+	res = res && len(c1.ExcludedBefore) == len(c2.ExcludedBefore)
+	for i, item := range c1.ExcludedBefore {
+		res = res && item == c2.ExcludedBefore[i]
 	}
-	res = res && len(c1.excludedAfter) == len(c2.excludedAfter)
-	for i, item := range c1.excludedAfter {
-		res = res && item == c2.excludedAfter[i]
+	res = res && len(c1.ExcludedAfter) == len(c2.ExcludedAfter)
+	for i, item := range c1.ExcludedAfter {
+		res = res && item == c2.ExcludedAfter[i]
 	}
 	return res
 }
@@ -66,18 +66,18 @@ func compareConfigs(c1 configuration, c2 configuration) bool {
 func testConfig(t *testing.T) {
 
 	var testConfig configuration = configuration{
-		dbUrl:          "dummy",
-		dbPort:         1234,
-		dbUser:         "dummy",
-		dbPassword:     "dummy",
-		dbTargetDB:     "dummy",
-		symbol:         "dummy",
-		instance:       1234,
-		mode:           1234,
-		excludedBefore: []string{"dummy1", "dummy2", "dummy3"},
-		excludedAfter:  []string{"dummyA", "dummyB", "dummyC"},
-		maxDepth:       1234, //0: no limit
-		jout:           "jsonOutputPlain",
+		DBUrl:          "dummy",
+		DBPort:         1234,
+		DBUser:         "dummy",
+		DBPassword:     "dummy",
+		DBTargetDB:     "dummy",
+		Symbol:         "dummy",
+		Instance:       1234,
+		Mode:           1234,
+		ExcludedBefore: []string{"dummy1", "dummy2", "dummy3"},
+		ExcludedAfter:  []string{"dummyA", "dummyB", "dummyC"},
+		MaxDepth:       1234, //0: no limit
+		Jout:           "jsonOutputPlain",
 		cmdlineNeeds:   map[string]bool{},
 	}
 
@@ -131,7 +131,7 @@ func testConfig(t *testing.T) {
 	}
 
 	tmp := testConfig
-	tmp.dbUser = "new"
+	tmp.DBUser = "new"
 	os.Args = []string{"nav", "-i", "1", "-s", "symb", "-f", current + "/t_files/test1.json", "-u", "new"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err != nil {

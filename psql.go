@@ -78,8 +78,6 @@ type connectToken struct {
 type entry struct {
 	symId      int
 	symbol     string
-	exported   bool
-	entryType  string
 	subsys     []string
 	fn         string
 	sourceRef  string
@@ -304,9 +302,8 @@ func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, vi
 					s = fmt.Sprintf(dotFmt, l.symbol, r.symbol)
 					ll = r
 					depthInc = 1
-					break
 				case printSubsys, printSubsysWs, printTargeted:
-					if tmp, err = getSubsysFromSymbolName(db, r.symbol, instance, cache.subSys); r.subsys != tmp {
+					if tmp, _ = getSubsysFromSymbolName(db, r.symbol, instance, cache.subSys); r.subsys != tmp {
 						if tmp != "" {
 							r.subsys = tmp
 						} else {
@@ -322,7 +319,6 @@ func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, vi
 						s = ""
 					}
 					ll = r
-					break
 				default:
 					panic(mode)
 				}
