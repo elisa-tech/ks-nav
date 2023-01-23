@@ -34,7 +34,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strconv"
 )
@@ -44,40 +44,42 @@ const (
 	appDescr string = "Descr: kernel symbol navigator"
 )
 
+const DBPortNumber = 5432
+
 type argFunc func(*configuration, []string) error
 
-// Command line switch elements
+// Command line switch elements.
 type cmdLineItems struct {
-	id        int
+	function  argFunc
 	switchStr string
 	helpStr   string
+	id        int
 	hasArg    bool
 	needed    bool
-	function  argFunc
 }
 
-// Represents the application configuration
+// Represents the application configuration.
 type configuration struct {
+	cmdlineNeeds   map[string]bool
+	DBTargetDB     string
 	DBUrl          string
-	DBPort         int
 	DBUser         string
 	DBPassword     string
-	DBTargetDB     string
 	Symbol         string
-	Instance       int
-	Mode           outMode
+	Jout           string
 	ExcludedBefore []string
 	ExcludedAfter  []string
-	TargetSybsys   []string
+	TargetSubsys   []string
+	Instance       int
 	MaxDepth       int
-	Jout           string
-	cmdlineNeeds   map[string]bool
+	Mode           outMode
+	DBPort         int
 }
 
-// Instance of default configuration values
-var defaultConfig configuration = configuration{
+// Instance of default configuration values.
+var defaultConfig = configuration{
 	DBUrl:          "dbs.hqhome163.com",
-	DBPort:         5432,
+	DBPort:         DBPortNumber,
 	DBUser:         "alessandro",
 	DBPassword:     "<password>",
 	DBTargetDB:     "kernel_bin",
@@ -86,7 +88,7 @@ var defaultConfig configuration = configuration{
 	Mode:           printSubsys,
 	ExcludedBefore: []string{},
 	ExcludedAfter:  []string{},
-	TargetSybsys:   []string{},
+	TargetSubsys:   []string{},
 	MaxDepth:       0, //0: no limit
 	Jout:           "graphOnly",
 	cmdlineNeeds:   map[string]bool{},
@@ -97,37 +99,37 @@ var defaultConfig configuration = configuration{
 // * switch description
 // * if the switch requires an additional argument
 // * a pointer to the function that manages the switch
-// * the configuration that gets updated
+// * the configuration that gets updated.
 func pushCmdLineItem(switchStr string, helpStr string, hasArg bool, needed bool, function argFunc, cmdLine *[]cmdLineItems) {
 	*cmdLine = append(*cmdLine, cmdLineItems{id: len(*cmdLine) + 1, switchStr: switchStr, helpStr: helpStr, hasArg: hasArg, needed: needed, function: function})
 }
 
 // This function initializes configuration parser subsystem
-// Inserts all the commandline switches suppported by the application
+// Inserts all the commandline switches supported by the application.
 func cmdLineItemInit() []cmdLineItems {
 	var res []cmdLineItems
 
-	pushCmdLineItem("-j", "Force Json output with subsystems data", true, false, funcOuttype, &res)
+	pushCmdLineItem("-j", "Force Json output with subsystems data", true, false, funcOutType, &res)
 	pushCmdLineItem("-s", "Specifies symbol", true, true, funcSymbol, &res)
 	pushCmdLineItem("-i", "Specifies instance", true, true, funcInstance, &res)
 	pushCmdLineItem("-f", "Specifies config file", true, false, funcJconf, &res)
 	pushCmdLineItem("-u", "Forces use specified database userid", true, false, funcDBUser, &res)
-	pushCmdLineItem("-p", "Forecs use specified password", true, false, funcDBPass, &res)
-	pushCmdLineItem("-d", "Forecs use specified DBhost", true, false, funcDBHost, &res)
-	pushCmdLineItem("-p", "Forecs use specified DBPort", true, false, funcDBPort, &res)
+	pushCmdLineItem("-p", "Forces use specified password", true, false, funcDBPass, &res)
+	pushCmdLineItem("-d", "Forces use specified DBHost", true, false, funcDBHost, &res)
+	pushCmdLineItem("-p", "Forces use specified DBPort", true, false, funcDBPort, &res)
 	pushCmdLineItem("-m", "Sets display mode 2=subsystems,1=all", true, false, funcMode, &res)
 	pushCmdLineItem("-x", "Specify Max depth in call flow exploration", true, false, funcDepth, &res)
-	pushCmdLineItem("-h", "This Help", false, false, funcHelp, &res)
+	pushCmdLineItem("-h", "This help", false, false, funcHelp, &res)
 
 	return res
 }
 
 func funcHelp(conf *configuration, fn []string) error {
-	return errors.New("Command help")
+	return errors.New("command help")
 }
 
-func funcOuttype(conf *configuration, jout []string) error {
-	(*conf).Jout = jout[0]
+func funcOutType(conf *configuration, jout []string) error {
+	conf.Jout = jout[0]
 	return nil
 }
 
@@ -136,8 +138,14 @@ func funcJconf(conf *configuration, fn []string) error {
 	if err != nil {
 		return err
 	}
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	jsonFile.Close()
+	defer func() {
+		closeErr := jsonFile.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
+
+	byteValue, _ := io.ReadAll(jsonFile)
 	err = json.Unmarshal(byteValue, conf)
 	if err != nil {
 		return err
@@ -146,22 +154,22 @@ func funcJconf(conf *configuration, fn []string) error {
 }
 
 func funcSymbol(conf *configuration, fn []string) error {
-	(*conf).Symbol = fn[0]
+	conf.Symbol = fn[0]
 	return nil
 }
 
 func funcDBUser(conf *configuration, user []string) error {
-	(*conf).DBUser = user[0]
+	conf.DBUser = user[0]
 	return nil
 }
 
 func funcDBPass(conf *configuration, pass []string) error {
-	(*conf).DBPassword = pass[0]
+	conf.DBPassword = pass[0]
 	return nil
 }
 
 func funcDBHost(conf *configuration, host []string) error {
-	(*conf).DBUrl = host[0]
+	conf.DBUrl = host[0]
 	return nil
 }
 
@@ -170,7 +178,7 @@ func funcDBPort(conf *configuration, port []string) error {
 	if err != nil {
 		return err
 	}
-	(*conf).DBPort = s
+	conf.DBPort = s
 	return nil
 }
 
@@ -180,9 +188,9 @@ func funcDepth(conf *configuration, depth []string) error {
 		return err
 	}
 	if s < 0 {
-		return errors.New("Depth must be >= 0")
+		return errors.New("depth must be >= 0")
 	}
-	(*conf).MaxDepth = s
+	conf.MaxDepth = s
 	return nil
 }
 
@@ -191,7 +199,7 @@ func funcInstance(conf *configuration, instance []string) error {
 	if err != nil {
 		return err
 	}
-	(*conf).Instance = s
+	conf.Instance = s
 	return nil
 }
 
@@ -201,13 +209,13 @@ func funcMode(conf *configuration, mode []string) error {
 		return err
 	}
 	if outMode(s) < printAll || outMode(s) >= OutModeLast {
-		return errors.New("Unsupported mode")
+		return errors.New("unsupported mode")
 	}
-	(*conf).Mode = outMode(s)
+	conf.Mode = outMode(s)
 	return nil
 }
 
-// Uses commandline args to generate the help string
+// Uses commandline args to generate the help string.
 func printHelp(lines []cmdLineItems) {
 
 	fmt.Println(appName)
@@ -227,10 +235,10 @@ func printHelp(lines []cmdLineItems) {
 	}
 }
 
-// Used to parse the command line and generate the command line
+// Used to parse the command line and generate the command line.
 func argsParse(lines []cmdLineItems) (configuration, error) {
-	var extra bool = false
-	var conf configuration = defaultConfig
+	var extra = false
+	var conf = defaultConfig
 	var f argFunc
 
 	for _, item := range lines {
@@ -269,7 +277,7 @@ func argsParse(lines []cmdLineItems) (configuration, error) {
 
 	}
 	if extra {
-		return defaultConfig, errors.New("Missing switch arg")
+		return defaultConfig, errors.New("missing switch arg")
 	}
 
 	res := true
@@ -279,5 +287,5 @@ func argsParse(lines []cmdLineItems) (configuration, error) {
 	if res {
 		return conf, nil
 	}
-	return defaultConfig, errors.New("Missing needed arg")
+	return defaultConfig, errors.New("missing needed arg")
 }
