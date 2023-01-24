@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-// Utility function to compart two configuration struct instances
+// Utility function to compare two configuration struct instances.
 func compareConfigs(c1 configuration, c2 configuration) bool {
 
 	res := true
@@ -38,9 +38,9 @@ func compareConfigs(c1 configuration, c2 configuration) bool {
 }
 
 // Tests the ability to extract the configuration from command line arguments
-func testConfig(t *testing.T) {
+func TestConfig(t *testing.T) {
 
-	var testConfig configuration = configuration{
+	var testConfig = configuration{
 		DBUrl:          "dummy",
 		DBPort:         1234,
 		DBUser:         "dummy",

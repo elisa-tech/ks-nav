@@ -29,7 +29,7 @@ const (
 )
 const SUBSYS_UNDEF = "The REST"
 
-// parent node
+// Parent node.
 type node struct {
 	subsys     string
 	symbol     string
@@ -41,7 +41,7 @@ type adjM struct {
 	r node
 }
 
-// Sql connection configuration
+// Sql connection configuration.
 type connectToken struct {
 	host   string
 	port   int
@@ -51,19 +51,19 @@ type connectToken struct {
 }
 
 type entry struct {
-	symId      int
 	symbol     string
-	subsys     []string
 	fn         string
 	sourceRef  string
 	addressRef string
+	subsys     []string
+	symId      int
 }
 
 type edge struct {
-	caller     int
-	callee     int
 	sourceRef  string
 	addressRef string
+	caller     int
+	callee     int
 }
 
 type Cache struct {
@@ -72,9 +72,9 @@ type Cache struct {
 	subSys     map[string]string
 }
 
-// Connects the target db and returns the handle
+// Connects the target db and returns the handle.
 func connectDb(t *connectToken) *sql.DB {
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", (*t).host, (*t).port, (*t).user, (*t).pass, (*t).dbname)
+	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", t.host, t.port, t.user, t.pass, t.dbname)
 	db, err := sql.Open("postgres", psqlconn)
 	if err != nil {
 		panic(err)
@@ -82,7 +82,7 @@ func connectDb(t *connectToken) *sql.DB {
 	return db
 }
 
-// Returns function details from a given id
+// Returns function details from a given id.
 func getEntryById(db *sql.DB, symbolId int, instance int, cache map[int]entry) (entry, error) {
 	var e entry
 	var s sql.NullString
@@ -98,7 +98,12 @@ func getEntryById(db *sql.DB, symbolId int, instance int, cache map[int]entry) (
 	if err != nil {
 		panic(err)
 	}
-	defer rows.Close()
+	defer func() {
+		closeErr := rows.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
 
 	for rows.Next() {
 		if err := rows.Scan(&e.symId, &e.symbol, &s, &e.fn); err != nil {
@@ -118,7 +123,7 @@ func getEntryById(db *sql.DB, symbolId int, instance int, cache map[int]entry) (
 	return e, nil
 }
 
-// Returns the list of successors (called function) for a given function
+// Returns the list of successors (called function) for a given function.
 func getSuccessorsById(db *sql.DB, symbolId int, instance int, cache Cache) ([]entry, error) {
 	var e edge
 	var res []entry
@@ -132,7 +137,12 @@ func getSuccessorsById(db *sql.DB, symbolId int, instance int, cache Cache) ([]e
 	if err != nil {
 		panic(err)
 	}
-	defer rows.Close()
+	defer func() {
+		closeErr := rows.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
 
 	for rows.Next() {
 		if err := rows.Scan(&e.caller, &e.callee, &e.sourceRef, &e.addressRef); err != nil {
@@ -152,7 +162,7 @@ func getSuccessorsById(db *sql.DB, symbolId int, instance int, cache Cache) ([]e
 	return res, nil
 }
 
-// Return id an item is already in the list
+// Return id an item is already in the list.
 func notIn(list []int, v int) bool {
 
 	for _, a := range list {
@@ -163,12 +173,12 @@ func notIn(list []int, v int) bool {
 	return true
 }
 
-// Removes duplicates resulting by the exploration of a call tree
+// Removes duplicates resulting by the exploration of a call tree.
 func removeDuplicate(list []entry) []entry {
 
 	sort.SliceStable(list, func(i, j int) bool { return list[i].symId < list[j].symId })
 	allKeys := make(map[int]bool)
-	res := []entry{}
+	var res []entry
 	for _, item := range list {
 		if _, value := allKeys[item.symId]; !value {
 			allKeys[item.symId] = true
@@ -178,7 +188,7 @@ func removeDuplicate(list []entry) []entry {
 	return res
 }
 
-// Given a function returns the lager subsystem it belongs
+// Given a function returns the lager subsystem it belongs.
 func getSubsysFromSymbolName(db *sql.DB, symbol string, instance int, subsytemsCache map[string]string) (string, error) {
 	var ty, sub string
 
@@ -194,7 +204,12 @@ func getSubsysFromSymbolName(db *sql.DB, symbol string, instance int, subsytemsC
 	if err != nil {
 		panic(err)
 	}
-	defer rows.Close()
+	defer func() {
+		closeErr := rows.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
 
 	for rows.Next() {
 		if err := rows.Scan(&ty, &sub); err != nil {
@@ -210,16 +225,21 @@ func getSubsysFromSymbolName(db *sql.DB, symbol string, instance int, subsytemsC
 	return sub, nil
 }
 
-// Returns the id of a given function name
+// Returns the id of a given function name.
 func sym2num(db *sql.DB, symb string, instance int) (int, error) {
-	var res int = 0
-	var cnt int = 0
+	var res = 0
+	var cnt = 0
 	query := "select symbol_id from symbols where symbols.symbol_name=$1 and symbols.symbol_instance_id_ref=$2"
 	rows, err := db.Query(query, symb, instance)
 	if err != nil {
 		panic(err)
 	}
-	defer rows.Close()
+	defer func() {
+		closeErr := rows.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
 
 	for rows.Next() {
 		cnt++
@@ -230,13 +250,13 @@ func sym2num(db *sql.DB, symb string, instance int) (int, error) {
 		}
 	}
 	if cnt != 1 {
-		return res, errors.New("Duplicate id in the DB")
+		return res, errors.New("duplicate ID in the DB")
 	}
 	return res, nil
 }
 
-// Checks if a given function needs to be explored
-func notExluded(symbol string, excluded []string) bool {
+// Checks if a given function needs to be explored.
+func notExcluded(symbol string, excluded []string) bool {
 
 	for _, s := range excluded {
 		if match, _ := regexp.MatchString(s, symbol); match {
@@ -253,7 +273,7 @@ func notExluded(symbol string, excluded []string) bool {
 func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, visited *[]int, AdjMap *[]adjM, prod map[string]int, instance int, cache Cache, mode outMode, excludedAfter []string, excludedBefore []string, depth int, maxdepth int, dotFmt string, output *string) {
 	var tmp, s string
 	var l, r, ll node
-	var depthInc int = 0
+	var depthInc = 0
 
 	*visited = append(*visited, symbolId)
 	l = parentDispaly
@@ -263,7 +283,7 @@ func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, vi
 	}
 	if err == nil {
 		for _, curr := range successors {
-			if notExluded(curr.symbol, excludedBefore) {
+			if notExcluded(curr.symbol, excludedBefore) {
 				r.symbol = curr.symbol
 				r.sourceRef = curr.sourceRef
 				r.addressRef = curr.addressRef
@@ -303,13 +323,13 @@ func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, vi
 					prod[s] = 1
 					if s != "" {
 						if (mode != printTargeted) || (intargets(targets, l.subsys, r.subsys)) {
-							(*output) = (*output) + s
+							*output = (*output) + s
 						}
 					}
 				}
 
 				if notIn(*visited, curr.symId) {
-					if (notExluded(curr.symbol, excludedAfter) || notExluded(curr.symbol, excludedBefore)) && (maxdepth == 0 || ((maxdepth > 0) && (depth < maxdepth))) {
+					if (notExcluded(curr.symbol, excludedAfter) || notExcluded(curr.symbol, excludedBefore)) && (maxdepth == 0 || ((maxdepth > 0) && (depth < maxdepth))) {
 						navigate(db, curr.symId, ll, targets, visited, AdjMap, prod, instance, cache, mode, excludedBefore, excludedBefore, depth+depthInc, maxdepth, dotFmt, output)
 					}
 				}
@@ -318,7 +338,7 @@ func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, vi
 	}
 }
 
-// returns true if one of the nodes n1, n2 is a target node
+// returns true if one of the nodes n1, n2 is a target node.
 func intargets(targets []string, n1 string, n2 string) bool {
 
 	for _, t := range targets {
@@ -329,27 +349,33 @@ func intargets(targets []string, n1 string, n2 string) bool {
 	return false
 }
 
-// Returns the subsystem list associated with a given function name
+// Returns the subsystem list associated with a given function name.
 func symbSubsys(db *sql.DB, symblist []int, instance int, cache Cache) (string, error) {
 	var out string
 	var res string
 
 	for _, symbid := range symblist {
-		//resolve sybm
+		// Resolve symb.
 		symb, _ := getEntryById(db, symbid, instance, cache.entries)
-		out = out + fmt.Sprintf("{\"FuncName\":\"%s\", \"subsystems\":[", symb.symbol)
+		out += fmt.Sprintf("{\"FuncName\":\"%s\", \"subsystems\":[", symb.symbol)
 		query := fmt.Sprintf("select subsys_name from tags where tag_file_ref_id= (select symbol_file_ref_id from symbols where symbol_id=%d);", symbid)
 		rows, err := db.Query(query)
 		if err != nil {
 			return "", errors.New("symbSubsys: query failed")
 		}
-		defer rows.Close()
+
+		defer func() {
+			closeErr := rows.Close()
+			if err == nil {
+				err = closeErr
+			}
+		}()
 
 		for rows.Next() {
 			if err := rows.Scan(&res); err != nil {
 				return "", errors.New("symbSubsys: error while scan query rows")
 			}
-			out = out + fmt.Sprintf("\"%s\",", res)
+			out += fmt.Sprintf("\"%s\",", res)
 		}
 		out = strings.TrimSuffix(out, ",") + "]},"
 	}
