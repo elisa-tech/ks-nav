@@ -88,7 +88,7 @@ var defaultConfig configuration = configuration{
 	ExcludedAfter:  []string{},
 	TargetSybsys:   []string{},
 	MaxDepth:       0, //0: no limit
-	Jout:           "GraphOnly",
+	Jout:           "graphOnly",
 	cmdlineNeeds:   map[string]bool{},
 }
 

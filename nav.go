@@ -42,7 +42,8 @@ import (
 )
 
 const (
-	graphOnly int = iota
+	dummyOutput int = iota
+	graphOnly
 	jsonOutputPlain
 	jsonOutputB64
 	jsonOutputGZB64
