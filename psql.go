@@ -1,31 +1,6 @@
 /*
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- *
- *   Name: nav - Kernel source code analysis tool
- *   Description: Extract call trees for kernel API
- *
- *   Author: Alessandro Carminati <acarmina@redhat.com>
- *   Author: Maurizio Papini <mpapini@redhat.com>
- *
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- *
- *   Copyright (c) 2022 Red Hat, Inc. All rights reserved.
- *
- *   This copyrighted material is made available to anyone wishing
- *   to use, modify, copy, or redistribute it subject to the terms
- *   and conditions of the GNU General Public License version 2.
- *
- *   This program is distributed in the hope that it will be
- *   useful, but WITHOUT ANY WARRANTY; without even the implied
- *   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- *   PURPOSE. See the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public
- *   License along with this program; if not, write to the Free
- *   Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- *   Boston, MA 02110-1301, USA.
- *
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2022 Red Hat, Inc.
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 package main
@@ -343,7 +318,7 @@ func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, vi
 	}
 }
 
-//returns true if one of the nodes n1, n2 is a target node
+// returns true if one of the nodes n1, n2 is a target node
 func intargets(targets []string, n1 string, n2 string) bool {
 
 	for _, t := range targets {
