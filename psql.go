@@ -1,31 +1,6 @@
 /*
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- *
- *   Name: kern_bin_db - Kernel source code analysis tool database creator
- *   Description: Parses kernel source tree and binary images and builds the DB
- *
- *   Author: Alessandro Carminati <acarmina@redhat.com>
- *   Author: Maurizio Papini <mpapini@redhat.com>
- *
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- *
- *   Copyright (c) 2022 Red Hat, Inc. All rights reserved.
- *
- *   This copyrighted material is made available to anyone wishing
- *   to use, modify, copy, or redistribute it subject to the terms
- *   and conditions of the GNU General Public License version 2.
- *
- *   This program is distributed in the hope that it will be
- *   useful, but WITHOUT ANY WARRANTY; without even the implied
- *   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- *   PURPOSE. See the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public
- *   License along with this program; if not, write to the Free
- *   Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- *   Boston, MA 02110-1301, USA.
- *
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2022 Red Hat, Inc.
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 package main
@@ -35,7 +10,6 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 )
-
 
 // Sql connection configuration
 type Connect_token struct {
@@ -47,41 +21,41 @@ type Connect_token struct {
 }
 
 type Insert_Instance_Args struct {
-	Version		int64
-	Patchlevel	int64
-	Sublevel	int64
-	Extraversion	string
-	Note		string
+	Version      int64
+	Patchlevel   int64
+	Sublevel     int64
+	Extraversion string
+	Note         string
 }
 
 type Insert_Config_Args struct {
-	Config_key	string
-	Config_val	string
-	Instance_no	int
+	Config_key  string
+	Config_val  string
+	Instance_no int
 }
 type Insert_Files_Ind_Args struct {
-	Id		int
+	Id int
 }
 type Insert_Symbols_Ind_Args struct {
-	Id		int
+	Id int
 }
 type Insert_Tags_Ind_Args struct {
-	Id		int
+	Id int
 }
 
 type Insert_Symbols_Files_Args struct {
-	Id		int
-	Symbol_Name	string
-	Symbol_Offset	string
-	Symbol_Type	string
+	Id            int
+	Symbol_Name   string
+	Symbol_Offset string
+	Symbol_Type   string
 }
 
 type Insert_Xrefs_Args struct {
-	Caller_Offset	uint64
-	Calling_Offset	uint64
-	Callee_Offset	uint64
-	Id		int
-	Source_line	string
+	Caller_Offset  uint64
+	Calling_Offset uint64
+	Callee_Offset  uint64
+	Id             int
+	Source_line    string
 }
 
 type Insert_Tags_Args struct {

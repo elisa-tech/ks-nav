@@ -1,43 +1,18 @@
 /*
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- *
- *   Name: kern_bin_db - Kernel source code analysis tool database creator
- *   Description: Parses kernel source tree and binary images and builds the DB
- *
- *   Author: Alessandro Carminati <acarmina@redhat.com>
- *   Author: Maurizio Papini <mpapini@redhat.com>
- *
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- *
- *   Copyright (c) 2022 Red Hat, Inc. All rights reserved.
- *
- *   This copyrighted material is made available to anyone wishing
- *   to use, modify, copy, or redistribute it subject to the terms
- *   and conditions of the GNU General Public License version 2.
- *
- *   This program is distributed in the hope that it will be
- *   useful, but WITHOUT ANY WARRANTY; without even the implied
- *   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
- *   PURPOSE. See the GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public
- *   License along with this program; if not, write to the Free
- *   Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
- *   Boston, MA 02110-1301, USA.
- *
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * Copyright (c) 2022 Red Hat, Inc.
+ * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
 package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	addr2line "github.com/elazarl/addr2line"
 	"path/filepath"
 	"strings"
 	"sync"
-	"errors"
-	addr2line "github.com/elazarl/addr2line"
 )
 
 var Query_fmts = [...]string{
@@ -55,7 +30,7 @@ type Workload_Type int64
 
 // Const values for configuration mode field.
 const (
-	_               Workload_Type         = iota
+	_ Workload_Type = iota
 	GENERATE_QUERY
 	EXECUTE_QUERY_ONLY
 	GENERATE_QUERY_AND_EXECUTE
@@ -64,19 +39,19 @@ const (
 )
 
 type Workload struct {
-	Addr2ln_offset	uint64
-	Addr2ln_name	string
-	Query_str	string
-	Query_args	interface{}
-	Workload_type	Workload_Type
+	Addr2ln_offset uint64
+	Addr2ln_name   string
+	Query_str      string
+	Query_args     interface{}
+	Workload_type  Workload_Type
 }
 
 // Context type
 type Context struct {
-	a2l		*addr2line.Addr2line
-	ch_workload	chan Workload
-	mu		sync.Mutex
-	DB		*sql.DB
+	a2l         *addr2line.Addr2line
+	ch_workload chan Workload
+	mu          sync.Mutex
+	DB          *sql.DB
 }
 
 // Caches item elements
@@ -88,11 +63,10 @@ type Addr2line_items struct {
 // Commandline handle functions prototype
 type ins_f func(*Context, string)
 
-var Test_result		[]string
+var Test_result []string
 
-
-func Fake_Insert_data(context *Context, query string){
-	Test_result=append(Test_result)
+func Fake_Insert_data(context *Context, query string) {
+	Test_result = append(Test_result)
 }
 
 func A2L_resolver__init(fn string, DB_inst *sql.DB, test bool) *Context {
@@ -145,8 +119,8 @@ func workload(context *Context, insert_func ins_f) {
 			for _, a := range rs {
 				qready = fmt.Sprintf(e.Query_str, filepath.Clean(a.File))
 				if a.Function == strings.ReplaceAll(e.Addr2ln_name, "sym.", "") {
-				break
-					}
+					break
+				}
 			}
 			insert_func(context, qready)
 			break
@@ -155,7 +129,7 @@ func workload(context *Context, insert_func ins_f) {
 	}
 }
 
-func Generate_Query_Str(Q_WL *Workload)error{
+func Generate_Query_Str(Q_WL *Workload) error {
 	var err error = nil
 
 	switch arg := (*Q_WL).Query_args.(type) {
@@ -193,7 +167,7 @@ func query_mgmt(ctx *Context, Q_WL *Workload) error {
 		err = Generate_Query_Str(Q_WL)
 		if err == nil {
 			(*ctx).ch_workload <- *Q_WL
-			}
+		}
 	default:
 		err = errors.New("Unknown workload type")
 	}
