@@ -379,9 +379,19 @@ func get_all_funcdata(r2p *r2.Pipe) []func_data {
 		if error != nil {
 			fmt.Printf("Error while parsing data: %s", error)
 		}
-		for _, s := range symbols {
-			if strings.Contains(s.Name, "loc.__x86_indirect_thunk_") {
-				functions = append(functions, func_data{Offset: s.Offset, Name: s.Name, Indirect: true})
+		//check if __x86_indirect_thunk_ x86_64 indirect retpoline are already there
+		addIndirect := true
+		for i, f := range functions {
+			if strings.Contains(f.Name, "__x86_indirect_thunk_") {
+				functions[i].Indirect = true
+				addIndirect = false
+			}
+		}
+		if addIndirect {
+			for _, s := range symbols {
+				if strings.Contains(s.Name, "loc.__x86_indirect_thunk_") {
+					functions = append(functions, func_data{Offset: s.Offset, Name: s.Name, Indirect: true})
+				}
 			}
 		}
 	}
