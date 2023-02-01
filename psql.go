@@ -273,7 +273,6 @@ func notExcluded(symbol string, excluded []string) bool {
 func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, visited *[]int, AdjMap *[]adjM, prod map[string]int, instance int, cache Cache, mode outMode, excludedAfter []string, excludedBefore []string, depth int, maxdepth int, dotFmt string, output *string) {
 	var tmp, s string
 	var l, r, ll node
-	var depthInc = 0
 
 	*visited = append(*visited, symbolId)
 	l = parentDispaly
@@ -283,6 +282,7 @@ func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, vi
 	}
 	if err == nil {
 		for _, curr := range successors {
+			depthInc := 0
 			if notExcluded(curr.symbol, excludedBefore) {
 				r.symbol = curr.symbol
 				r.sourceRef = curr.sourceRef
@@ -329,7 +329,7 @@ func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, vi
 				}
 
 				if notIn(*visited, curr.symId) {
-					if (notExcluded(curr.symbol, excludedAfter) || notExcluded(curr.symbol, excludedBefore)) && (maxdepth == 0 || ((maxdepth > 0) && (depth < maxdepth))) {
+					if (notExcluded(curr.symbol, excludedAfter) || notExcluded(curr.symbol, excludedBefore)) && (maxdepth == 0 || ((maxdepth > 0) && (depth+depthInc < maxdepth))) {
 						navigate(db, curr.symId, ll, targets, visited, AdjMap, prod, instance, cache, mode, excludedBefore, excludedBefore, depth+depthInc, maxdepth, dotFmt, output)
 					}
 				}
