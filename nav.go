@@ -36,10 +36,10 @@ var fmtDot = []string{
 
 var fmtDotHeader = []string{
 	"",
-	"digraph G {\n",
-	"digraph G {\\\\\\n",
-	"digraph G {\n",
-	"digraph G {\n",
+	"digraph G {\nrankdir=\"LR\"\n",
+	"digraph G {\\\\\\nrankdir=\"LR\"\\\\\\n",
+	"digraph G {\nrankdir=\"LR\"\n",
+	"digraph G {\nrankdir=\"LR\"\n",
 }
 
 var fmtDotNodeHighlightWSymb = "\"%[1]s\" [shape=record style=\"rounded,filled,bold\" fillcolor=yellow label=\"%[1]s|%[2]s\"]\n"
