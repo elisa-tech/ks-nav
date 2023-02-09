@@ -51,15 +51,13 @@ The following is the command line switches list from the kern_bin_db help.
 ```
 $ ./kern_bin_db -h
 Kernel symbol fetcher
-	-f	<v>	specifies json configuration file
-	-s	<v>	Forces use specified strip binary
-	-u	<v>	Forces use specified database userid
-	-p	<v>	Forecs use specified password
-	-d	<v>	Forecs use specified DBhost
-	-o	<v>	Forecs use specified DBPort
-	-n	<v>	Forecs use specified note (default 'upstream')
-	-c		Checks dependencies
-	-h		This Help
+        -f      <v>     specifies json configuration file
+        -s      <v>     Forces use specified strip binary
+        -e      <v>     Forces to use a specified DB Driver (i.e. postgres, mysql or sqlite3)
+        -d      <v>     Forces to use a specified DB DSN
+        -n      <v>     Forecs use specified note (default 'upstream')
+        -c              Checks dependencies
+        -h              This Help
 
 ```
 After having compiled a good default by specifying the Postgres database backend, start 
@@ -76,11 +74,8 @@ $ ./kern_bin_db -f conf.json -n "Custom kernel from NXP bsp"
 "LinuxWDebug":          "vmlinux",
 "LinuxWODebug":         "vmlinux.work",
 "StripBin":             "/usr/bin/aarch64-linux-gnu-strip",
-"DBURL":                "dbs.hqhome163.com",
-"DBPort":               5432,
-"DBUser":               "alessandro",
-"DBPassword":           "<password>",
-"DBTargetDB":           "kernel_bin",
+"DBDriver":             "postgres",
+"DBDSN":                "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
 "Maintainers_fn":       "MAINTAINERS",
 "KConfig_fn":           "include/generated/autoconf.h",
 "KMakefile":            "Makefile",
@@ -96,11 +91,8 @@ Configuration is a file containing a JSON serialized conf object
 |LinuxWDebug   |Linux image built with the debug symbols, input for the operation                   |string  |vmlinux                     |
 |LinuxWODebug  |File created after the strip operation,and on which the R" tool operates on         |string  |vmlinux.work                |
 |StripBin      |Executable that performs the strip operation to the selected architecture.          |string  |/usr/bin/strip              |
-|DBURL         |Host name ot ip address of the psql instance                                        |string  |dbs.hqhome163.com           |
-|DBPort        |tcp port where psql instance is listening                                           |integer |5432                        |
-|DBUser        |Valid username on the psql instance                                                 |string  |alessandro                  |
-|DBPassword    |Valid password on the psql instance                                                 |string  |<password>                  |
-|DBTargetDB    |The identifier for the DB containing symbols                                        |string  |kernel_bin                  |
+|DBDriver      |Name of DB engine driver, i.e. postgres, mysql or sqlite3                           |string  |postgres                    |
+|DBDSN         |DSN in the engine specific format                                                   |string  |See Note                    |
 |Maintainers_fn|The path to MAINTAINERS file, typically in the kernel source tree                   |string  |MAINTAINERS                 |
 |KConfig_fn    |The path to autoconf file containing the current build configuration                |string  |include/generated/autoconf.h|
 |KMakefile     |The path to main kernel sourcecode Makefile, tipically sitting on the kernel tree / |string  |Makefile                    |
@@ -108,7 +100,11 @@ Configuration is a file containing a JSON serialized conf object
 |Note          |The string gets copied to the database. Consider a sort of tag for the data set     |string  |upstream                    |
 
 **NOTE:** Defaults  are designed to make the tool work out of the box, if 
-the executable is placed in the Linux kernel source code root directory.
+the executable is placed in the Linux kernel source code root directory. 
+
+Currently the default DBDSN value is set to: 
+host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable 
+to be consistent with the previous default configuration.
 
 # TODO
 * currently, kern_bin_db scans only the kernel binary image. Loadable 
