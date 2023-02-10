@@ -243,6 +243,11 @@ func TestConfig(t *testing.T) {
 	if conf.DBDSN != "None3" {
 		t.Error("Error parsing database DSN arg")
 	}
+	os.Args = []string{"kern_bin_db", "-n", "None4"}
+	conf, err = args_parse(cmd_line_item_init())
+	if conf.Note != "None4" {
+		t.Error("Error parsing note")
+	}
 }
 
 // Tests the ability to remove duplicates xrefs from the xref list
