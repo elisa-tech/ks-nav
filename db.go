@@ -8,16 +8,15 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Sql connection configuration
 type Connect_token struct {
-	Host   string
-	Port   int
-	User   string
-	Pass   string
-	Dbname string
+	DBDriver string
+	DBDSN    string
 }
 
 type Insert_Instance_Args struct {
@@ -65,8 +64,7 @@ type Insert_Tags_Args struct {
 // Connects the target db and returns the handle
 func Connect_db(t *Connect_token) *sql.DB {
 	fmt.Println("connect")
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", (*t).Host, (*t).Port, (*t).User, (*t).Pass, (*t).Dbname)
-	db, err := sql.Open("postgres", psqlconn)
+	db, err := sql.Open((*t).DBDriver, (*t).DBDSN)
 	if err != nil {
 		panic(err)
 	}
@@ -90,15 +88,11 @@ func Insert_data(context *Context, query string) {
 func Insert_datawID(context *Context, query string) int {
 	var res int
 
-	_, err := (*context).DB.Exec(query)
+	rows, err := (*context).DB.Query(query)
 	if err != nil {
 		fmt.Println("##################################################")
 		fmt.Println(query)
 		fmt.Println("##################################################")
-		panic(err)
-	}
-	rows, err := (*context).DB.Query("SELECT currval('instances_instance_id_seq');")
-	if err != nil {
 		panic(err)
 	}
 	defer rows.Close()

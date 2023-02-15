@@ -41,7 +41,7 @@ func main() {
 	}
 	fmt.Println("create stripped version")
 	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
-	t := Connect_token{conf.DBURL, conf.DBPort, conf.DBUser, conf.DBPassword, conf.DBTargetDB}
+	t := Connect_token{conf.DBDriver, conf.DBDSN}
 	context := A2L_resolver__init(conf.LinuxWDebug, Connect_db(&t), false)
 	if conf.Mode&(ENABLE_VERSION_CONFIG) != 0 {
 		config, _ := get_FromFile(conf.KConfig_fn)

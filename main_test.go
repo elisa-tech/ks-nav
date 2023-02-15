@@ -193,11 +193,8 @@ func TestConfig(t *testing.T) {
 		LinuxWDebug:    "vmlinux",
 		LinuxWODebug:   "vmlinux.work",
 		StripBin:       "/usr/bin/strip",
-		DBURL:          "dbs.hqhome163.com",
-		DBPort:         5432,
-		DBUser:         "alessandro",
-		DBPassword:     "<password>",
-		DBTargetDB:     "kernel_bin",
+		DBDriver:       "postgres",
+		DBDSN:          "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
 		Maintainers_fn: "MAINTAINERS",
 		KConfig_fn:     "include/generated/autoconf.h",
 		KMakefile:      "Makefile",
@@ -236,33 +233,26 @@ func TestConfig(t *testing.T) {
 	if conf.StripBin != "None1" {
 		t.Error("Error parsing strip binary arg")
 	}
-	os.Args = []string{"kern_bin_db", "-u", "None2"}
+	os.Args = []string{"kern_bin_db", "-e", "None2"}
 	conf, err = args_parse(cmd_line_item_init())
-	if conf.DBUser != "None2" {
-		t.Error("Error parsing database userid arg")
+	if conf.DBDriver != "None2" {
+		t.Error("Error parsing database driver arg")
 	}
-	os.Args = []string{"kern_bin_db", "-p", "None3"}
+	os.Args = []string{"kern_bin_db", "-d", "None3"}
 	conf, err = args_parse(cmd_line_item_init())
-	if conf.DBPassword != "None3" {
-		t.Error("Error parsing password arg")
+	if conf.DBDSN != "None3" {
+		t.Error("Error parsing database DSN arg")
 	}
-	os.Args = []string{"kern_bin_db", "-d", "None4"}
+	os.Args = []string{"kern_bin_db", "-n", "None4"}
 	conf, err = args_parse(cmd_line_item_init())
-	if conf.DBURL != "None4" {
-		t.Error("Error parsing db url arg")
-	}
-	os.Args = []string{"kern_bin_db", "-o", "1234"}
-	conf, err = args_parse(cmd_line_item_init())
-	if conf.DBPort != 1234 {
-		t.Error("Error parsing db port arg")
+	if conf.Note != "None4" {
+		t.Error("Error parsing note")
 	}
 }
 
-
-
 // Tests the ability to remove duplicates xrefs from the xref list
 func TestRemoveDuplicate(t *testing.T) {
- 	xref_test1 := []xref{ //should find no duplicates
+	xref_test1 := []xref{ //should find no duplicates
 		xref{"indirect", 0xffffffff826a98a7, 0}, xref{"indirect", 0xffffffff826a98ef, 0}, xref{"indirect", 0xffffffff826ab514, 0}, xref{"indirect", 0xffffffff826ab5f3, 0},
 		xref{"direct", 0xffffffff82681b9a, 0xffffffff826831c4}, xref{"direct", 0xffffffff8268214a, 0xffffffff82685b2a}, xref{"direct", 0xffffffff8268215a, 0xffffffff826878ab}, xref{"direct", 0xffffffff8268226a, 0xffffffff82687591},
 		xref{"direct", 0xffffffff826822aa, 0xffffffff82685dc1}, xref{"direct", 0xffffffff8268245b, 0xffffffff826826aa}, xref{"direct", 0xffffffff8268255b, 0xffffffff826833a5}, xref{"direct", 0xffffffff8268259b, 0xffffffff82680329},
@@ -306,12 +296,12 @@ func TestRemoveDuplicate(t *testing.T) {
 	}
 
 	res := removeDuplicate(xref_test1)
-	if len(xref_test1)!=len(res){
+	if len(xref_test1) != len(res) {
 		t.Error("Expect to find no duplicates. Test failed.")
 	}
 
 	res = removeDuplicate(xref_test2)
-	if len(xref_test2)-2!=len(res){
+	if len(xref_test2)-2 != len(res) {
 		t.Error("Expect to find duplicates. Test failed.")
 	}
 }

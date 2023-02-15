@@ -16,7 +16,7 @@ import (
 )
 
 var Query_fmts = [...]string{
-	"insert into instances (version_string, note) values ('%d.%d.%d%s', '%s');",
+	"insert into instances (version_string, note) values ('%d.%d.%d%s', '%s') returning instance_id;",
 	"insert into configs (config_symbol, config_value, config_instance_id_ref) values ('%s', '%s', %d);",
 	"insert into files (file_name, file_instance_id_ref) select 'NoFile',%d;",
 	"insert into symbols (symbol_name,symbol_address,symbol_type,symbol_file_ref_id,symbol_instance_id_ref) " + "select (select 'Indirect call'), '0x00000000', 'indirect', (select file_id from files where file_name ='NoFile' and file_instance_id_ref=%[1]d), %[1]d;",
