@@ -43,16 +43,18 @@ func main() {
 	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
 	t := Connect_token{conf.DBDriver, conf.DBDSN}
 	context := A2L_resolver__init(conf.LinuxWDebug, Connect_db(&t), false)
+
+	config, _ := get_FromFile(conf.KConfig_fn)
+	makefile, _ := get_FromFile(conf.KMakefile)
+	v, err := get_version(makefile)
+	if err != nil {
+		panic(err)
+	}
+	wl = &Workload{Workload_type: GENERATE_QUERY, Query_args: Insert_Instance_Args{v.Version, v.Patchlevel, v.Sublevel, v.Extraversion, conf.Note}}
+	query_mgmt(context, wl)
+	id = Insert_datawID(context, (*wl).Query_str)
+
 	if conf.Mode&(ENABLE_VERSION_CONFIG) != 0 {
-		config, _ := get_FromFile(conf.KConfig_fn)
-		makefile, _ := get_FromFile(conf.KMakefile)
-		v, err := get_version(makefile)
-		if err != nil {
-			panic(err)
-		}
-		wl = &Workload{Workload_type: GENERATE_QUERY, Query_args: Insert_Instance_Args{v.Version, v.Patchlevel, v.Sublevel, v.Extraversion, conf.Note}}
-		query_mgmt(context, wl)
-		id = Insert_datawID(context, (*wl).Query_str)
 		kconfig := parse_config(config)
 
 		fmt.Println("store config")
