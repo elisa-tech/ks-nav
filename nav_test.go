@@ -7,31 +7,32 @@ package main
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	c "nav/constants"
 )
 
 var _ = Describe("Nav Tests", func() {
 	Describe("opt2num", func() {
 		When("Using a valid options key", func() {
 			It("Should return the correct value for graphOnly", func() {
-				Expect(opt2num("graphOnly")).To(Equal(graphOnly))
+				Expect(opt2num("graphOnly")).To(Equal(c.GraphOnly))
 			})
 
 			It("Should return the correct value for jsonOutputPlain", func() {
-				Expect(opt2num("jsonOutputPlain")).To(Equal(jsonOutputPlain))
+				Expect(opt2num("jsonOutputPlain")).To(Equal(c.JsonOutputPlain))
 			})
 
 			It("Should return the correct value for jsonOutputB64", func() {
-				Expect(opt2num("jsonOutputB64")).To(Equal(jsonOutputB64))
+				Expect(opt2num("jsonOutputB64")).To(Equal(c.JsonOutputB64))
 			})
 
 			It("Should return the correct value for jsonOutputGZB64", func() {
-				Expect(opt2num("jsonOutputGZB64")).To(Equal(jsonOutputGZB64))
+				Expect(opt2num("jsonOutputGZB64")).To(Equal(c.JsonOutputGZB64))
 			})
 		})
 
 		When("Using an invalid options key", func() {
 			It("Should return 0", func() {
-				Expect(opt2num("invalidKey")).To(Equal(invalidOutput))
+				Expect(opt2num("invalidKey")).To(Equal(c.InvalidOutput))
 			})
 		})
 	})

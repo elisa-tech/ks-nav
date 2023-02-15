@@ -71,8 +71,6 @@ linters:
     - prealloc
     # Check for improper duration handling.
     - durationcheck
-    # Enforce tests being in the _test package.
-    - testpackage
     # Check for magic numbers
     - gomnd
     # Check that errors returned from external packages are wrapped.
@@ -85,6 +83,11 @@ linters-settings:
     include-go-root: false
     packages:
       - github.com/lib/pq
+      - nav/constants
+      - nav/config
+      - github.com/spf13/pflag
+      - github.com/onsi/ginkgo
+      - github.com/onsi/gomega
   govet:
     enable-all: true
     check-shadowing: false

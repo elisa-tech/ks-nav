@@ -6,7 +6,7 @@ Nav is a tool that uses a pre-constituted database to emit call trees graphs tha
 Although other similar tool do exist, the motivation for this tool is to be developed, is to solve a specific need: do a kernel source code analysis aimed at feature level and  shows it as functions call tree or subsystems call tree. 
 
 ## Build
-Nav is implemented in Golang. Golang application are usually easy to build. In addition to this, it has very few dependencies other than the standard Golang packages.
+Nav is implemented in Golang. Golang applications are usually easy to build. In addition to this, it has very few dependencies other than the standard Golang packages.
 A `Makefile` is provided to ease the build process. 
 Just typing 
 ```
@@ -42,46 +42,58 @@ $ ./nav -f conf.json -s kernel_init
 The following is the command line switches list from the nav help.
 ```
 $ ./nav -h
-Command Help
-App Name: nav
-Descr: kernel symbol navigator
-	-j	<v>	Force Json output with subsystems data
-	-s	<v>	Specifies symbol
-	-i	<v>	Specifies instance
-	-f	<v>	Specifies config file
-	-e	<v>	Forces to use a specified DB Driver (i.e. postgres, mysql or sqlite3)
-	-d	<v>	Forces to use a specified DB DSN
-	-m	<v>	Sets display mode 2=subsystems,1=all
-	-h		This Help
+Nav - kernel symbol navigator
+
+Usage:
+  nav [FLAGS]
+
+Flags:
+  -f, --config config              path to config file
+  -s, --symbol symbol              name of the symbol to start the navigation from
+  -j, --output-type type           type of output: graphOnly, jsonOutputPlain, jsonOutputB64 or jsonOutputGZB64 (default "graphOnly")
+  -x, --max-depth number           max number of levels in call flow exploration (0=No limit)
+  -m, --mode mode                  mode of plotting: 1=Symbols, 2=Subsystems, 3=Subsystems with labels, 4=Target subsystem isolation (default 2)
+  -b, --excluded-before symbols    list of symbols to exclude before the target symbol
+  -a, --excluded-after symbols     list of symbols to exclude after the target symbol
+  -t, --target-subsys subsystems   list of subsystems to include in the output
+                                   
+  -e, --db-driver driver           database driver: mysql, postgres or sqlite3 (default "postgres")
+  -i, --db-instance instance       database instance (default 1)
+  -d, --DBDSN DSN                  database DSN in the engine specific format
+                                   postgres: "host=dbhost.com port=5432 user=username password=<password> dbname=kernel_bin sslmode=disable"
+                                   mysql: "username:@tcp(dbhost.com:3306)/dbname?multiStatements=true"
+                                   sqlite3: "file:db_file.db"
+                                   
+  -h, --help                       show this help message and exit
 ```
 
 ## Sample configuration:
 ```
 {
-"DBDriver":	"postgres",
-"DBDSN":	"host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
-"Symbol":	"__arm64_sys_getppid",
-"Instance":	1,
-"Mode":		1,
-"Excluded":	["rcu_.*", "kmalloc", "kfree"],
-"MaxDepth":	0,
-"Jout":		"JsonOutputPlain"
+  "db_driver": "postgres",
+  "DBDSN": "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kern_bin_new sslmode=disable",
+  "db_instance": 1,
+  "symbol": "__arm64_sys_getppid",
+  "mode":4,
+  "excluded_before": [],
+  "excluded_after": [".*rcu.*"],
+  "max_depth": 1,
+  "output_type": "graphOnly",
+  "target_subsys": [],
 }
 ```
 Configuration is a file containing a JSON serialized conf object
 
-|Field        |description                                                                                                |type    |Default value      |
-|-------------|-----------------------------------------------------------------------------------------------------------|--------|-------------------|
-|DBDriver     |Name of DB engine driver, i.e. postgres, mysql or sqlite3                                                  |string  |postgres           |
-|DBDSN        |DSN in the engine specific format                                                                          |string  |See Note           |
-|Symbol       |The symbol where start the navigation                                                                      |string  |NULL               |
-|Instance     |The interesting symbols instance identifier                                                                |integer |1                  |
-|Mode         |Mode of plotting: 1 symbols, 2 subsystems, 3 subsystems with labels,4 target subsystem isolation           |integer |2                  |
-|Excluded     |List of symbols/subsystem not to be expanded                                                               |string[]|["rcu_.*"]         |
-|MaxDepth     |Max number of levels to explore 0 no limit                                                                 |integer |0                  |
-|Jout         |Type of output: GraphOnly, JsonOutputPlain, JsonOutputB64, JsonOutputGZB64                                 |enum    |GraphOnly          |
-|Target_sybsys|List of subsys that need to be highlighted. if empty, only the subs that contain the start is highlighted  |string  |[]                 | 
+| Field           | description                                                                                               | type     | Default value |
+|-----------------|-----------------------------------------------------------------------------------------------------------|----------|---------------|
+| db_driver       | Name of DB engine driver, i.e. postgres, mysql or sqlite3                                                 | string   | postgres      |
+| DBDSN           | DSN in the engine specific format                                                                         | string   | See Note      |
+| db_instance     | Database instance                                                                                         | int      | 1             |
+| symbol          | Name of the symbol to start the navigation from                                                           | string   | NULL          |
+| mode            | Mode of plotting: 1 symbols, 2 subsystems, 3 subsystems with labels, 4 target subsystem isolation         | integer  | 2             |
+| excluded_before | List of symbols to exclude before the target symbol                                                       | string[] | nil           |
+| excluded_after  | List of symbols to exclude after the target symbol                                                        | string[] | nil           |
+| max_depth       | Max number of levels to explore (0=no limit)                                                              | integer  | 0             |
+| output_type     | Type of output: graphOnly, jsonOutputPlain, jsonOutputB64, jsonOutputGZB64                                | enum     | graphOnly     |
+| target_subsys   | List of subsys that need to be highlighted. if empty, only the subs that contain the start is highlighted | string[] | nil           | 
 
-**NOTE:** Currently the default DBDSN value is set to:
-host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable
-to be consistent with the previous default configuration.

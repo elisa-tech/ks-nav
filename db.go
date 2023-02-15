@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	c "nav/constants"
 	"regexp"
 	"sort"
 	"strings"
@@ -18,17 +19,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type outMode int64
-
-// Const values for configuration mode field.
-const (
-	_ outMode = iota
-	printAll
-	printSubsys
-	printSubsysWs
-	printTargeted
-	OutModeLast
-)
 const SUBSYS_UNDEF = "The REST"
 
 // Parent node.
@@ -286,14 +276,14 @@ func notExcluded(symbol string, excluded []string) bool {
 // TODO: refactory needed:
 // What is the problem: too many args.
 // suggestion: New version with input and output structs.
-func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, visited *[]int, AdjMap *[]adjM, prod map[string]int, instance int, cache Cache, mode outMode, excludedAfter []string, excludedBefore []string, depth int, maxdepth int, dotFmt string, output *string) {
+func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, visited *[]int, AdjMap *[]adjM, prod map[string]int, instance int, cache Cache, mode c.OutMode, excludedAfter []string, excludedBefore []string, depth int, maxdepth int, dotFmt string, output *string) {
 	var tmp, s string
 	var l, r, ll node
 
 	*visited = append(*visited, symbolId)
 	l = parentDispaly
 	successors, err := getSuccessorsById(db, symbolId, instance, cache)
-	if mode == printAll {
+	if mode == c.PrintAll {
 		successors = removeDuplicate(successors)
 	}
 	if err == nil {
@@ -309,11 +299,11 @@ func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, vi
 				}
 
 				switch mode {
-				case printAll:
+				case c.PrintAll:
 					s = fmt.Sprintf(dotFmt, l.symbol, r.symbol)
 					ll = r
 					depthInc = 1
-				case printSubsys, printSubsysWs, printTargeted:
+				case c.PrintSubsys, c.PrintSubsysWs, c.PrintTargeted:
 					if tmp, _ = getSubsysFromSymbolName(db, r.symbol, instance, cache.subSys); r.subsys != tmp {
 						if tmp != "" {
 							r.subsys = tmp
@@ -338,7 +328,7 @@ func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, vi
 				} else {
 					prod[s] = 1
 					if s != "" {
-						if (mode != printTargeted) || (intargets(targets, l.subsys, r.subsys)) {
+						if (mode != c.PrintTargeted) || (intargets(targets, l.subsys, r.subsys)) {
 							*output = (*output) + s
 						}
 					}
