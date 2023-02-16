@@ -42,7 +42,7 @@ func main() {
 	fmt.Println("create stripped version")
 	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
 	t := Connect_token{conf.DBDriver, conf.DBDSN}
-	context := A2L_resolver__init(conf.LinuxWDebug, Connect_db(&t), false)
+	context := A2L_resolver__init(conf.LinuxWDebug, Connect_db(&t), conf.DBDSN, false)
 
 	config, _ := get_FromFile(conf.KConfig_fn)
 	makefile, _ := get_FromFile(conf.KMakefile)
