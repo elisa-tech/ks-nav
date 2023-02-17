@@ -8,9 +8,22 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"errors"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+)
+
+
+type DBtype int64
+
+// Const values for DB type.
+const (
+        PSQL DBtype = iota
+        MYSQL
+        MARIADB
+        SQLITE
+        DBTYPE_Last
 )
 
 // Sql connection configuration
@@ -63,12 +76,11 @@ type Insert_Tags_Args struct {
 
 // Connects the target db and returns the handle
 func Connect_db(t *Connect_token) *sql.DB {
-	fmt.Println("connect")
 	db, err := sql.Open((*t).DBDriver, (*t).DBDSN)
+	fmt.Println((*t).DBDriver, (*t).DBDSN)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("connected")
 	return db
 }
 
@@ -102,4 +114,18 @@ func Insert_datawID(context *Context, query string) int {
 	}
 
 	return res
+}
+func DBSN2DBtype(DBT string) (DBtype, error) {
+
+	switch DBT {
+		case "psql", "PSQL", "postgres":
+			return PSQL, nil
+		case "mysql", "MySQL", "MYSQL":
+			return MYSQL, nil
+		case "mariadb", "MariaDB", "MARIADB":
+			return MARIADB, nil
+		case "sqlite", "SQLITE":
+			return SQLITE, nil
+		}
+	return DBTYPE_Last, errors.New("Unknown Database type")
 }

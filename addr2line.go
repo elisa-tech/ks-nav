@@ -92,7 +92,7 @@ type Context struct {
 	ch_workload chan Workload
 	mu          sync.Mutex
 	DB          *sql.DB
-	DBDSN       string
+	DBT         string
 }
 
 // Caches item elements
@@ -116,7 +116,7 @@ func A2L_resolver__init(fn string, DB_inst *sql.DB, DBT string, test bool) *Cont
 		panic(err)
 	}
 	addresses := make(chan Workload, 16)
-	context := &Context{a2l: a, ch_workload: addresses, DB: DB_inst, DBDSN: DBT}
+	context := &Context{a2l: a, ch_workload: addresses, DB: DB_inst, DBT: DBT}
 
 	if !test {
 		go workload(context, Insert_data)
@@ -201,7 +201,7 @@ func query_mgmt(ctx *Context, Q_WL *Workload) error {
 
 	switch (*Q_WL).Workload_type {
 	case GENERATE_QUERY:
-		DBT, err := DBSN2DBtype((*ctx).DBDSN)
+		DBT, err := DBSN2DBtype((*ctx).DBT)
 		if err != nil {
 			panic(err)
 		}
@@ -209,7 +209,7 @@ func query_mgmt(ctx *Context, Q_WL *Workload) error {
 	case EXECUTE_QUERY_ONLY:
 		(*ctx).ch_workload <- *Q_WL
 	case GENERATE_QUERY_AND_EXECUTE, GENERATE_QUERY_AND_EXECUTE_W_A2L:
-		DBT, err := DBSN2DBtype((*ctx).DBDSN)
+		DBT, err := DBSN2DBtype((*ctx).DBT)
 		if err != nil {
 			panic(err)
 		}
