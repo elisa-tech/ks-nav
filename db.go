@@ -13,7 +13,9 @@ import (
 	"sort"
 	"strings"
 
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type outMode int64
@@ -43,11 +45,8 @@ type adjM struct {
 
 // Sql connection configuration.
 type connectToken struct {
-	host   string
-	port   int
-	user   string
-	pass   string
-	dbname string
+	DBDriver string
+	DBDSN    string
 }
 
 type entry struct {
@@ -74,8 +73,7 @@ type Cache struct {
 
 // Connects the target db and returns the handle.
 func connectDb(t *connectToken) *sql.DB {
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", t.host, t.port, t.user, t.pass, t.dbname)
-	db, err := sql.Open("postgres", psqlconn)
+	db, err := sql.Open(t.DBDriver, t.DBDSN)
 	if err != nil {
 		panic(err)
 	}
@@ -92,9 +90,10 @@ func getEntryById(db *sql.DB, symbolId int, instance int, cache map[int]entry) (
 	}
 
 	query := "select symbol_id, symbol_name, subsys_name, file_name from " +
-		"(select * from symbols, files where symbols.symbol_file_ref_id=files.file_id and symbols.symbol_instance_id_ref=$2) as dummy " +
-		"left outer join tags on dummy.symbol_file_ref_id=tags.tag_file_ref_id where symbol_id=$1 and symbol_instance_id_ref=$2"
-	rows, err := db.Query(query, symbolId, instance)
+		"(select * from symbols, files where symbols.symbol_file_ref_id=files.file_id and symbols.symbol_instance_id_ref=%[2]d) as dummy " +
+		"left outer join tags on dummy.symbol_file_ref_id=tags.tag_file_ref_id where symbol_id=%[1]d and symbol_instance_id_ref=%[2]d"
+	query = fmt.Sprintf(query, symbolId, instance)
+	rows, err := db.Query(query)
 	if err != nil {
 		panic(err)
 	}
@@ -132,8 +131,9 @@ func getSuccessorsById(db *sql.DB, symbolId int, instance int, cache Cache) ([]e
 		return res, nil
 	}
 
-	query := "select caller, callee, source_line, ref_addr from xrefs where caller =$1 and xref_instance_id_ref=$2"
-	rows, err := db.Query(query, symbolId, instance)
+	query := "select caller, callee, source_line, ref_addr from xrefs where caller = %[1]d and xref_instance_id_ref = %[2]d"
+	query = fmt.Sprintf(query, symbolId, instance)
+	rows, err := db.Query(query)
 	if err != nil {
 		panic(err)
 	}
@@ -195,12 +195,13 @@ func getSubsysFromSymbolName(db *sql.DB, symbol string, instance int, subsytemsC
 	if res, ok := subsytemsCache[symbol]; ok {
 		return res, nil
 	}
-	query := "select (select symbol_type from symbols where symbol_name=$1 and symbol_instance_id_ref=$2) as type, subsys_name from " +
+	query := "select (select symbol_type from symbols where symbol_name='%[1]s' and symbol_instance_id_ref=%[2]d) as type, subsys_name from " +
 		"(select count(*) as cnt, subsys_name from tags where subsys_name in (select subsys_name from symbols, " +
-		"tags where symbols.symbol_file_ref_id=tags.tag_file_ref_id and symbols.symbol_name=$1 and symbols.symbol_instance_id_ref=$2) " +
+		"tags where symbols.symbol_file_ref_id=tags.tag_file_ref_id and symbols.symbol_name='%[1]s' and symbols.symbol_instance_id_ref=%[2]d) " +
 		"group by subsys_name order by cnt desc) as tbl;"
 
-	rows, err := db.Query(query, symbol, instance)
+	query = fmt.Sprintf(query, symbol, instance)
+	rows, err := db.Query(query)
 	if err != nil {
 		panic(err)
 	}
@@ -229,8 +230,9 @@ func getSubsysFromSymbolName(db *sql.DB, symbol string, instance int, subsytemsC
 func sym2num(db *sql.DB, symb string, instance int) (int, error) {
 	var res = 0
 	var cnt = 0
-	query := "select symbol_id from symbols where symbols.symbol_name=$1 and symbols.symbol_instance_id_ref=$2"
-	rows, err := db.Query(query, symb, instance)
+	query := "select symbol_id from symbols where symbols.symbol_name='%[1]s' and symbols.symbol_instance_id_ref=%[2]d"
+	query = fmt.Sprintf(query, symb, instance)
+	rows, err := db.Query(query)
 	if err != nil {
 		panic(err)
 	}

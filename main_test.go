@@ -16,11 +16,8 @@ import (
 func compareConfigs(c1 configuration, c2 configuration) bool {
 
 	res := true
-	res = res && c1.DBUrl == c2.DBUrl
-	res = res && c1.DBPort == c2.DBPort
-	res = res && c1.DBUser == c2.DBUser
-	res = res && c1.DBPassword == c2.DBPassword
-	res = res && c1.DBTargetDB == c2.DBTargetDB
+	res = res && c1.DBDriver == c2.DBDriver
+	res = res && c1.DBDSN == c2.DBDSN
 	res = res && c1.Symbol == c2.Symbol
 	res = res && c1.Instance == c2.Instance
 	res = res && c1.Mode == c2.Mode
@@ -41,11 +38,8 @@ func compareConfigs(c1 configuration, c2 configuration) bool {
 func TestConfig(t *testing.T) {
 
 	var testConfig = configuration{
-		DBUrl:          "dummy",
-		DBPort:         1234,
-		DBUser:         "dummy",
-		DBPassword:     "dummy",
-		DBTargetDB:     "dummy",
+		DBDriver:       "dummy",
+		DBDSN:          "dummy",
 		Symbol:         "dummy",
 		Instance:       1234,
 		Mode:           1234,
@@ -106,8 +100,8 @@ func TestConfig(t *testing.T) {
 	}
 
 	tmp := testConfig
-	tmp.DBUser = "new"
-	os.Args = []string{"nav", "-i", "1", "-s", "symb", "-f", current + "/t_files/test1.json", "-u", "new"}
+	tmp.DBDriver = "new"
+	os.Args = []string{"nav", "-i", "1", "-s", "symb", "-f", current + "/t_files/test1.json", "-e", "new"}
 	conf, err = argsParse(cmdLineItemInit())
 	if err != nil {
 		t.Error("Unexpected conf error while reading from existing file", err, current+"/t_files/test1.json")

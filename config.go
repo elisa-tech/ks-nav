@@ -19,8 +19,6 @@ const (
 	appDescr string = "Descr: kernel symbol navigator"
 )
 
-const DBPortNumber = 5432
-
 type argFunc func(*configuration, []string) error
 
 // Command line switch elements.
@@ -36,10 +34,8 @@ type cmdLineItems struct {
 // Represents the application configuration.
 type configuration struct {
 	cmdlineNeeds   map[string]bool
-	DBTargetDB     string
-	DBUrl          string
-	DBUser         string
-	DBPassword     string
+	DBDriver       string
+	DBDSN          string
 	Symbol         string
 	Jout           string
 	ExcludedBefore []string
@@ -48,16 +44,12 @@ type configuration struct {
 	Instance       int
 	MaxDepth       int
 	Mode           outMode
-	DBPort         int
 }
 
 // Instance of default configuration values.
 var defaultConfig = configuration{
-	DBUrl:          "dbs.hqhome163.com",
-	DBPort:         DBPortNumber,
-	DBUser:         "alessandro",
-	DBPassword:     "<password>",
-	DBTargetDB:     "kernel_bin",
+	DBDriver:       "postgres",
+	DBDSN:          "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
 	Symbol:         "",
 	Instance:       0,
 	Mode:           printSubsys,
@@ -88,10 +80,8 @@ func cmdLineItemInit() []cmdLineItems {
 	pushCmdLineItem("-s", "Specifies symbol", true, true, funcSymbol, &res)
 	pushCmdLineItem("-i", "Specifies instance", true, true, funcInstance, &res)
 	pushCmdLineItem("-f", "Specifies config file", true, false, funcJconf, &res)
-	pushCmdLineItem("-u", "Forces use specified database userid", true, false, funcDBUser, &res)
-	pushCmdLineItem("-p", "Forces use specified password", true, false, funcDBPass, &res)
-	pushCmdLineItem("-d", "Forces use specified DBHost", true, false, funcDBHost, &res)
-	pushCmdLineItem("-p", "Forces use specified DBPort", true, false, funcDBPort, &res)
+	pushCmdLineItem("-e", "Forces to use a specified DB Driver (i.e. postgres, mysql or sqlite3)", true, false, funcDBDriver, &res)
+	pushCmdLineItem("-d", "Forces to use a specified DB DSN", true, false, funcDBDSN, &res)
 	pushCmdLineItem("-m", "Sets display mode 2=subsystems,1=all", true, false, funcMode, &res)
 	pushCmdLineItem("-x", "Specify Max depth in call flow exploration", true, false, funcDepth, &res)
 	pushCmdLineItem("-h", "This help", false, false, funcHelp, &res)
@@ -133,27 +123,13 @@ func funcSymbol(conf *configuration, fn []string) error {
 	return nil
 }
 
-func funcDBUser(conf *configuration, user []string) error {
-	conf.DBUser = user[0]
+func funcDBDriver(conf *configuration, driver []string) error {
+	conf.DBDriver = driver[0]
 	return nil
 }
 
-func funcDBPass(conf *configuration, pass []string) error {
-	conf.DBPassword = pass[0]
-	return nil
-}
-
-func funcDBHost(conf *configuration, host []string) error {
-	conf.DBUrl = host[0]
-	return nil
-}
-
-func funcDBPort(conf *configuration, port []string) error {
-	s, err := strconv.Atoi(port[0])
-	if err != nil {
-		return err
-	}
-	conf.DBPort = s
+func funcDBDSN(conf *configuration, dsn []string) error {
+	conf.DBDSN = dsn[0]
 	return nil
 }
 

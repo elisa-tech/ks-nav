@@ -190,7 +190,7 @@ func main() {
 		fmt.Printf("Unknown mode %s\n", conf.Jout)
 		os.Exit(-2)
 	}
-	t := connectToken{conf.DBUrl, conf.DBPort, conf.DBUser, conf.DBPassword, conf.DBTargetDB}
+	t := connectToken{conf.DBDriver, conf.DBDSN}
 	db := connectDb(&t)
 
 	output, err := generateOutput(db, &conf)

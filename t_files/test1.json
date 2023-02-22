@@ -1,9 +1,6 @@
 {
-"DBURL":"dummy",
-"DBPort":1234,
-"DBUser":"dummy",
-"DBPassword":"dummy",
-"DBTargetDB":"dummy",
+"DBDriver":"dummy",
+"DBDSN":"dummy",
 "Symbol":"dummy",
 "Instance":1234,
 "Mode":1234,
