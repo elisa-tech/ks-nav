@@ -48,13 +48,13 @@ type func_data struct {
 	Noreturn   bool         `json: "noreturn"`
 	Stackframe uint16       `json: "stackframe"`
 	Calltype   string       `json: "calltype"`
-	Cost       uint16       `json: "cost"`
+	Cost       uint32       `json: "cost"`
 	Cc         uint16       `json: "cc"`
 	Bits       uint16       `json: "bits"`
 	Type       string       `json: "type"`
 	Nbbs       uint16       `json: "nbbs"`
 	Is_lineal  bool         `json: "is-lineal"`
-	Ninstrs    uint16       `json: "ninstrs"`
+	Ninstrs    uint32       `json: "ninstrs"`
 	Edges      uint16       `json: "edges"`
 	Ebbs       uint16       `json: "ebbs"`
 	Signature  string       `json: "signature"`
@@ -64,7 +64,7 @@ type func_data struct {
 	Datarefs   []uint64     `json: "datarefs"`
 	Codexrefs  []ref_       `json: "codexrefs"`
 	Dataxrefs  []uint64     `json: "dataxrefs"`
-	Indegree   uint16       `json: "indegree"`
+	Indegree   uint32       `json: "indegree"`
 	Outdegree  uint16       `json: "outdegree"`
 	Nlocals    uint16       `json: "nlocals"`
 	Nargs      uint16       `json: "nargs"`
