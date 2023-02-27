@@ -106,7 +106,8 @@ Currently the default DBDSN value is set to:
 host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable
 to be consistent with the previous default configuration.
 
-For sqlite the DBDSN can be as simple as **file:kernel-symbol.db**.
+For sqlite the DBDSN can be as simple as just the filename of the database
+file: **kernel-symbol.db**.
 
 In any case, before starting kern_bin_db, the DB schema needs to be created
 manually with one of the provided sql-files.
