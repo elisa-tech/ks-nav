@@ -95,7 +95,7 @@ func getEntryById(db *sql.DB, symbolId int, instance int, cache map[int]entry) (
 	query = fmt.Sprintf(query, symbolId, instance)
 	rows, err := db.Query(query)
 	if err != nil {
-		panic(err)
+		return entry{}, err
 	}
 	defer func() {
 		closeErr := rows.Close()
@@ -219,6 +219,15 @@ func getSubsysFromSymbolName(db *sql.DB, symbol string, instance int, subsytemsC
 		}
 	}
 
+	if err = rows.Err(); err != nil {
+		fmt.Println("getSubsysFromSymbolName: error in access query rows")
+		return "", err
+	}
+
+	if sub == "" {
+		return "", nil
+	}
+
 	if ty == "indirect" {
 		sub = ty
 	}
@@ -228,7 +237,7 @@ func getSubsysFromSymbolName(db *sql.DB, symbol string, instance int, subsytemsC
 
 // Returns the id of a given function name.
 func sym2num(db *sql.DB, symb string, instance int) (int, error) {
-	var res = 0
+	var res = -1
 	var cnt = 0
 	query := "select symbol_id from symbols where symbols.symbol_name='%[1]s' and symbols.symbol_instance_id_ref=%[2]d"
 	query = fmt.Sprintf(query, symb, instance)
@@ -251,6 +260,12 @@ func sym2num(db *sql.DB, symb string, instance int) (int, error) {
 			return res, err
 		}
 	}
+
+	if err = rows.Err(); err != nil {
+		fmt.Println("sym2num: error in access query rows")
+		return -1, err
+	}
+
 	if cnt != 1 {
 		return res, errors.New("duplicate ID in the DB")
 	}
@@ -259,7 +274,6 @@ func sym2num(db *sql.DB, symb string, instance int) (int, error) {
 
 // Checks if a given function needs to be explored.
 func notExcluded(symbol string, excluded []string) bool {
-
 	for _, s := range excluded {
 		if match, _ := regexp.MatchString(s, symbol); match {
 			return false
@@ -357,7 +371,10 @@ func symbSubsys(db *sql.DB, symblist []int, instance int, cache Cache) (string, 
 
 	for _, symbid := range symblist {
 		// Resolve symb.
-		symb, _ := getEntryById(db, symbid, instance, cache.entries)
+		symb, err := getEntryById(db, symbid, instance, cache.entries)
+		if err != nil {
+			return "", fmt.Errorf("symbSubsys::getEntryById error: %s", err)
+		}
 		out += fmt.Sprintf("{\"FuncName\":\"%s\", \"subsystems\":[", symb.symbol)
 		query := fmt.Sprintf("select subsys_name from tags where tag_file_ref_id= (select symbol_file_ref_id from symbols where symbol_id=%d);", symbid)
 		rows, err := db.Query(query)

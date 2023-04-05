@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	dummyOutput int = iota
+	invalidOutput int = iota
 	graphOnly
 	jsonOutputPlain
 	jsonOutputB64
@@ -47,10 +47,10 @@ var fmtDotNodeHighlightWoSymb = "\"%[1]s\" [shape=record style=\"rounded,filled,
 
 func opt2num(s string) int {
 	var opt = map[string]int{
-		"graphOnly":       1,
-		"jsonOutputPlain": 2,
-		"jsonOutputB64":   3,
-		"jsonOutputGZB64": 4,
+		"graphOnly":       graphOnly,
+		"jsonOutputPlain": jsonOutputPlain,
+		"jsonOutputB64":   jsonOutputB64,
+		"jsonOutputGZB64": jsonOutputGZB64,
 	}
 	val, ok := opt[s]
 	if !ok {
