@@ -24,6 +24,7 @@ type Datasource interface {
 
 
 type outMode int64
+type outIMode int64
 
 // Const values for configuration mode field.
 const (
@@ -34,6 +35,16 @@ const (
 	printTargeted
 	OutModeLast
 )
+
+const (
+	_ outIMode = iota
+	oText
+	oPNG
+	oJPG
+	oSVG
+	OutIModeLast
+)
+
 const SUBSYS_UNDEF = "The REST"
 
 // Parent node.
