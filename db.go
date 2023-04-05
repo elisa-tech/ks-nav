@@ -329,10 +329,9 @@ func navigate(db *sql.DB, symbolId int, parentDispaly node, targets []string, vi
 						}
 					}
 				}
-
 				if notIn(*visited, curr.symId) {
-					if (notExcluded(curr.symbol, excludedAfter) || notExcluded(curr.symbol, excludedBefore)) && (maxdepth == 0 || ((maxdepth > 0) && (depth+depthInc < maxdepth))) {
-						navigate(db, curr.symId, ll, targets, visited, AdjMap, prod, instance, cache, mode, excludedBefore, excludedBefore, depth+depthInc, maxdepth, dotFmt, output)
+					if (notExcluded(curr.symbol, excludedAfter) && notExcluded(curr.symbol, excludedBefore) ) && (maxdepth == 0 || ((maxdepth > 0) && (depth+depthInc < maxdepth))) {
+						navigate(db, curr.symId, ll, targets, visited, AdjMap, prod, instance, cache, mode, excludedAfter, excludedBefore, depth+depthInc, maxdepth, dotFmt, output)
 					}
 				}
 			}
