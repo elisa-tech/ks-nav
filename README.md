@@ -112,6 +112,13 @@ file: **kernel-symbol.db**.
 In any case, before starting kern_bin_db, the DB schema needs to be created
 manually with one of the provided sql-files.
 
+# DSN examples
+
+| DBMS          | Example                                                                                                |
+|---------------|--------------------------------------------------------------------------------------------------------|
+| MySQL/MariaDB | alessandro:<password>@tcp(dbs.hqhome163.com:3306)/kernel_bin?multiStatements=true                      |
+| Postgresql    | host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable |
+
 # TODO
 * currently, kern_bin_db scans only the kernel binary image. Loadable 
 modules are not considered, which means that symbols defined in modules 
