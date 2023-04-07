@@ -5,6 +5,21 @@
 
 package main
 
+/*
+#cgo LDFLAGS: -ldotparser -Ldot_parser/
+#include <stdio.h>
+#include "dot_parser/dot.tab.h"
+extern int dotparse(void);
+extern void set_input_string(const char* in);
+extern void end_lexical_scan(void);
+int parse_string(const char* in) {
+	set_input_string(in);
+	int rv = dotparse();
+	end_lexical_scan();
+	return rv;
+}
+*/
+import "C"
 import (
 	"encoding/binary"
 	"bytes"
@@ -82,16 +97,16 @@ func decorate(dotStr string, adjm []adjM) string {
 	return res
 }
 
-func do_graphviz(dot string, output_type outIMode) error{
+func do_graphviz(dot string, output_type c.OutIMode) error{
 	var buf bytes.Buffer
 	var format graphviz.Format
 
 	switch output_type {
-	case oPNG:
+	case c.OPNG:
 		format=graphviz.PNG
-	case oJPG:
+	case c.OJPG:
 		format=graphviz.JPG
-	case oSVG:
+	case c.OSVG:
 		format=graphviz.SVG
 	default:
 		return errors.New("Unknown format")
@@ -111,6 +126,13 @@ func do_graphviz(dot string, output_type outIMode) error{
 	return nil
 }
 
+func valid_dot(dot string) bool{
+	if C.parse_string(C.CString(dot))==0 {
+		return true
+		}
+	return false
+}
+
 func generateOutput(d Datasource, cfg *config.Config) (string, error) {
 	var graphOutput string
 	var jsonOutput string
@@ -122,7 +144,7 @@ func generateOutput(d Datasource, cfg *config.Config) (string, error) {
 
 	conf := cfg.ConfValues
 
-	start, err := d.sym2num(conf.Symbol, conf.Instance)
+	start, err := d.sym2num(conf.Symbol, conf.DBInstance)
 	if err != nil {
 		fmt.Println("Symbol not found")
 		return "", err
@@ -222,8 +244,8 @@ func main() {
 		fmt.Println("Internal error", err)
 		os.Exit(-3)
 	}
-	if conf.Graphviz != oText {
-		err = do_graphviz(output, conf.Graphviz);
+	if conf.ConfValues.Graphviz != c.OText {
+		err = do_graphviz(output, conf.ConfValues.Graphviz);
 		if err != nil {
 			fmt.Println(err.Error())
 		}

@@ -73,6 +73,7 @@ func (d *SqlDB) getEntryById(symbolId int, instance int) (entry, error) {
 		"(select * from symbols, files where symbols.symbol_file_ref_id=files.file_id and symbols.symbol_instance_id_ref=%[2]d) as dummy " +
 		"left outer join tags on dummy.symbol_file_ref_id=tags.tag_file_ref_id where symbol_id=%[1]d and symbol_instance_id_ref=%[2]d"
 	query = fmt.Sprintf(query, symbolId, instance)
+	fmt.Println(query)
 	rows, err := d.db.Query(query)
 	if err != nil {
 		return entry{}, err
@@ -113,6 +114,7 @@ func (d *SqlDB) getSuccessorsById(symbolId int, instance int) ([]entry, error) {
 
 	query := "select caller, callee, source_line, ref_addr from xrefs where caller = %[1]d and xref_instance_id_ref = %[2]d"
 	query = fmt.Sprintf(query, symbolId, instance)
+	fmt.Println(query)
 	rows, err := d.db.Query(query)
 	if err != nil {
 		panic(err)
@@ -152,9 +154,10 @@ func (d *SqlDB) getSubsysFromSymbolName(symbol string, instance int) (string, er
 	query := "select (select symbol_type from symbols where symbol_name='%[1]s' and symbol_instance_id_ref=%[2]d) as type, subsys_name from " +
 		"(select count(*) as cnt, subsys_name from tags where subsys_name in (select subsys_name from symbols, " +
 		"tags where symbols.symbol_file_ref_id=tags.tag_file_ref_id and symbols.symbol_name='%[1]s' and symbols.symbol_instance_id_ref=%[2]d) " +
-		"group by subsys_name order by cnt desc) as tbl;"
+		"group by subsys_name order by cnt desc) as tbl"
 
 	query = fmt.Sprintf(query, symbol, instance)
+	fmt.Println(query)
 	rows, err := d.db.Query(query)
 	if err != nil {
 		panic(err)
@@ -195,6 +198,7 @@ func (d *SqlDB) sym2num(symb string, instance int) (int, error) {
 	var cnt = 0
 	query := "select symbol_id from symbols where symbols.symbol_name='%[1]s' and symbols.symbol_instance_id_ref=%[2]d"
 	query = fmt.Sprintf(query, symb, instance)
+	fmt.Println(query)
 	rows, err := d.db.Query(query)
 	if err != nil {
 		panic(err)
@@ -238,7 +242,8 @@ func (d *SqlDB) symbSubsys(symblist []int, instance int) (string, error) {
 			return "", fmt.Errorf("symbSubsys::getEntryById error: %s", err)
 		}
 		out += fmt.Sprintf("{\"FuncName\":\"%s\", \"subsystems\":[", symb.symbol)
-		query := fmt.Sprintf("select subsys_name from tags where tag_file_ref_id= (select symbol_file_ref_id from symbols where symbol_id=%d);", symbid)
+		query := fmt.Sprintf("select subsys_name from tags where tag_file_ref_id= (select symbol_file_ref_id from symbols where symbol_id=%d)", symbid)
+		fmt.Println(query)
 		rows, err := d.db.Query(query)
 		if err != nil {
 			return "", errors.New("symbSubsys: query failed")

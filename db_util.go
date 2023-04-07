@@ -23,28 +23,6 @@ type Datasource interface {
 }
 
 
-type outMode int64
-type outIMode int64
-
-// Const values for configuration mode field.
-const (
-	_ outMode = iota
-	printAll
-	printSubsys
-	printSubsysWs
-	printTargeted
-	OutModeLast
-)
-
-const (
-	_ outIMode = iota
-	oText
-	oPNG
-	oJPG
-	oSVG
-	OutIModeLast
-)
-
 const SUBSYS_UNDEF = "The REST"
 
 // Parent node.
@@ -116,14 +94,14 @@ func notExcluded(symbol string, excluded []string) bool {
 // TODO: refactory needed:
 // What is the problem: too many args.
 // suggestion: New version with input and output structs.
-func navigate(d Datasource, symbolId int, parentDispaly node, targets []string, visited *[]int, AdjMap *[]adjM, prod map[string]int, instance int, mode c.outMode, excludedAfter []string, excludedBefore []string, depth int, maxdepth int, dotFmt string, output *string) {
+func navigate(d Datasource, symbolId int, parentDispaly node, targets []string, visited *[]int, AdjMap *[]adjM, prod map[string]int, instance int, mode c.OutMode, excludedAfter []string, excludedBefore []string, depth int, maxdepth int, dotFmt string, output *string) {
 	var tmp, s string
 	var l, r, ll node
 
 	*visited = append(*visited, symbolId)
 	l = parentDispaly
 	successors, err := d.getSuccessorsById(symbolId, instance)
-	if mode == c.printAll {
+	if mode == c.PrintAll {
 		successors = removeDuplicate(successors)
 	}
 	if err == nil {
@@ -139,11 +117,11 @@ func navigate(d Datasource, symbolId int, parentDispaly node, targets []string, 
 				}
 
 				switch mode {
-				case c.printAll:
+				case c.PrintAll:
 					s = fmt.Sprintf(dotFmt, l.symbol, r.symbol)
 					ll = r
 					depthInc = 1
-				case c.printSubsys, c.printSubsysWs, c.printTargeted:
+				case c.PrintSubsys, c.PrintSubsysWs, c.PrintTargeted:
 					if tmp, _ = d.getSubsysFromSymbolName(r.symbol, instance); r.subsys != tmp {
 						if tmp != "" {
 							r.subsys = tmp
@@ -168,7 +146,7 @@ func navigate(d Datasource, symbolId int, parentDispaly node, targets []string, 
 				} else {
 					prod[s] = 1
 					if s != "" {
-						if (mode != c.printTargeted) || (intargets(targets, l.subsys, r.subsys)) {
+						if (mode != c.PrintTargeted) || (intargets(targets, l.subsys, r.subsys)) {
 							*output = (*output) + s
 						}
 					}

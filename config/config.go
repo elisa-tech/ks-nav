@@ -17,16 +17,17 @@ type Config struct {
 }
 
 type ConfValues struct {
-	Symbol         string    `json:"symbol"`
-	Type           string    `json:"output_type"`
-	DBDriver       string    `json:"db_driver"`
-	DBDSN          string    `json:"DBDSN"`
-	ExcludedBefore []string  `json:"excluded_before"`
-	ExcludedAfter  []string  `json:"excluded_after"`
-	TargetSubsys   []string  `json:"target_subsys"`
-	MaxDepth       int       `json:"max_depth"`
-	Mode           c.OutMode `json:"mode"`
-	DBInstance     int       `json:"db_instance"`
+	Symbol         string     `json:"symbol"`
+	Type           string     `json:"output_type"`
+	DBDriver       string     `json:"db_driver"`
+	DBDSN          string     `json:"DBDSN"`
+	ExcludedBefore []string   `json:"excluded_before"`
+	ExcludedAfter  []string   `json:"excluded_after"`
+	TargetSubsys   []string   `json:"target_subsys"`
+	MaxDepth       int        `json:"max_depth"`
+	Mode           c.OutMode  `json:"mode"`
+	Graphviz       c.OutIMode `json:"out_type"`
+	DBInstance     int        `json:"db_instance"`
 }
 
 // New creates a new Config instance and returns a pointer to it.
