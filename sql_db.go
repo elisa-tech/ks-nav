@@ -38,9 +38,15 @@ func (d SqlDB) check_operative() bool {
 func (d *SqlDB) init(arg interface{}) (err error){
 	t, ok := arg.(*connectToken)
 	if !ok {
-		return errors.New("invalid type")
+		var ok1 bool
+		d.db, ok1 = arg.(*sql.DB)
+		if !ok1 {
+			return errors.New("invalid type")
+		}
 	}
-	d.db, err = sql.Open(t.DBDriver, t.DBDSN)
+	if ok {
+		d.db, err = sql.Open(t.DBDriver, t.DBDSN)
+	}
 	if err==nil {
 		d.cache.successors = make(map[int][]entry)
 		d.cache.entries = make(map[int]entry)
