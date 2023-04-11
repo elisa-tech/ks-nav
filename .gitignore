@@ -1,3 +1,4 @@
 *.swp
 nav
 conf.json
+libdotparser.so

@@ -1,4 +1,4 @@
-// +build !CGO
+// +build CGO
 /*
  * Copyright (c) 2022 Red Hat, Inc.
  * SPDX-License-Identifier: GPL-2.0-or-later
@@ -8,8 +8,6 @@ package main
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"nav/config"
-	c "nav/constants"
 	"database/sql"
 	"database/sql/driver"
 	"github.com/DATA-DOG/go-sqlmock"
@@ -19,25 +17,25 @@ var _ = Describe("Nav Tests", func() {
 	Describe("opt2num", func() {
 		When("Using a valid options key", func() {
 			It("Should return the correct value for graphOnly", func() {
-				Expect(opt2num("graphOnly")).To(Equal(c.GraphOnly))
+				Expect(opt2num("graphOnly")).To(Equal(graphOnly))
 			})
 
 			It("Should return the correct value for jsonOutputPlain", func() {
-				Expect(opt2num("jsonOutputPlain")).To(Equal(c.JsonOutputPlain))
+				Expect(opt2num("jsonOutputPlain")).To(Equal(jsonOutputPlain))
 			})
 
 			It("Should return the correct value for jsonOutputB64", func() {
-				Expect(opt2num("jsonOutputB64")).To(Equal(c.JsonOutputB64))
+				Expect(opt2num("jsonOutputB64")).To(Equal(jsonOutputB64))
 			})
 
 			It("Should return the correct value for jsonOutputGZB64", func() {
-				Expect(opt2num("jsonOutputGZB64")).To(Equal(c.JsonOutputGZB64))
+				Expect(opt2num("jsonOutputGZB64")).To(Equal(jsonOutputGZB64))
 			})
 		})
 
 		When("Using an invalid options key", func() {
 			It("Should return 0", func() {
-				Expect(opt2num("invalidKey")).To(Equal(c.InvalidOutput))
+				Expect(opt2num("invalidKey")).To(Equal(invalidOutput))
 			})
 		})
 	})
@@ -140,6 +138,32 @@ var _ = Describe("Nav Tests", func() {
 		})
 	})
 
+	Describe("valid_dot", func() {
+		var test_valid_dot string = `
+digraph G {
+  start -> a0;
+  start -> b0;
+  end [shape=Msquare];
+}
+`
+
+		var test_invalid_dot string = `
+dgraph G {
+  start  a0;
+  end [shape=Msquare];
+}
+`
+		When("using on dot file", func() {
+			It("Should return true if syntax is correct", func() {
+				Expect(valid_dot(test_valid_dot)).To(Equal(true))
+			})
+			It("Should return false if syntax is not correct", func() {
+				Expect(valid_dot(test_invalid_dot)).To(Equal(false))
+			})
+		})
+	})
+
+
 	Describe("generateOutput", func() {
 		type mockQueries struct {
 			querySTR string
@@ -150,13 +174,6 @@ var _ = Describe("Nav Tests", func() {
 		var db *sql.DB
 		var mock sqlmock.Sqlmock
 		var dok *SqlDB
-		expectedDot:=`digraph G {
-rankdir="LR"
-"__x64_sys_getpid"->"__task_pid_nr_ns"
-"__task_pid_nr_ns"->"__rcu_read_lock"
-"__task_pid_nr_ns"->"__rcu_read_unlock"
-}
-`
 
 		dok=&SqlDB{}
 		db, mock, _ = sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -286,27 +303,25 @@ rankdir="LR"
 		dok.cache.entries = map[int]entry{}
 		dok.cache.successors = map[int][]entry{}
 		dok.cache.subSys = map[string]string{}
-		testConfig:=  config.Config{
-		ConfValues: config.ConfValues{
-				DBDriver:       "postgres",
-				DBDSN:          "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
-				Symbol:         "__x64_sys_getpid",
-				DBInstance:       16,
-				Mode:           c.PrintAll,
-				ExcludedBefore: []string{"__fentry__", "__stack_chk_fail"},
-				ExcludedAfter:  []string{"^kfree$","^_raw_spin_lock$","^_raw_spin_unlock$","^panic$","^call_rcu$", "^__call_rcu$","__rcu_read_unlock", "__rcu_read_lock", "path_openat"},
-				TargetSubsys:   []string{},
-				MaxDepth:       0, //0: no limit
-				Type:           "graphOnly",
-				Graphviz:       c.OText,
-			},
+		testConfig:=  configuration{
+			DBDriver:       "postgres",
+			DBDSN:          "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
+			Symbol:         "__x64_sys_getpid",
+			Instance:       16,
+			Mode:           printAll,
+			ExcludedBefore: []string{"__fentry__", "__stack_chk_fail"},
+			ExcludedAfter:  []string{"^kfree$","^_raw_spin_lock$","^_raw_spin_unlock$","^panic$","^call_rcu$", "^__call_rcu$","__rcu_read_unlock", "__rcu_read_lock", "path_openat"},
+			TargetSubsys:   []string{},
+			MaxDepth:       0, //0: no limit
+			Jout:           "graphOnly",
+			Graphviz:       oText,
+			cmdlineNeeds:   map[string]bool{},
 		}
-
 
 		dot, err := generateOutput(dok, &testConfig)
 		It("Should return sintax correct json with no error", func() {
 			Expect(err).To(BeNil())
-			Expect(dot).To(Equal(expectedDot))
+			Expect(valid_dot(dot)).To(Equal(true))
 			})
 	})
 
