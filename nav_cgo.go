@@ -1,3 +1,4 @@
+//go:build CGO
 // +build CGO
 
 package main
@@ -18,9 +19,9 @@ int parse_string(const char* in) {
 */
 import "C"
 
-func valid_dot(dot string) bool{
-	if C.parse_string(C.CString(dot))==0 {
+func valid_dot(dot string) bool {
+	if C.parse_string(C.CString(dot)) == 0 {
 		return true
-		}
+	}
 	return false
 }

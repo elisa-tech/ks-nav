@@ -11,7 +11,6 @@ import (
 
 var _ = Describe("Psql Tests", func() {
 
-
 	AfterEach(func() {
 		defer GinkgoRecover()
 	})

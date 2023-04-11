@@ -14,14 +14,13 @@ import (
 
 type Datasource interface {
 	init(arg interface{}) (err error)
-	GetExploredSubsystemByName(subs string) (string)
+	GetExploredSubsystemByName(subs string) string
 	getSuccessorsById(symbolId int, instance int) ([]entry, error)
 	getSubsysFromSymbolName(symbol string, instance int) (string, error)
 	sym2num(symb string, instance int) (int, error)
 	symbSubsys(symblist []int, instance int) (string, error)
-	getEntryById(symbolId int, instance int) (entry, error) 
+	getEntryById(symbolId int, instance int) (entry, error)
 }
-
 
 const SUBSYS_UNDEF = "The REST"
 
@@ -78,7 +77,6 @@ func removeDuplicate(list []entry) []entry {
 	}
 	return res
 }
-
 
 // Checks if a given function needs to be explored.
 func notExcluded(symbol string, excluded []string) bool {
@@ -152,7 +150,7 @@ func navigate(d Datasource, symbolId int, parentDispaly node, targets []string, 
 					}
 				}
 				if notIn(*visited, curr.symId) {
-					if (notExcluded(curr.symbol, excludedAfter) && notExcluded(curr.symbol, excludedBefore) ) && (maxdepth == 0 || ((maxdepth > 0) && (depth+depthInc < maxdepth))) {
+					if (notExcluded(curr.symbol, excludedAfter) && notExcluded(curr.symbol, excludedBefore)) && (maxdepth == 0 || ((maxdepth > 0) && (depth+depthInc < maxdepth))) {
 						navigate(d, curr.symId, ll, targets, visited, AdjMap, prod, instance, mode, excludedAfter, excludedBefore, depth+depthInc, maxdepth, dotFmt, output)
 					}
 				}
@@ -171,4 +169,3 @@ func intargets(targets []string, n1 string, n2 string) bool {
 	}
 	return false
 }
-

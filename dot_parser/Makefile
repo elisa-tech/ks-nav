@@ -1,6 +1,6 @@
 #DEBUG=-g
-#CC=gcc
-CC=clang-13
+CC=gcc
+#CC=clang-13
 
 all: dotf
 dot.tab.h: dot.y

@@ -21,7 +21,7 @@ var _ = Describe("Psql Tests", func() {
 	var db *sql.DB
 	var mock sqlmock.Sqlmock
 	var e entry
-	var dok,dko *SqlDB
+	var dok, dko *SqlDB
 
 	BeforeEach(func() {
 		e = entry{
@@ -32,13 +32,13 @@ var _ = Describe("Psql Tests", func() {
 			symId:      1,
 		}
 
-		dok=&SqlDB{}
+		dok = &SqlDB{}
 		db, mock, _ = sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-		dok.db=db
+		dok.db = db
 		dok.cache = Cache{}
 
-		dko=&SqlDB{}
-		dko.db=nil
+		dko = &SqlDB{}
+		dko.db = nil
 		dko.cache = Cache{}
 	})
 
@@ -175,7 +175,7 @@ var _ = Describe("Psql Tests", func() {
 
 		It("Should return cached sucessors", func() {
 
-			dko.cache.successors = map[int][]entry{1:{e}}
+			dko.cache.successors = map[int][]entry{1: {e}}
 			entries, err := dko.getSuccessorsById(1, 1)
 
 			Expect(err).To(BeNil())

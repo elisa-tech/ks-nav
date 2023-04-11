@@ -24,9 +24,10 @@ type Cache struct {
 }
 
 type SqlDB struct {
-	db *sql.DB
+	db    *sql.DB
 	cache Cache
 }
+
 /*
 func (d SqlDB) check_operative() bool {
 	fmt.Printf("check_operative %p\n", d.db)
@@ -35,7 +36,7 @@ func (d SqlDB) check_operative() bool {
 */
 
 // Connects the target db and returns the handle.
-func (d *SqlDB) init(arg interface{}) (err error){
+func (d *SqlDB) init(arg interface{}) (err error) {
 	t, ok := arg.(*connectToken)
 	if !ok {
 		var ok1 bool
@@ -47,7 +48,7 @@ func (d *SqlDB) init(arg interface{}) (err error){
 	if ok {
 		d.db, err = sql.Open(t.DBDriver, t.DBDSN)
 	}
-	if err==nil {
+	if err == nil {
 		d.cache.successors = make(map[int][]entry)
 		d.cache.entries = make(map[int]entry)
 		d.cache.subSys = make(map[string]string)
@@ -55,8 +56,7 @@ func (d *SqlDB) init(arg interface{}) (err error){
 	return err
 }
 
-
-func (d *SqlDB) GetExploredSubsystemByName(subs string) (string) {
+func (d *SqlDB) GetExploredSubsystemByName(subs string) string {
 	return d.cache.subSys[subs]
 }
 
@@ -231,7 +231,7 @@ func (d *SqlDB) sym2num(symb string, instance int) (int, error) {
 }
 
 // Returns the subsystem list associated with a given function name.
-func (d *SqlDB) symbSubsys(symblist []int, instance int) (string, error) { 
+func (d *SqlDB) symbSubsys(symblist []int, instance int) (string, error) {
 	var out string
 	var res string
 

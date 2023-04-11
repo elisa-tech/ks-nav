@@ -6,17 +6,17 @@
 package main
 
 import (
-	"encoding/binary"
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"nav/config"
 	c "nav/constants"
+	"github.com/goccy/go-graphviz"
 	"os"
 	"strings"
-	"github.com/goccy/go-graphviz"
 )
 
 const jsonOutputFMT string = "{\"graph\": \"%s\",\"graph_type\":\"%s\",\"symbols\": [%s]}"
@@ -97,7 +97,6 @@ func do_graphviz(dot string, output_type c.OutIMode) error{
 		return errors.New("Unknown format")
 	}
 
-
 	graph, _ := graphviz.ParseBytes([]byte(dot))
 	g := graphviz.New()
 	defer func() {
@@ -109,13 +108,6 @@ func do_graphviz(dot string, output_type c.OutIMode) error{
 	g.Render(graph, format, &buf)
 	binary.Write(os.Stdout, binary.LittleEndian, buf.Bytes())
 	return nil
-}
-
-func valid_dot(dot string) bool{
-	if C.parse_string(C.CString(dot))==0 {
-		return true
-		}
-	return false
 }
 
 func generateOutput(d Datasource, cfg *config.Config) (string, error) {
@@ -215,12 +207,10 @@ func main() {
 		fmt.Printf("Unknown mode %s\n", conf.ConfValues.Type)
 		os.Exit(-2)
 	}
-
 	t := connectToken{conf.ConfValues.DBDriver, conf.ConfValues.DBDSN}
-
-	d:=&SqlDB{}
-	err=d.init(&t)
-	if err!= nil {
+	d := &SqlDB{}
+	err = d.init(&t)
+	if err != nil {
 		panic(err)
 	}
 
