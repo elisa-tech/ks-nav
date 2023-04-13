@@ -67,7 +67,7 @@ func (d *SqlDB) getEntryById(symbolId int, instance int) (entry, error) {
 
 	debugIOPrintf("input symbolId=%d, instance=%d\n", symbolId, instance)
 	if e, ok := d.cache.entries[symbolId]; ok {
-		debugIOPrintf("output entry=%+v, error=%s\n", e, nil)
+		debugIOPrintf("output entry=%+v, error=%s\n", e, "nil")
 		return e, nil
 	}
 
@@ -102,7 +102,7 @@ func (d *SqlDB) getEntryById(symbolId int, instance int) (entry, error) {
 		return e, err
 	}
 	d.cache.entries[symbolId] = e
-	debugIOPrintf("output entry=%+v, error=%s\n", e, nil)
+	debugIOPrintf("output entry=%+v, error=%s\n", e, "nil")
 	return e, nil
 }
 
@@ -113,7 +113,7 @@ func (d *SqlDB) getSuccessorsById(symbolId int, instance int) ([]entry, error) {
 
 	debugIOPrintf("input symbolId=%d, instance=%d\n", symbolId, instance)
 	if res, ok := d.cache.successors[symbolId]; ok {
-		debugIOPrintf("output []entry=%+v, error=%s\n", res, nil)
+		debugIOPrintf("output []entry=%+v, error=%s\n", res, "nil")
 		return res, nil
 	}
 
@@ -146,7 +146,7 @@ func (d *SqlDB) getSuccessorsById(symbolId int, instance int) ([]entry, error) {
 		return nil, err
 	}
 	d.cache.successors[symbolId] = res
-	debugIOPrintf("output []entry=%+v, error=%s\n", res, nil)
+	debugIOPrintf("output []entry=%+v, error=%s\n", res, "nil")
 	return res, nil
 }
 
@@ -156,7 +156,7 @@ func (d *SqlDB) getSubsysFromSymbolName(symbol string, instance int) (string, er
 
 	debugIOPrintf("input symbol=%s, instance=%d\n", symbol, instance)
 	if res, ok := d.cache.subSys[symbol]; ok {
-		debugIOPrintf("output  string=%s, error=%s\n", res, nil)
+		debugIOPrintf("output  string=%s, error=%s\n", res, "nil")
 		return res, nil
 	}
 	query := "select (select symbol_type from symbols where symbol_name='%[1]s' and symbol_instance_id_ref=%[2]d) as type, subsys_name from " +
@@ -190,7 +190,7 @@ func (d *SqlDB) getSubsysFromSymbolName(symbol string, instance int) (string, er
 	}
 
 	if sub == "" {
-		debugIOPrintf("output  string=%s, error=%s\n", "", nil)
+		debugIOPrintf("output  string=%s, error=%s\n", "", "nil")
 		return "", nil
 	}
 
@@ -198,7 +198,7 @@ func (d *SqlDB) getSubsysFromSymbolName(symbol string, instance int) (string, er
 		sub = ty
 	}
 	d.cache.subSys[symbol] = sub
-	debugIOPrintf("output  string=%s, error=%s\n", sub, nil)
+	debugIOPrintf("output  string=%s, error=%s\n", sub, "nil")
 	return sub, nil
 }
 
@@ -238,7 +238,7 @@ func (d *SqlDB) sym2num(symb string, instance int) (int, error) {
 	if cnt != 1 {
 		return res, errors.New("duplicate ID in the DB")
 	}
-	debugIOPrintf("output int=%d, error=%s\n", res, nil)
+	debugIOPrintf("output int=%d, error=%s\n", res, "nil")
 	return res, nil
 }
 
@@ -259,7 +259,7 @@ func (d *SqlDB) symbSubsys(symblist []int, instance int) (string, error) {
 		debugQueryPrintln(query)
 		rows, err := d.db.Query(query)
 		if err != nil {
-			err=errors.New("symbSubsys: query failed")
+			err = errors.New("symbSubsys: query failed")
 			debugIOPrintf("output string=%s, error=%s\n", "", err)
 			return "", err
 		}
@@ -282,6 +282,6 @@ func (d *SqlDB) symbSubsys(symblist []int, instance int) (string, error) {
 		out = strings.TrimSuffix(out, ",") + "]},"
 	}
 	out = strings.TrimSuffix(out, ",")
-	debugIOPrintf("output string=%s, error=%s\n", out, nil)
+	debugIOPrintf("output string=%s, error=%s\n", out, "nil")
 	return out, nil
 }

@@ -143,7 +143,64 @@ var _ = Describe("Nav Tests", func() {
 		})
 	})
 
-	Describe("generateOutput", func() {
+	Describe("generateOutput using sqlmock", func() {
+		var d *sqlMock
+		expectedDot := `digraph G {
+rankdir="LR"
+"__x64_sys_getpid"->"__task_pid_nr_ns" 
+"__task_pid_nr_ns"->"__rcu_read_lock" 
+"__task_pid_nr_ns"->"__rcu_read_unlock" 
+}`
+		d = &sqlMock{}
+		d.init(nil)
+		d.LOADsym2numValues("__x64_sys_getpid", 16, 472055, nil)
+		d.LOADgetEntryByIdValues(472055, 16, entry{symbol: "__x64_sys_getpid", fn: "kernel/sys.c", sourceRef: "", addressRef: "", subsys: []string{}, symId: 472055}, nil)
+		d.LOADgetSubsysFromSymbolNameValues("__x64_sys_getpid", 16, "", nil)
+		d.LOADgetSuccessorsByIdValues(472055, 16, []entry{
+			entry{symbol: "__fentry__", fn: "arch/x86/kernel/ftrace_64.S", sourceRef: "kernel/sys.c:892", addressRef: "0xffffffff81077570", subsys: []string{"X86 ARCHITECTURE (32-BIT AND 64-BIT)"}, symId: 501994},
+			entry{symbol: "__task_pid_nr_ns", fn: "kernel/pid.c", sourceRef: "kernel/sys.c:893", addressRef: "0xffffffff81077589", subsys: []string{}, symId: 472243},
+		}, nil)
+		d.LOADgetEntryByIdValues(501994, 16, entry{symbol: "__fentry__", fn: "arch/x86/kernel/ftrace_64.S", sourceRef: "", addressRef: "", subsys: []string{"X86 ARCHITECTURE (32-BIT AND 64-BIT)"}, symId: 501994}, nil)
+		d.LOADgetEntryByIdValues(472243, 16, entry{symbol: "__task_pid_nr_ns", fn: "kernel/pid.c", sourceRef: "", addressRef: "", subsys: []string{}, symId: 472243}, nil)
+		d.LOADgetSubsysFromSymbolNameValues("symbol=__task_pid_nr_ns", 16, "", nil)
+		d.LOADgetSuccessorsByIdValues(472243, 16, []entry{
+			entry{symbol: "__fentry__", fn: "arch/x86/kernel/ftrace_64.S", sourceRef: "kernel/pid.c:427", addressRef: "0xffffffff810824e0", subsys: []string{"X86 ARCHITECTURE (32-BIT AND 64-BIT)"}, symId: 501994},
+			entry{symbol: "__rcu_read_lock", fn: "kernel/rcu/tree_plugin.h", sourceRef: "kernel/pid.c:430", addressRef: "0xffffffff810824f7", subsys: []string{"READ-COPY UPDATE (RCU)"}, symId: 473674},
+			entry{symbol: "__rcu_read_unlock", fn: "kernel/rcu/tree_plugin.h", sourceRef: "kernel/pid.c:435", addressRef: "0xffffffff81082540", subsys: []string{"READ-COPY UPDATE (RCU)"}, symId: 473716},
+			entry{symbol: "__rcu_read_unlock", fn: "kernel/rcu/tree_plugin.h", sourceRef: "kernel/pid.c:435", addressRef: "0xffffffff81082584", subsys: []string{"READ-COPY UPDATE (RCU)"}, symId: 473716},
+		}, nil)
+		d.LOADgetEntryByIdValues(501994, 16, entry{symbol: "__fentry__", fn: "arch/x86/kernel/ftrace_64.S", sourceRef: "", addressRef: "", subsys: []string{"X86 ARCHITECTURE (32-BIT AND 64-BIT)"}, symId: 501994}, nil)
+		d.LOADgetEntryByIdValues(473674, 16, entry{symbol: "__rcu_read_lock", fn: "kernel/rcu/tree_plugin.h", sourceRef: "", addressRef: "", subsys: []string{"READ-COPY UPDATE (RCU)"}, symId: 473674}, nil)
+		d.LOADgetEntryByIdValues(473716, 16, entry{symbol: "__rcu_read_unlock", fn: "kernel/rcu/tree_plugin.h", sourceRef: "", addressRef: "", subsys: []string{"READ-COPY UPDATE (RCU)"}, symId: 473716}, nil)
+		d.LOADgetEntryByIdValues(473716, 16, entry{symbol: "__rcu_read_unlock", fn: "kernel/rcu/tree_plugin.h", sourceRef: "", addressRef: "", subsys: []string{"READ-COPY UPDATE (RCU)"}, symId: 473716}, nil)
+		d.LOADgetSubsysFromSymbolNameValues("_rcu_read_lock", 16, "READ-COPY UPDATE (RCU)", nil)
+		d.LOADgetSubsysFromSymbolNameValues("__rcu_read_unlock", 16, "READ-COPY UPDATE (RCU)", nil)
+		d.LOADsymbSubsysValues([]int{472055, 472243}, 16, "{\"FuncName\":\"__x64_sys_getpid\", \"subsystems\":[]},{\"FuncName\":\"__task_pid_nr_ns\", \"subsystems\":[]}", nil)
+		d.LOADgetEntryByIdValues(472055, 16, entry{symbol: "__x64_sys_getpid", fn: "kernel/sys.c", sourceRef: "", addressRef: "", subsys: []string{}, symId: 472055}, nil)
+		d.LOADgetEntryByIdValues(472243, 16, entry{symbol: "__task_pid_nr_ns", fn: "kernel/pid.c", sourceRef: "", addressRef: "", subsys: []string{}, symId: 472243}, nil)
+		testConfig := configuration{
+			DBDriver:       "postgres",
+			DBDSN:          "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
+			Symbol:         "__x64_sys_getpid",
+			Instance:       16,
+			Mode:           printAll,
+			ExcludedBefore: []string{"__fentry__", "__stack_chk_fail"},
+			ExcludedAfter:  []string{"^kfree$", "^_raw_spin_lock$", "^_raw_spin_unlock$", "^panic$", "^call_rcu$", "^__call_rcu$", "__rcu_read_unlock", "__rcu_read_lock", "path_openat"},
+			TargetSubsys:   []string{},
+			MaxDepth:       0, //0: no limit
+			Jout:           "graphOnly",
+			Graphviz:       oText,
+			cmdlineNeeds:   map[string]bool{},
+		}
+		dot, err := generateOutput(d, &testConfig)
+		It("Should return syntax correct json with no error", func() {
+			Expect(err).To(BeNil())
+			Expect(dot).To(Equal(expectedDot))
+		})
+
+	})
+
+	Describe("generateOutput using go-sqlmock", func() {
 		type mockQueries struct {
 			querySTR     string
 			resultHead   []string
@@ -159,7 +216,6 @@ rankdir="LR"
 "__task_pid_nr_ns"->"__rcu_read_lock" 
 "__task_pid_nr_ns"->"__rcu_read_unlock" 
 }`
-
 		dok = &SqlDB{}
 		db, mock, _ = sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
 		dok.db = db
