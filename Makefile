@@ -12,6 +12,7 @@ upx:	nav
 
 test:
 	go test -cover
+	go test ./config -v -cover
 
 code/check:
 	@gofmt -l `find . -type f -name '*.go' -not -path "./vendor/*"`
