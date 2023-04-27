@@ -9,9 +9,11 @@
 package main
 
 import (
+	"nav/config"
 	"database/sql"
 	"database/sql/driver"
 	"github.com/DATA-DOG/go-sqlmock"
+	c "nav/constants"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -20,25 +22,25 @@ var _ = Describe("Nav Tests", func() {
 	Describe("opt2num", func() {
 		When("Using a valid options key", func() {
 			It("Should return the correct value for graphOnly", func() {
-				Expect(opt2num("graphOnly")).To(Equal(graphOnly))
+				Expect(opt2num("graphOnly")).To(Equal(c.GraphOnly))
 			})
 
 			It("Should return the correct value for jsonOutputPlain", func() {
-				Expect(opt2num("jsonOutputPlain")).To(Equal(jsonOutputPlain))
+				Expect(opt2num("jsonOutputPlain")).To(Equal(c.JsonOutputPlain))
 			})
 
 			It("Should return the correct value for jsonOutputB64", func() {
-				Expect(opt2num("jsonOutputB64")).To(Equal(jsonOutputB64))
+				Expect(opt2num("jsonOutputB64")).To(Equal(c.JsonOutputB64))
 			})
 
 			It("Should return the correct value for jsonOutputGZB64", func() {
-				Expect(opt2num("jsonOutputGZB64")).To(Equal(jsonOutputGZB64))
+				Expect(opt2num("jsonOutputGZB64")).To(Equal(c.JsonOutputGZB64))
 			})
 		})
 
 		When("Using an invalid options key", func() {
 			It("Should return 0", func() {
-				Expect(opt2num("invalidKey")).To(Equal(invalidOutput))
+				Expect(opt2num("invalidKey")).To(Equal(c.InvalidOutput))
 			})
 		})
 	})
@@ -304,19 +306,20 @@ dgraph G {
 		dok.cache.entries = map[int]entry{}
 		dok.cache.successors = map[int][]entry{}
 		dok.cache.subSys = map[string]string{}
-		testConfig := configuration{
-			DBDriver:       "postgres",
-			DBDSN:          "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
-			Symbol:         "__x64_sys_getpid",
-			Instance:       16,
-			Mode:           printAll,
-			ExcludedBefore: []string{"__fentry__", "__stack_chk_fail"},
-			ExcludedAfter:  []string{"^kfree$", "^_raw_spin_lock$", "^_raw_spin_unlock$", "^panic$", "^call_rcu$", "^__call_rcu$", "__rcu_read_unlock", "__rcu_read_lock", "path_openat"},
-			TargetSubsys:   []string{},
-			MaxDepth:       0, //0: no limit
-			Jout:           "graphOnly",
-			Graphviz:       oText,
-			cmdlineNeeds:   map[string]bool{},
+		testConfig:=  config.Config{
+			ConfValues: config.ConfValues{
+				DBDriver:       "postgres",
+				DBDSN:          "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
+				Symbol:         "__x64_sys_getpid",
+				DBInstance:       16,
+				Mode:           c.PrintAll,
+				ExcludedBefore: []string{"__fentry__", "__stack_chk_fail"},
+				ExcludedAfter:  []string{"^kfree$", "^_raw_spin_lock$", "^_raw_spin_unlock$", "^panic$", "^call_rcu$", "^__call_rcu$", "__rcu_read_unlock", "__rcu_read_lock", "path_openat"},
+				TargetSubsys:   []string{},
+				MaxDepth:       0, //0: no limit
+				Type:           "graphOnly",
+				Graphviz:       c.OText,
+			},
 		}
 
 		dot, err := generateOutput(dok, &testConfig)

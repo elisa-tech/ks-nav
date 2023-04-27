@@ -178,19 +178,20 @@ rankdir="LR"
 		d.LOADsymbSubsysValues([]int{472055, 472243}, 16, "{\"FuncName\":\"__x64_sys_getpid\", \"subsystems\":[]},{\"FuncName\":\"__task_pid_nr_ns\", \"subsystems\":[]}", nil)
 		d.LOADgetEntryByIdValues(472055, 16, entry{symbol: "__x64_sys_getpid", fn: "kernel/sys.c", sourceRef: "", addressRef: "", subsys: []string{}, symId: 472055}, nil)
 		d.LOADgetEntryByIdValues(472243, 16, entry{symbol: "__task_pid_nr_ns", fn: "kernel/pid.c", sourceRef: "", addressRef: "", subsys: []string{}, symId: 472243}, nil)
-		testConfig := configuration{
-			DBDriver:       "postgres",
-			DBDSN:          "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
-			Symbol:         "__x64_sys_getpid",
-			Instance:       16,
-			Mode:           printAll,
-			ExcludedBefore: []string{"__fentry__", "__stack_chk_fail"},
-			ExcludedAfter:  []string{"^kfree$", "^_raw_spin_lock$", "^_raw_spin_unlock$", "^panic$", "^call_rcu$", "^__call_rcu$", "__rcu_read_unlock", "__rcu_read_lock", "path_openat"},
-			TargetSubsys:   []string{},
-			MaxDepth:       0, //0: no limit
-			Jout:           "graphOnly",
-			Graphviz:       oText,
-			cmdlineNeeds:   map[string]bool{},
+		testConfig:=  config.Config{
+			ConfValues: config.ConfValues{
+				DBDriver:       "postgres",
+				DBDSN:          "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
+				Symbol:         "__x64_sys_getpid",
+				DBInstance:       16,
+				Mode:           c.PrintAll,
+				ExcludedBefore: []string{"__fentry__", "__stack_chk_fail"},
+				ExcludedAfter:  []string{"^kfree$", "^_raw_spin_lock$", "^_raw_spin_unlock$", "^panic$", "^call_rcu$", "^__call_rcu$", "__rcu_read_unlock", "__rcu_read_lock", "path_openat"},
+				TargetSubsys:   []string{},
+				MaxDepth:       0, //0: no limit
+				Type:           "graphOnly",
+				Graphviz:       c.OText,
+			},
 		}
 		dot, err := generateOutput(d, &testConfig)
 		It("Should return syntax correct json with no error", func() {
