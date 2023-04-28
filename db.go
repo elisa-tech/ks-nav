@@ -22,7 +22,7 @@ const (
         PSQL DBtype = iota
         MYSQL
         MARIADB
-        SQLITE
+        SQLITE3
         DBTYPE_Last
 )
 
@@ -124,8 +124,8 @@ func DBSN2DBtype(DBT string) (DBtype, error) {
 			return MYSQL, nil
 		case "mariadb", "MariaDB", "MARIADB":
 			return MARIADB, nil
-		case "sqlite", "SQLITE":
-			return SQLITE, nil
+		case "sqlite3", "SQLITE3":
+			return SQLITE3, nil
 		}
 	return DBTYPE_Last, errors.New("Unknown Database type")
 }
