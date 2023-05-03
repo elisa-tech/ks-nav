@@ -53,6 +53,7 @@ func main() {
 	wl = &Workload{Workload_type: GENERATE_QUERY, Query_args: Insert_Instance_Args{v.Version, v.Patchlevel, v.Sublevel, v.Extraversion, conf.Note}}
 	query_mgmt(context, wl)
 	id = Insert_datawID(context, (*wl).Query_str)
+	fmt.Printf("Currently fetching dataset is \"-i %d\"\n", id)
 
 	if conf.Mode&(ENABLE_VERSION_CONFIG) != 0 {
 		kconfig := parse_config(config)
