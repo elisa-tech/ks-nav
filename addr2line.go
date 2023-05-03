@@ -20,7 +20,7 @@ var Query_fmts = [...][DBTYPE_Last]string{
 	"insert into instances (version_string, note) values ('%d.%d.%d%s', '%s'); SELECT currval('instances_instance_id_seq');",
 	"insert into instances (version_string, note) values ('%d.%d.%d%s', '%s'); select LAST_INSERT_ID();",
 	"insert into instances (version_string, note) values ('%d.%d.%d%s', '%s') returning instance_id; ",
-	"insert into instances (version_string, note) values ('%d.%d.%d%s', '%s'); SELECT last_insert_rowid();",
+	"insert into instances (version_string, note) values ('%d.%d.%d%s', '%s') returning instance_id; ",
 	},
 	{
 	"insert into configs (config_symbol, config_value, config_instance_id_ref) values ('%s', '%s', %d);",
