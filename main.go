@@ -39,7 +39,7 @@ func generateImageHandler(c *gin.Context) {
 		return
 	}
 
-	cmd := exec.Command("./nav/nav",  "-f", "confNN.json", "-s", request.StartSymbol, "-i", strconv.Itoa(request.Instance), "-m", request.DisplayMode, "-x", request.Depth, "-g", "4", "-j","graphOnly")
+	cmd := exec.Command("./nav/nav",  "-f", "confs/conf_sample.json", "-s", request.StartSymbol, "-i", strconv.Itoa(request.Instance), "-m", request.DisplayMode, "-x", request.Depth, "-g", "4", "-j","graphOnly")
 	fmt.Println("Executing command:", cmd.String())
 	output, err := cmd.Output()
 	if err != nil {

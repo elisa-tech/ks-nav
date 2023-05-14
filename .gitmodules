@@ -1,4 +1,4 @@
 [submodule "nav"]
 	path = nav
 	url = git@github.com:AC-FuSa-Tools/nav.git
-	branch = ac-graphviz-integration_refactor-rebase-4b86da7b
+	branch = ac-graphviz-integration_refactor
