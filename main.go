@@ -120,7 +120,7 @@ func main() {
 					panic("Error resolving start_kernel!")
 				}
 				if len(start_kernel_file[0]) > len(start_kernel_file_tail) {
-					addr2line_prefix = start_kernel_file[0][:len(start_kernel_file)-len(start_kernel_file_tail)]
+					addr2line_prefix = start_kernel_file[0][:len(start_kernel_file[0])-len(start_kernel_file_tail)]
 				}
 			}
 		}
