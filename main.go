@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
-	"strconv"
+//	"strconv"
 	"fmt"
 )
 
@@ -39,7 +39,9 @@ func generateImageHandler(c *gin.Context) {
 		return
 	}
 
-	cmd := exec.Command("./nav/nav",  "-f", "confs/conf_sample.json", "-s", request.StartSymbol, "-i", strconv.Itoa(request.Instance), "-m", request.DisplayMode, "-x", request.Depth, "-g", "4", "-j","graphOnly")
+//	cmd := exec.Command("./nav/nav",  "-f", "confs/conf_sample.json", "-s", request.StartSymbol, "-i", strconv.Itoa(request.Instance), "-m", request.DisplayMode, "-x", request.Depth, "-g", "4", "-j","graphOnly")
+	cmdstr:=fmt.Sprintf("./nav/nav -f confs/conf_sample.json -s %s -i %d -m %s -x %s -g 1 -j graphOnly |dot -Tsvg", request.StartSymbol, request.Instance, request.DisplayMode, request.Depth)
+	cmd := exec.Command("/bin/bash", "-c", cmdstr)
 	fmt.Println("Executing command:", cmd.String())
 	output, err := cmd.Output()
 	if err != nil {
