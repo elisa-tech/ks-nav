@@ -6,6 +6,16 @@ const (
 )
 
 type OutMode int64
+type OutIMode int64
+
+const (
+	_ OutIMode = iota
+	OText
+	OPNG
+	OJPG
+	OSVG
+	OutIModeLast
+)
 
 // Const values for configuration mode field.
 const (
