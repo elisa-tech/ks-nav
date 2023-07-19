@@ -1,0 +1,12 @@
+{
+  "mode":4,
+  "excluded_before": [],
+  "excluded_after": [".*rcu.*"],
+  "target_subsys":[],
+  "max_depth":1,
+  "output_type": "graphOnly",
+  "symbol": "symbol",
+  "db_driver":       "postgres",
+  "DBDSN":          "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kern_bin_new sslmode=disable",
+  "db_instance":     12
+}
