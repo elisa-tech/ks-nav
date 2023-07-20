@@ -7,8 +7,8 @@ a static analysis tool for the kernel. The toolset consists of three
 applications, one of which is this frontend. 
 The other two applications are:
 
-* kern_bin_db: A tool designed to acquire data from a kernel image.
-* nav: A tool that utilizes the acquired data to generate diagrams.
+* `kern_bin_db`: A tool designed to acquire data from a kernel image.
+* `nav`: A tool that utilizes the acquired data to generate diagrams.
 
 The purpose of this frontend application is to provide a web interface for 
 interacting with the nav tool. It acts as a wrapper around nav and enables 
@@ -52,10 +52,3 @@ Please note that these instructions provide a basic outline, and further
 details specific to your environment may be required. Refer to the project 
 documentation or consult the project team for any additional information or 
 troubleshooting steps.
-
-# Contributing
-
-We welcome contributions to improve the navweb frontend and the overall static 
-analysis toolset. If you are interested in contributing, please refer to the 
-project's contribution guidelines for detailed instructions on how to get 
-started.
