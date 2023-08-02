@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Terminal Output</title>
+</head>
+<body>
+    <pre id="terminalOutput"></pre>
+
+    <script>
+        const socket = new WebSocket("ws://" + window.location.hostname + ":8080/ws");
+
+        socket.onmessage = function(event) {
+            const outputElement = document.getElementById("terminalOutput");
+            const newOutput = interpretANSI(event.data);
+            outputElement.textContent += newOutput;
+            outputElement.scrollTop = outputElement.scrollHeight;
+        };
+
+        function interpretANSI(text) {
+            return text;
+        }
+    </script>
+</body>
+</html>

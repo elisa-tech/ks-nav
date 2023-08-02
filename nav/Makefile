@@ -1,13 +1,16 @@
+EXECUTABLE=nav
+INSTALL_DIR=/usr/bin/
+
 .PHONY: all cgo upx test testcgo code/check code/fmt clean
 
 all:	nav.go
-	go build
+	go build  -o $(EXECUTABLE)
 
 cgo:    nav.go dot_parser/libdotparser.so libdotparser.so
 	go build -ldflags="-r ." -tags CGO
 
-upx:	nav
-	upx nav
+upx:	$(EXECUTABLE)
+	upx $(EXECUTABLE)
 
 test:
 	go test -cover -v
@@ -30,4 +33,7 @@ libdotparser.so: dot_parser/libdotparser.so
 
 clean:
 	$(MAKE) -C dot_parser/ clean
-	rm -f nav libdotparser.so
+	rm -f $(EXECUTABLE) libdotparser.so
+
+install: $(EXECUTABLE)
+	cp $(EXECUTABLE) $(INSTALL_DIR)

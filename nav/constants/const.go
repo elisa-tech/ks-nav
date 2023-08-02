@@ -38,11 +38,12 @@ const (
 
 // Configuration defaults.
 const (
-	DefaultMode       = PrintSubsys
-	DefaultOutputType = "graphOnly"
-	DefaultMaxDepth   = 0
-	DefaultDBDriver   = "postgres"
-	DefaultDBInstance = 1
+	DefaultMode        = PrintSubsys
+	DefaultOutputType  = "graphOnly"
+	DefaultGOutputType = 1
+	DefaultMaxDepth    = 0
+	DefaultDBDriver    = "postgres"
+	DefaultDBInstance  = 1
 )
 
 // App description.
