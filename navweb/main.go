@@ -88,7 +88,8 @@ func generateImageHandler(c *gin.Context) {
 		return
 	}
 
-	cmdstr:=fmt.Sprintf("nav -f /tmp/container.json -s %s -i %d -m %s -x %s -g 1 -j graphOnly |dot -T svg", request.StartSymbol, request.Instance, request.DisplayMode, request.Depth)
+//	cmdstr:=fmt.Sprintf("nav -f /tmp/container.json -s %s -i %d -m %s -x %s -g 1 -j graphOnly |dot -T svg; echo -n;", request.StartSymbol, request.Instance, request.DisplayMode, request.Depth)
+	cmdstr:=fmt.Sprintf("nav -f /tmp/container.json -s %s -i %d -m %s -x %s -g 4 -j graphOnly", request.StartSymbol, request.Instance, request.DisplayMode, request.Depth)
 	cmd := exec.Command("/bin/sh", "-c", cmdstr)
 	fmt.Println("Executing command:", cmd.String())
 	output, err := cmd.Output()
