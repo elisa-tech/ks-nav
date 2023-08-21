@@ -22,6 +22,7 @@ func initFlagSet(fs *pflag.FlagSet, configPath *string) {
 
 	fs.StringP("db-driver", "e", c.DefaultDBDriver, "database `driver`: mysql, postgres or sqlite3")
 	fs.IntP("db-instance", "i", c.DefaultDBInstance, "database `instance`")
+	fs.IntP("output-format", "g", int(c.DefaultGOutputType), "Output format 1=dot 2=png 3=jpg 4=svg")
 	fs.StringP("DBDSN", "d", "", "database `DSN` in the engine specific format\n"+
 		"postgres: \"host=dbhost.com port=5432 user=username password=<password> dbname=kernel_bin sslmode=disable\"\n"+
 		"mysql: \"username:@tcp(dbhost.com:3306)/dbname?multiStatements=true\"\n"+
@@ -63,6 +64,7 @@ func setFlags(fs *pflag.FlagSet, cfg *ConfValues) {
 		"db-driver":       &cfg.DBDriver,
 		"DBDSN":           &cfg.DBDSN,
 		"db-instance":     &cfg.DBInstance,
+		"output-format":   &cfg.Graphviz,
 	}
 
 	fs.VisitAll(func(f *pflag.Flag) {
@@ -89,6 +91,10 @@ func setFlag(field interface{}, value pflag.Value) {
 	case *c.OutMode:
 		if i, err := strconv.Atoi(value.String()); err == nil {
 			*f = c.OutMode(i)
+		}
+	case *c.OutIMode:
+		if i, err := strconv.Atoi(value.String()); err == nil {
+			*f = c.OutIMode(i)
 		}
 	}
 }

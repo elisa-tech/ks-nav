@@ -117,6 +117,9 @@ func (cfg *ConfValues) validate() error {
 	if err := validateType(&cfg.Type); err != nil {
 		return err
 	}
+	if err := validateGType(&cfg.Graphviz); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -173,4 +176,17 @@ func validateType(t *string) error {
 	default:
 		return fmt.Errorf("invalid output type: %s\nChoose one of the following: graphOnly, jsonOutputPlain, jsonOutputB64 or jsonOutputGZB64", *t)
 	}
+}
+
+func validateGType(t *c.OutIMode) error {
+        switch *t {
+        case 0:
+                *t = c.DefaultGOutputType
+                fmt.Printf("No output format specified. Defaulting to %d.\n", c.DefaultGOutputType)
+                return nil
+        case c.OText, c.OPNG, c.OJPG, c.OSVG:
+                return nil
+        default:
+                return fmt.Errorf("invalid graphviz output type: %s\nSee help for more details.", *t)
+        }
 }

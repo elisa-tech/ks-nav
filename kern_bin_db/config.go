@@ -54,7 +54,7 @@ var Default_config configuration = configuration{
 	LinuxWODebug:   "vmlinux.work",
 	StripBin:       "/usr/bin/strip",
 	DBDriver:       "postgres",
-	DBDSN:          "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
+	DBDSN:          "host=127.0.0.1 port=5432 user=postgres password=<password> dbname=kernel_bin sslmode=disable",
 	Maintainers_fn: "MAINTAINERS",
 	KConfig_fn:     "include/generated/autoconf.h",
 	KMakefile:      "Makefile",

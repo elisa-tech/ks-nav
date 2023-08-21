@@ -1,0 +1,9 @@
+{
+"db_driver": "postgres",
+"DBDSN": "host=127.0.0.1 port=5432 user=postgres password=<password> dbname=kernel_bin sslmode=disable",
+"ExcludedBefore": ["__fentry__", "__stack_chk_fail"],
+"ExcludedAfter": ["^kfree$","^_raw_spin_lock$","^_raw_spin_unlock$","^panic$","^call_rcu$", "^__call_rcu$","__rcu_read_unlock", "__rcu_read_lock", "path_openat"],
+"Target_sybsys":[],
+"MaxDepth":1,
+"Jout": "TextPlain"
+}
