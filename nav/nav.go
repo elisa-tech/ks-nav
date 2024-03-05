@@ -19,19 +19,19 @@ import (
 	"strings"
 )
 
-const jsonOutputFMT string = "{\"graph\": \"%s\",\"graph_type\":\"%s\",\"symbols\": [%s]}"
+const jsonOutputFMT string = "{\"graph\": \"%s\",\"graph_type\":\"%s\",\"symbols\": [edge%s]}"
 
 var fmtDot = []string{
 	"",
-	"\"%s\"->\"%s\" \n",
-	"\\\"%s\\\"->\\\"%s\\\" \\\\\\n",
-	"\"%s\"->\"%s\" \n",
-	"\"%s\"->\"%s\" \n",
+	"\"%s\"->\"%s\" [ edgeid = \"%d\"]; \n",
+	"\\\"%s\\\"->\\\"%s\\\"; \\\\\\n",
+	"\"%s\"->\"%s\"; \n",
+	"\"%s\"->\"%s\"; \n",
 }
 
 var fmtDotHeader = []string{
 	"",
-	"digraph G {\nrankdir=\"LR\"\n",
+	"digraph G {\nrankdir=LR; node [style=filled fillcolor=yellow]\n",
 	"digraph G {\\\\\\nrankdir=\"LR\"\\\\\\n",
 	"digraph G {\nrankdir=\"LR\"\n",
 	"digraph G {\nrankdir=\"LR\"\n",
@@ -119,6 +119,7 @@ func generateOutput(d Datasource, cfg *config.Config) (string, error) {
 	var output string
 	var adjm []adjM
 
+	archnum := 0
 	conf := cfg.ConfValues
 
 	start, err := d.sym2num(conf.Symbol, conf.DBInstance)
@@ -147,7 +148,7 @@ func generateOutput(d Datasource, cfg *config.Config) (string, error) {
 		conf.TargetSubsys = append(conf.TargetSubsys, targSubsysTmp)
 	}
 
-	navigate(d, start, node{startSubsys, entryName, "entry point", "0x0"}, conf.TargetSubsys, &visited, &adjm, prod, conf.DBInstance, conf.Mode, conf.ExcludedAfter, conf.ExcludedBefore, 0, conf.MaxDepth, fmtDot[opt2num(conf.Type)], &output)
+	navigate(d, start, node{startSubsys, entryName, "entry point", "0x0"}, conf.TargetSubsys, &visited, &adjm, prod, conf.DBInstance, conf.Mode, conf.ExcludedAfter, conf.ExcludedBefore, 0, conf.MaxDepth, fmtDot[opt2num(conf.Type)], &output, &archnum)
 
 	if (conf.Mode == c.PrintSubsysWs) || (conf.Mode == c.PrintTargeted) {
 		output = decorate(output, adjm)
