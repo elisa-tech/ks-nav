@@ -20,6 +20,7 @@ const (
 	ENABLE_XREFS          = 2
 	ENABLE_MAINTAINERS    = 4
 	ENABLE_VERSION_CONFIG = 8
+	ENABLE_NM             = 16
 )
 
 func main() {
@@ -63,6 +64,22 @@ func main() {
 		(*wl).Workload_type = GENERATE_QUERY_AND_EXECUTE
 		for key, value := range kconfig {
 			(*wl).Query_args = Insert_Config_Args{key, value, id}
+			query_mgmt(context, wl)
+			bar.Increment()
+		}
+		bar.Finish()
+	}
+
+	if conf.Mode&(ENABLE_NM) != 0 {
+
+		nm_syms, err := GetNmSymbols(conf.ToolchainPref, conf.LinuxWODebug)
+		if err != nil {
+			panic("nm")
+		}
+		bar = pb.StartNew(len(nm_syms))
+		(*wl).Workload_type = GENERATE_QUERY_AND_EXECUTE
+		for _, line := range nm_syms {
+			(*wl).Query_args = Insert_nm_symbol_Args{line.Address, int64(line.Type), line.Name, id}
 			query_mgmt(context, wl)
 			bar.Increment()
 		}

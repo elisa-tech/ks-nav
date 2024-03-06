@@ -32,6 +32,13 @@ type Connect_token struct {
 	DBDSN    string
 }
 
+type Insert_nm_symbol_Args struct {
+        symbol_address            string
+        symtype                   int64
+        symbol_name               string
+        nm_symbol_instance_id_ref int
+}
+
 type Insert_Instance_Args struct {
 	Version      int64
 	Patchlevel   int64

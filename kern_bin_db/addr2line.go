@@ -64,6 +64,13 @@ var Query_fmts = [...][DBTYPE_Last]string{
 	"insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select '%%[1]s', " + "(select file_id from files where file_name='%[1]s%%[2]s' and file_instance_id_ref=%%[3]d) as fn_id, %%[3]d " + "WHERE EXISTS ( select file_id from files where file_name='%[1]s%%[2]s' and file_instance_id_ref=%%[3]d);",
 	"insert into tags (subsys_name, tag_file_ref_id, tag_instance_id_ref) select '%%[1]s', " + "(select file_id from files where file_name='%[1]s%%[2]s' and file_instance_id_ref=%%[3]d) as fn_id, %%[3]d " + "WHERE EXISTS ( select file_id from files where file_name='%[1]s%%[2]s' and file_instance_id_ref=%%[3]d);",
 	},
+
+	{
+	"insert into nm_symbol (symbol_address, symtype, symbol_name, nm_symbol_instance_id_ref) values ('%s', %d, '%s', %d);",
+	"insert into nm_symbol (symbol_address, symtype, symbol_name, nm_symbol_instance_id_ref) values ('%s', %d, '%s', %d);",
+	"insert into nm_symbol (symbol_address, symtype, symbol_name, nm_symbol_instance_id_ref) values ('%s', %d, '%s', %d);",
+	"insert into nm_symbol (symbol_address, symtype, symbol_name, nm_symbol_instance_id_ref) values ('%s', %d, '%s', %d);",
+	},
 }
 
 type Workload_Type int64
@@ -190,6 +197,9 @@ func Generate_Query_Str(Q_WL *Workload, DBT DBtype) error {
 		(*Q_WL).Query_str = fmt.Sprintf(Query_fmts[6][DBT], arg.Caller_Offset, arg.Callee_Offset, arg.Id, arg.Source_line, arg.Calling_Offset)
 	case Insert_Tags_Args:
 		(*Q_WL).Query_str = fmt.Sprintf(Query_fmts[7][DBT], arg.addr2line_prefix)
+	case Insert_nm_symbol_Args:
+		(*Q_WL).Query_str = fmt.Sprintf(Query_fmts[8][DBT], arg.symbol_address, arg.symtype, arg.symbol_name, arg.nm_symbol_instance_id_ref)
+
 	default:
 		err = errors.New("GENERATE_QUERY: Unknown workload argument")
 	}

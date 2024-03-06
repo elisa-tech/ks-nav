@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
-	"strconv"
 	"strings"
 )
 
@@ -23,6 +22,12 @@ const (
 	WEAK_SYMBOL
 	WEAK_OBJECT
 )
+
+type Symbol struct {
+	Address string
+	Type    symtype
+	Name    string
+}
 
 func nmTypeToEnum(t rune) symtype {
 	switch t {
@@ -49,22 +54,13 @@ func nmTypeToEnum(t rune) symtype {
 	}
 }
 
-type Symbol struct {
-	Address uint64
-	Type    symtype
-	Name    string
-}
-
 func ParseSymbol(line string) (*Symbol, error) {
 	parts := strings.Fields(line)
 	if len(parts) < 3 {
 		return nil, fmt.Errorf("invalid line format")
 	}
 
-	address, err := strconv.ParseUint(parts[0], 16, 64)
-	if err != nil {
-		return nil, err
-	}
+	address := "0x"+parts[0]
 
 	symType := nmTypeToEnum(rune(parts[1][0]))
 	if symType == Unknown {
@@ -78,7 +74,7 @@ func ParseSymbol(line string) (*Symbol, error) {
 	}, nil
 }
 
-func GetSymbols(toolchainPrefix string, file string) ([]Symbol, error) {
+func GetNmSymbols(toolchainPrefix string, file string) ([]Symbol, error) {
 	cmd := exec.Command(toolchainPrefix+"nm", "-n", file)
 	var out bytes.Buffer
 	cmd.Stdout = &out
