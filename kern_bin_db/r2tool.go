@@ -326,7 +326,7 @@ func init_fw(r2p *r2.Pipe) {
 	if err != nil {
 		panic(err)
 	}
-	_, err = r2p.Cmd("aaa")
+	_, err = r2p.Cmd("aaa; aaef")
 	if err != nil {
 		panic(err)
 	}
