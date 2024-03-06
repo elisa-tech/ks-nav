@@ -16,3 +16,4 @@ create index symbol_file_ref_id_idx on symbols using hash (symbol_file_ref_id);
 create index symbol_address_idx on symbols using btree (symbol_address COLLATE "default" ASC NULLS LAST, symbol_instance_id_ref ASC NULLS LAST);
 create index func_id_idx on data_xrefs   using hash (func_id);
 create index data_sym_id_idx on  data_xrefs using hash (data_sym_id);
+create index nm_symbol_symbol_address_idx on nm_symbol using hash (symbol_address);

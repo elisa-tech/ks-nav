@@ -317,6 +317,28 @@ func remove_non_func(list []xref, functions []func_data) []xref {
 	return res
 }
 
+func isNmSym(addr uint64, nm_symbols []NmSymbol) bool {
+	for _, s := range nm_symbols {
+		if addr == s.AddrInt {
+			return true;
+		}
+	}
+	return false
+
+}
+
+// ######################
+func filter_static_data(list []xref, nm_symbols []NmSymbol) []xref {
+
+        res := []xref{}
+        for _, item := range list {
+                if  (item.Type == "DATA") &&  (isNmSym(item.To, nm_symbols)) {
+                        res = append(res, item)
+                }
+        }
+        return res
+}
+
 // Initializes the radare 2 framework
 func init_fw(r2p *r2.Pipe) {
 	l := log.New(os.Stderr, "", 0)

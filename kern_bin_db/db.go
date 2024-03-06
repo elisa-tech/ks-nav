@@ -76,6 +76,13 @@ type Insert_Xrefs_Args struct {
 	Id             int
 	Source_line    string
 }
+type Insert_DataXrefs_Args struct {
+	Caller_Offset  uint64
+	Calling_Offset uint64
+	Callee_Offset  uint64
+	Id             int
+	Source_line    string
+}
 
 type Insert_Tags_Args struct {
 	addr2line_prefix string

@@ -70,9 +70,10 @@ func main() {
 		bar.Finish()
 	}
 
+	nm_syms := []NmSymbol{}
 	if conf.Mode&(ENABLE_NM) != 0 {
-
-		nm_syms, err := GetNmSymbols(conf.ToolchainPref, conf.LinuxWODebug)
+		fmt.Println("Collect symbols from nm")
+		nm_syms, err = GetNmSymbols(conf.ToolchainPref, conf.LinuxWODebug)
 		if err != nil {
 			panic("nm")
 		}
@@ -152,7 +153,15 @@ func main() {
 			bar.Increment()
 			if strings.Contains(a.Name, "sym.") {
 				Move(r2p, a.Offset)
-				xrefs := remove_non_func(Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache), funcs_data)
+				AllXrefs := Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache)
+				dataxrefs := filter_static_data(AllXrefs, nm_syms)
+				for _, l := range dataxrefs {
+					source_ref := resolve_addr(context, l.From)
+					(*wl).Workload_type = GENERATE_QUERY_AND_EXECUTE
+					(*wl).Query_args = Insert_DataXrefs_Args{Caller_Offset: a.Offset, Callee_Offset: l.To, Id: id, Source_line: source_ref, Calling_Offset: l.From}
+					query_mgmt(context, wl)
+				}
+				xrefs := remove_non_func(AllXrefs, funcs_data)
 				for _, l := range xrefs {
 					source_ref := resolve_addr(context, l.From)
 					(*wl).Workload_type = GENERATE_QUERY_AND_EXECUTE

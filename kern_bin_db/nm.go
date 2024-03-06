@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"strconv"
 )
 
 type symtype int
@@ -23,8 +24,9 @@ const (
 	WEAK_OBJECT
 )
 
-type Symbol struct {
+type NmSymbol struct {
 	Address string
+	AddrInt uint64
 	Type    symtype
 	Name    string
 }
@@ -54,27 +56,32 @@ func nmTypeToEnum(t rune) symtype {
 	}
 }
 
-func ParseSymbol(line string) (*Symbol, error) {
+func ParseSymbol(line string) (*NmSymbol, error) {
 	parts := strings.Fields(line)
 	if len(parts) < 3 {
 		return nil, fmt.Errorf("invalid line format")
 	}
 
 	address := "0x"+parts[0]
+	addint, err := strconv.ParseUint(parts[0], 16, 64)
+	if err != nil {
+		return nil, err
+	}
 
 	symType := nmTypeToEnum(rune(parts[1][0]))
 	if symType == Unknown {
 		return nil, fmt.Errorf("Unknown symbol type");
 	}
 
-	return &Symbol{
+	return &NmSymbol{
 		Address: address,
+		AddrInt: addint,
 		Type:    symType,
 		Name:    parts[2],
 	}, nil
 }
 
-func GetNmSymbols(toolchainPrefix string, file string) ([]Symbol, error) {
+func GetNmSymbols(toolchainPrefix string, file string) ([]NmSymbol, error) {
 	cmd := exec.Command(toolchainPrefix+"nm", "-n", file)
 	var out bytes.Buffer
 	cmd.Stdout = &out
@@ -84,8 +91,9 @@ func GetNmSymbols(toolchainPrefix string, file string) ([]Symbol, error) {
 		return nil, err
 	}
 
+
 	scanner := bufio.NewScanner(&out)
-	var symbols []Symbol
+	var symbols []NmSymbol
 
 	for scanner.Scan() {
 		symbol, err := ParseSymbol(scanner.Text())
