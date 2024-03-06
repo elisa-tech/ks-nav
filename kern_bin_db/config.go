@@ -38,7 +38,7 @@ type cmd_line_items struct {
 type configuration struct {
 	LinuxWDebug    string
 	LinuxWODebug   string
-	StripBin       string
+	ToolchainPref  string
 	DBDriver       string
 	DBDSN          string
 	Maintainers_fn string
@@ -52,7 +52,7 @@ type configuration struct {
 var Default_config configuration = configuration{
 	LinuxWDebug:    "vmlinux",
 	LinuxWODebug:   "vmlinux.work",
-	StripBin:       "/usr/bin/strip",
+	ToolchainPref:  "",
 	DBDriver:       "postgres",
 	DBDSN:          "host=127.0.0.1 port=5432 user=postgres password=<password> dbname=kernel_bin sslmode=disable",
 	Maintainers_fn: "MAINTAINERS",
@@ -107,7 +107,7 @@ func func_jconf(conf *configuration, fn []string) error {
 }
 
 func func_forceStrip(conf *configuration, fn []string) error {
-	(*conf).StripBin = fn[0]
+	(*conf).ToolchainPref = fn[0]
 	return nil
 }
 

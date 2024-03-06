@@ -192,7 +192,7 @@ func TestConfig(t *testing.T) {
 	var Default_config configuration = configuration{
 		LinuxWDebug:    "vmlinux",
 		LinuxWODebug:   "vmlinux.work",
-		StripBin:       "/usr/bin/strip",
+		ToolchainPref:  "",
 		DBDriver:       "postgres",
 		DBDSN:          "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
 		Maintainers_fn: "MAINTAINERS",
@@ -230,7 +230,7 @@ func TestConfig(t *testing.T) {
 	}
 	os.Args = []string{"kern_bin_db", "-s", "None1"}
 	conf, err = args_parse(cmd_line_item_init())
-	if conf.StripBin != "None1" {
+	if conf.ToolchainPref != "None1" {
 		t.Error("Error parsing strip binary arg")
 	}
 	os.Args = []string{"kern_bin_db", "-e", "None2"}

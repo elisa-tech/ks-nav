@@ -40,7 +40,7 @@ func main() {
 		os.Exit(-1)
 	}
 	fmt.Println("create stripped version")
-	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
+	strip(conf.ToolchainPref+"strip", conf.LinuxWDebug, conf.LinuxWODebug)
 	t := Connect_token{conf.DBDriver, conf.DBDSN,}
 	context := A2L_resolver__init(conf.LinuxWDebug, Connect_db(&t), conf.DBDriver, false)
 
