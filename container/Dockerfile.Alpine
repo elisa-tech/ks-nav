@@ -1,0 +1,129 @@
+# BUILDER
+FROM alpine:latest AS builder
+
+# build ARGs
+#RADARE2
+ARG _RADARE2_GIT_REPO="https://github.com/radareorg/radare2.git"
+ENV RADARE2_GIT_REPO=$_RADARE2_GIT_REPO
+# Radare2 constitutes a noteworthy dependency. 
+# However, it's a software that undergoes consistent changes across commits. 
+# In my experience, even within the same minor version, significant alterations can be observed. 
+# Despite ks-nav not utilizing any uncommon features of Radare2, I prefer to adhere to the most thoroughly tested commit.
+#ARG _RADARE2_GIT_COMMIT=ecd8d00aad289abf8f850b45d5f6c2e6b0c15c0f
+ARG _RADARE2_GIT_COMMIT=158857c262f1101a838996337e4ba9a7368383cc
+ENV RADARE2_GIT_COMMIT=$_RADARE2_GIT_COMMIT
+
+#CAPSTONE
+ARG _CAPSTONE_GIT_REPO="https://github.com/capstone-engine/capstone.git"
+ENV CAPSTONE_GIT_REPO=$_CAPSTONE_GIT_REPO
+ARG _CAPSTONE_GIT_COMMIT=b4fde983de9d14c038afef88e79fe1111388e569
+ENV CAPSTONE_GIT_COMMIT=$_CAPSTONE_GIT_COMMIT
+
+#KS-NAV
+ARG _KS_NAV_GIT_REPO="https://github.com/alessandrocarminati/ks-nav.git"
+ENV KS_NAV_GIT_REPO=$_KS_NAV_GIT_REPO
+ARG _KS_NAV_GIT_REPO_BRANCH=ac-colored-nodes
+ENV KS_NAV_GIT_REPO_BRANCH=$_KS_NAV_GIT_REPO_BRANCH
+
+# install build dependecies
+RUN apk add --no-cache autoconf automake build-base git
+RUN apk add --no-cache go
+RUN apk add --no-cache linux-headers
+
+# build app
+WORKDIR /build
+
+# Build Capstone
+RUN git clone ${CAPSTONE_GIT_REPO} /build/capstone && cd /build/capstone && git checkout ${CAPSTONE_GIT_COMMIT}
+RUN cd /build/capstone && ./make.sh install
+
+# Build radare2
+RUN git clone ${RADARE2_GIT_REPO} /build/radare2 && cd /build/radare2 && git checkout ${RADARE2_GIT_COMMIT}
+RUN cd /build/radare2 && ./configure && make && make install
+
+# Build ks-nav
+RUN git clone ${KS_NAV_GIT_REPO} /build/ksnav && cd /build/ksnav/kern_bin_db && git checkout ${KS_NAV_GIT_REPO_BRANCH}
+RUN cd /build/ksnav/kern_bin_db && make && make install
+RUN cd /build/ksnav/nav && make && make install
+RUN cd /build/ksnav/navweb && go get -u github.com/go-bindata/go-bindata/... && go install github.com/go-bindata/go-bindata/... && make && make install
+
+
+##############################################################################################################################################
+
+# RUNTIME
+FROM alpine:latest
+
+# run ARGs
+ARG _POSTGRES_NAME=only
+ENV POSTGRES_NAME=$_POSTGRES_NAME
+ARG _POSTGRES_DATA_DIR=/var/lib/postgresql/data/
+ENV POSTGRES_DATA_DIR=$_POSTGRES_DATA_DIR
+ARG _POSTGRES_IDENT_FILE=pg_ident.conf
+ENV POSTGRES_IDENT_FILE=$_POSTGRES_IDENT_FILE
+ARG _POSTGRES_CONF_FILE=${POSTGRES_DATA_DIR}/${POSTGRES_NAME}/postgresql.conf
+ENV POSTGRES_CONF_FILE=$_POSTGRES_CONF_FILE
+
+ARG _START_SCRIPT_NAME=/usr/bin/start.sh
+ENV START_SCRIPT_NAME=$_START_SCRIPT_NAME
+
+# install dependencies
+RUN apk add --no-cache postgresql postgresql-contrib postgresql-client
+RUN apk add --no-cache binutils
+RUN apk add --no-cache graphviz
+
+# setup resources
+
+WORKDIR /app
+COPY postgres_conf_template.conf /tmp
+# pg.db.tar.gz is a link, please set it to empty database, or whatever db you have.
+COPY pg.db.tar.gz /tmp
+RUN chown -R postgres:postgres ${POSTGRES_DATA_DIR} && \
+	chmod 750 ${POSTGRES_DATA_DIR}
+RUN [ ! -d ${POSTGRES_DATA_DIR}/${POSTGRES_NAME} ] && \
+	mkdir -p ${POSTGRES_DATA_DIR}/${POSTGRES_NAME} && \
+	cd ${POSTGRES_DATA_DIR}/${POSTGRES_NAME} && \
+	tar -zxvf /tmp/pg.db.tar.gz && \
+	chown -R postgres:postgres ${POSTGRES_DATA_DIR}/${POSTGRES_NAME} && \
+	chmod 750 ${POSTGRES_DATA_DIR}/${POSTGRES_NAME}  && \
+	cd -
+RUN cat /tmp/postgres_conf_template.conf | \
+	sed -r "s|%POSTGRES_DATA_DIR%|${POSTGRES_DATA_DIR}|g" | \
+	sed -r "s|%POSTGRES_NAME%|${POSTGRES_NAME}|g" | \
+	sed -r "s|%POSTGRES_DATA_DIR%|${POSTGRES_DATA_DIR}|g" | \
+	sed -r "s|%POSTGRES_CONF_FILE%|${POSTGRES_CONF_FILE}|g" | \
+	sed -r "s|%POSTGRES_IDENT_FILE%|${POSTGRES_IDENT_FILE}|g" | tee ${POSTGRES_CONF_FILE}
+RUN mkdir -p /run/postgresql && chown postgres:postgres /run/postgresql
+COPY --from=builder /usr/bin/nav-db-filler /usr/bin
+COPY --from=builder /usr/bin/nav /usr/bin
+COPY --from=builder /usr/bin/navweb /usr/bin
+COPY --from=builder /build/ksnav/kern_bin_db/psql.sql /tmp
+COPY --from=builder /build/radare2/libr/reg/libr_reg.so /usr/lib
+COPY --from=builder /build/radare2/libr/syscall/libr_syscall.so /usr/lib
+COPY --from=builder /build/radare2/libr/lang/libr_lang.so /usr/lib
+COPY --from=builder /build/radare2/libr/main/libr_main.so /usr/lib
+COPY --from=builder /build/radare2/libr/io/libr_io.so /usr/lib
+COPY --from=builder /build/radare2/libr/core/libr_core.so /usr/lib
+COPY --from=builder /build/radare2/libr/fs/libr_fs.so /usr/lib
+COPY --from=builder /build/radare2/libr/util/libr_util.so /usr/lib
+COPY --from=builder /build/radare2/libr/magic/libr_magic.so /usr/lib
+COPY --from=builder /build/radare2/libr/bin/libr_bin.so /usr/lib
+COPY --from=builder /build/radare2/libr/debug/libr_debug.so /usr/lib
+COPY --from=builder /build/radare2/libr/cons/libr_cons.so /usr/lib
+COPY --from=builder /build/radare2/libr/flag/libr_flag.so /usr/lib
+COPY --from=builder /build/radare2/libr/config/libr_config.so /usr/lib
+#COPY --from=builder /build/radare2/libr/hash/libr_hash.so /usr/lib
+COPY --from=builder /build/radare2/libr/egg/libr_egg.so /usr/lib
+COPY --from=builder /build/radare2/libr/asm/libr_asm.so /usr/lib
+COPY --from=builder /build/radare2/libr/socket/libr_socket.so /usr/lib
+COPY --from=builder /build/radare2/libr/bp/libr_bp.so /usr/lib
+COPY --from=builder /build/radare2/libr/search/libr_search.so /usr/lib
+COPY --from=builder /build/radare2/libr/crypto/libr_crypto.so /usr/lib
+#COPY --from=builder /build/radare2/libr/parse/libr_parse.so /usr/lib
+COPY --from=builder /build/radare2/libr/anal/libr_anal.so /usr/lib
+COPY --from=builder /build/radare2/binr/radare2/radare2 /usr/bin
+EXPOSE 8080
+
+# start the thing
+RUN find /app
+RUN echo -e '#!/bin/sh\nchown -R postgres:postgres ${POSTGRES_DATA_DIR} /run/postgresql\nsu postgres -c "pg_ctl start -D ${POSTGRES_DATA_DIR}/${POSTGRES_NAME}"\n/usr/bin/navweb\n' >/usr/bin/start.sh && chmod +x /usr/bin/start.sh
+ENTRYPOINT ["/usr/bin/start.sh"]
