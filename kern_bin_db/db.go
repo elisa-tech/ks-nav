@@ -32,6 +32,13 @@ type Connect_token struct {
 	DBDSN    string
 }
 
+type Insert_nm_symbol_Args struct {
+        symbol_address            string
+        symtype                   int64
+        symbol_name               string
+        nm_symbol_instance_id_ref int
+}
+
 type Insert_Instance_Args struct {
 	Version      int64
 	Patchlevel   int64
@@ -63,6 +70,13 @@ type Insert_Symbols_Files_Args struct {
 }
 
 type Insert_Xrefs_Args struct {
+	Caller_Offset  uint64
+	Calling_Offset uint64
+	Callee_Offset  uint64
+	Id             int
+	Source_line    string
+}
+type Insert_DataXrefs_Args struct {
 	Caller_Offset  uint64
 	Calling_Offset uint64
 	Callee_Offset  uint64

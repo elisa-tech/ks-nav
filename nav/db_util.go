@@ -92,7 +92,7 @@ func notExcluded(symbol string, excluded []string) bool {
 // TODO: refactory needed:
 // What is the problem: too many args.
 // suggestion: New version with input and output structs.
-func navigate(d Datasource, symbolId int, parentDispaly node, targets []string, visited *[]int, AdjMap *[]adjM, prod map[string]int, instance int, mode c.OutMode, excludedAfter []string, excludedBefore []string, depth int, maxdepth int, dotFmt string, output *string) {
+func navigate(d Datasource, symbolId int, parentDispaly node, targets []string, visited *[]int, AdjMap *[]adjM, prod map[string]int, instance int, mode c.OutMode, excludedAfter []string, excludedBefore []string, depth int, maxdepth int, dotFmt string, output *string, archnum *int) {
 	var tmp, s string
 	var l, r, ll node
 
@@ -116,7 +116,8 @@ func navigate(d Datasource, symbolId int, parentDispaly node, targets []string, 
 
 				switch mode {
 				case c.PrintAll:
-					s = fmt.Sprintf(dotFmt, l.symbol, r.symbol)
+					(*archnum)++
+					s = fmt.Sprintf(dotFmt, l.symbol, r.symbol, *archnum)
 					ll = r
 					depthInc = 1
 				case c.PrintSubsys, c.PrintSubsysWs, c.PrintTargeted:
@@ -129,7 +130,8 @@ func navigate(d Datasource, symbolId int, parentDispaly node, targets []string, 
 					}
 
 					if l.subsys != r.subsys {
-						s = fmt.Sprintf(dotFmt, l.subsys, r.subsys)
+						(*archnum)++
+						s = fmt.Sprintf(dotFmt, l.subsys, r.subsys, *archnum)
 						*AdjMap = append(*AdjMap, adjM{l, r})
 						depthInc = 1
 					} else {
@@ -151,7 +153,19 @@ func navigate(d Datasource, symbolId int, parentDispaly node, targets []string, 
 				}
 				if notIn(*visited, curr.symId) {
 					if (notExcluded(curr.symbol, excludedAfter) && notExcluded(curr.symbol, excludedBefore)) && (maxdepth == 0 || ((maxdepth > 0) && (depth+depthInc < maxdepth))) {
-						navigate(d, curr.symId, ll, targets, visited, AdjMap, prod, instance, mode, excludedAfter, excludedBefore, depth+depthInc, maxdepth, dotFmt, output)
+						navigate(d, curr.symId, ll, targets, visited, AdjMap, prod, instance, mode, excludedAfter, excludedBefore, depth+depthInc, maxdepth, dotFmt, output, archnum)
+					} else {
+						if !notExcluded(curr.symbol, excludedAfter) {
+							s = fmt.Sprintf("\"%s\" [style=filled; fillcolor=orange];\n", r.symbol)
+							*output = (*output) + s
+						} else {
+							tmp, _ := d.getSuccessorsById(curr.symId, instance)
+							if (len(tmp)>0) && (mode==c.PrintAll) {
+//								fmt.Printf("==> %d(%s) succn=%d\n", curr.symId,curr.symbol, len(tmp))
+								s = fmt.Sprintf("\"%s\" [style=filled; fillcolor=red];\n", r.symbol)
+								*output = (*output) + s
+							}
+						}
 					}
 				}
 			}

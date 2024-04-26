@@ -5,6 +5,8 @@ create table tags      (tag_id SERIAL PRIMARY KEY, subsys_name varchar(100), tag
 create table configs   (config_id SERIAL PRIMARY KEY, config_symbol varchar(150), config_value varchar(150), config_instance_id_ref int not null);
 create table symbols   (symbol_id SERIAL PRIMARY KEY, symbol_name varchar(100), symbol_address varchar(20), symbol_type varchar(15), symbol_file_ref_id int, symbol_instance_id_ref int not null);
 create table files     (file_id SERIAL PRIMARY KEY, file_name varchar (100), file_instance_id_ref int not null);
+create table nm_symbol (nm_sym_id SERIAL PRIMARY KEY, symbol_address varchar(20), symtype int, symbol_name varchar(100), nm_symbol_instance_id_ref int not null);
+create table data_xrefs(func_id int, data_sym_id int, ref_addr varchar(20), source_line varchar(1024), xref_instance_id_ref int);
 create index symbol_name_idx on symbols using hash (symbol_name);
 create index caller_idx on xrefs   using hash (caller);
 create index callee_idx on xrefs   using hash (callee);
@@ -12,3 +14,6 @@ create index file_name_idx on files   using hash (file_name);
 create index tag_file_ref_id_idx on tags    using hash (tag_file_ref_id);
 create index symbol_file_ref_id_idx on symbols using hash (symbol_file_ref_id);
 create index symbol_address_idx on symbols using btree (symbol_address COLLATE "default" ASC NULLS LAST, symbol_instance_id_ref ASC NULLS LAST);
+create index func_id_idx on data_xrefs   using hash (func_id);
+create index data_sym_id_idx on  data_xrefs using hash (data_sym_id);
+create index nm_symbol_symbol_address_idx on nm_symbol using hash (symbol_address);

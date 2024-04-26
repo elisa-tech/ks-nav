@@ -7,16 +7,17 @@ package main
 
 import (
 	"os/exec"
+	"fmt"
 )
 
 // Executes the strip operation on a new file to ease the operations Radare 2 performs on the binary image
 func strip(executable string, fn string, outfile string) {
 	_, err := exec.LookPath(executable)
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("exec.LookPath: %s", err.Error()))
 	}
 	cmd := exec.Command(executable, "--strip-debug", fn, "-o", outfile)
 	if err := cmd.Run(); err != nil {
-		panic(err)
+		panic(fmt.Sprintf("exec.Command(%s %s %s %s %s): %s", executable, "--strip-debug", fn, "-o", outfile, err.Error()))
 	}
 }

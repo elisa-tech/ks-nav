@@ -20,6 +20,7 @@ const (
 	ENABLE_XREFS          = 2
 	ENABLE_MAINTAINERS    = 4
 	ENABLE_VERSION_CONFIG = 8
+	ENABLE_NM             = 16
 )
 
 func main() {
@@ -40,7 +41,7 @@ func main() {
 		os.Exit(-1)
 	}
 	fmt.Println("create stripped version")
-	strip(conf.StripBin, conf.LinuxWDebug, conf.LinuxWODebug)
+	strip(conf.ToolchainPref+"strip", conf.LinuxWDebug, conf.LinuxWODebug)
 	t := Connect_token{conf.DBDriver, conf.DBDSN,}
 	context := A2L_resolver__init(conf.LinuxWDebug, Connect_db(&t), conf.DBDriver, false)
 
@@ -63,6 +64,23 @@ func main() {
 		(*wl).Workload_type = GENERATE_QUERY_AND_EXECUTE
 		for key, value := range kconfig {
 			(*wl).Query_args = Insert_Config_Args{key, value, id}
+			query_mgmt(context, wl)
+			bar.Increment()
+		}
+		bar.Finish()
+	}
+
+	nm_syms := []NmSymbol{}
+	if conf.Mode&(ENABLE_NM) != 0 {
+		fmt.Println("Collect symbols from nm")
+		nm_syms, err = GetNmSymbols(conf.ToolchainPref, conf.LinuxWODebug)
+		if err != nil {
+			panic("nm")
+		}
+		bar = pb.StartNew(len(nm_syms))
+		(*wl).Workload_type = GENERATE_QUERY_AND_EXECUTE
+		for _, line := range nm_syms {
+			(*wl).Query_args = Insert_nm_symbol_Args{line.Address, int64(line.Type), line.Name, id}
 			query_mgmt(context, wl)
 			bar.Increment()
 		}
@@ -135,7 +153,15 @@ func main() {
 			bar.Increment()
 			if strings.Contains(a.Name, "sym.") {
 				Move(r2p, a.Offset)
-				xrefs := remove_non_func(Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache), funcs_data)
+				AllXrefs := Getxrefs(r2p, a.Offset, indcl, funcs_data, &cache)
+				dataxrefs := filter_static_data(AllXrefs, nm_syms)
+				for _, l := range dataxrefs {
+					source_ref := resolve_addr(context, l.From)
+					(*wl).Workload_type = GENERATE_QUERY_AND_EXECUTE
+					(*wl).Query_args = Insert_DataXrefs_Args{Caller_Offset: a.Offset, Callee_Offset: l.To, Id: id, Source_line: source_ref, Calling_Offset: l.From}
+					query_mgmt(context, wl)
+				}
+				xrefs := remove_non_func(AllXrefs, funcs_data)
 				for _, l := range xrefs {
 					source_ref := resolve_addr(context, l.From)
 					(*wl).Workload_type = GENERATE_QUERY_AND_EXECUTE
