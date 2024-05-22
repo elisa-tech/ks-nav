@@ -20,6 +20,9 @@ type Datasource interface {
 	sym2num(symb string, instance int) (int, error)
 	symbSubsys(symblist []int, instance int) (string, error)
 	getEntryById(symbolId int, instance int) (entry, error)
+	symbGData(symb string, instance int) ([]string, error)
+	symbGDataFuncOf(gdata string, instance int) []string
+
 }
 
 const SUBSYS_UNDEF = "The REST"

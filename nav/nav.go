@@ -27,6 +27,7 @@ var fmtDot = []string{
 	"\\\"%s\\\"->\\\"%s\\\"; \\\\\\n",
 	"\"%s\"->\"%s\"; \n",
 	"\"%s\"->\"%s\"; \n",
+	"",
 }
 
 var fmtDotHeader = []string{
@@ -35,6 +36,8 @@ var fmtDotHeader = []string{
 	"digraph G {\\\\\\nrankdir=\"LR\"\\\\\\n",
 	"digraph G {\nrankdir=\"LR\"\n",
 	"digraph G {\nrankdir=\"LR\"\n",
+	"digraph G {\nlayout=\"fdp\"\noverlap=\"1:scalexy\"\nnode [shape=\"box\";style=filled;color=green];\n",
+	"digraph G {\nlayout=\"fdp\"\noverlap=\"1:scalexy\"\nnode [shape=\"box\";style=filled;color=green];\n",
 }
 
 var fmtDotNodeHighlightWSymb = "\"%[1]s\" [shape=record style=\"rounded,filled,bold\" fillcolor=yellow label=\"%[1]s|%[2]s\"]\n"
@@ -128,60 +131,94 @@ func generateOutput(d Datasource, cfg *config.Config) (string, error) {
 		return "", err
 	}
 
-	graphOutput = fmtDotHeader[opt2num(conf.Type)]
-	entry, err := d.getEntryById(start, conf.DBInstance)
-	if err != nil {
-		return "", err
-	} else {
-		entryName = entry.symbol
-	}
-	startSubsys, _ := d.getSubsysFromSymbolName(entryName, conf.DBInstance)
-	if startSubsys == "" {
-		startSubsys = SUBSYS_UNDEF
-	}
-
-	if (conf.Mode == c.PrintTargeted) && len(conf.TargetSubsys) == 0 {
-		targSubsysTmp, err := d.getSubsysFromSymbolName(conf.Symbol, conf.DBInstance)
+	graphOutput = fmtDotHeader[conf.Mode]
+	if conf.Mode <= c.PrintTargeted {
+		entry, err := d.getEntryById(start, conf.DBInstance)
 		if err != nil {
+			return "", err
+		} else {
+			entryName = entry.symbol
+		}
+		startSubsys, _ := d.getSubsysFromSymbolName(entryName, conf.DBInstance)
+		if startSubsys == "" {
+			startSubsys = SUBSYS_UNDEF
+		}
+
+		if (conf.Mode == c.PrintTargeted) && len(conf.TargetSubsys) == 0 {
+			targSubsysTmp, err := d.getSubsysFromSymbolName(conf.Symbol, conf.DBInstance)
+			if err != nil {
+				panic(err)
+			}
+			conf.TargetSubsys = append(conf.TargetSubsys, targSubsysTmp)
+		}
+
+		navigate(d, start, node{startSubsys, entryName, "entry point", "0x0"}, conf.TargetSubsys, &visited, &adjm, prod, conf.DBInstance, conf.Mode, conf.ExcludedAfter, conf.ExcludedBefore, 0, conf.MaxDepth, fmtDot[opt2num(conf.Type)], &output, &archnum)
+
+		if (conf.Mode == c.PrintSubsysWs) || (conf.Mode == c.PrintTargeted) {
+			output = decorate(output, adjm)
+		}
+
+		graphOutput += output
+		if conf.Mode == c.PrintTargeted {
+			for _, i := range conf.TargetSubsys {
+				if d.GetExploredSubsystemByName(conf.Symbol) == i {
+					graphOutput += fmt.Sprintf(fmtDotNodeHighlightWSymb, i, conf.Symbol)
+				} else {
+					graphOutput += fmt.Sprintf(fmtDotNodeHighlightWoSymb, i)
+				}
+			}
+		}
+	} else {
+/*
+		print " ##symb## [shape=house;style=filled;color=cyan;];"
+		set = select * from nm_symbol where nm_sym_id in (select data_sym_id from data_xrefs where func_id in (select symbol_id from symbols where symbol_name ='##symb##' and symbol_instance_id_ref=##i##));
+		for x in set {
+		        print " "##x##" [shape=box;style=filled;color=green]; "
+		}
+		for x in set {
+		        arch = select subsys_name, '##x##'  from tags where tag_file_ref_id in (select file_id from files where file_id in (select symbol_file_ref_id from symbols where symbol_id in (select func_id from data_xrefs where data_sym_id in (s>
+		        for y in arch {
+		                print " "##y1##" -> "##y2##"
+		        }
+		}
+*/
+		graphOutput += fmt.Sprintf(" \"%s\" [shape=house;style=filled;color=cyan;width=5, height=2, fixedsize=true];\n", conf.Symbol)
+		gdata, err := d.symbGData(conf.Symbol, conf.DBInstance)
+		if err!= nil {
 			panic(err)
 		}
-		conf.TargetSubsys = append(conf.TargetSubsys, targSubsysTmp)
-	}
-
-	navigate(d, start, node{startSubsys, entryName, "entry point", "0x0"}, conf.TargetSubsys, &visited, &adjm, prod, conf.DBInstance, conf.Mode, conf.ExcludedAfter, conf.ExcludedBefore, 0, conf.MaxDepth, fmtDot[opt2num(conf.Type)], &output, &archnum)
-
-	if (conf.Mode == c.PrintSubsysWs) || (conf.Mode == c.PrintTargeted) {
-		output = decorate(output, adjm)
-	}
-
-	graphOutput += output
-	if conf.Mode == c.PrintTargeted {
-		for _, i := range conf.TargetSubsys {
-			if d.GetExploredSubsystemByName(conf.Symbol) == i {
-				graphOutput += fmt.Sprintf(fmtDotNodeHighlightWSymb, i, conf.Symbol)
-			} else {
-				graphOutput += fmt.Sprintf(fmtDotNodeHighlightWoSymb, i)
+		for _, i := range gdata {
+			graphOutput += fmt.Sprintf("\"%s\" [shape=\"ellipse\";style=filled;color=orange;width=5, height=2, fixedsize=true];\n", i)
+			tmp := d.symbGDataFuncOf(i, conf.DBInstance)
+			for _, j := range tmp {
+				graphOutput += fmt.Sprintf("%s\n", j)
 			}
 		}
 	}
 	graphOutput += "}"
-
-	symbdata, err := d.symbSubsys(visited, conf.DBInstance)
-	if err != nil {
-		return "", err
-	}
-
 	switch opt2num(conf.Type) {
 	case c.GraphOnly:
 		jsonOutput = graphOutput
 	case c.JsonOutputPlain:
+		symbdata, err := d.symbSubsys(visited, conf.DBInstance)
+		if err != nil {
+			return "", err
+		}
 		jsonOutput = fmt.Sprintf(jsonOutputFMT, graphOutput, conf.Type, symbdata)
 	case c.JsonOutputB64:
+		symbdata, err := d.symbSubsys(visited, conf.DBInstance)
+		if err != nil {
+			return "", err
+		}
 		b64dot := base64.StdEncoding.EncodeToString([]byte(graphOutput))
 		jsonOutput = fmt.Sprintf(jsonOutputFMT, b64dot, conf.Type, symbdata)
 
 	case c.JsonOutputGZB64:
 		var b bytes.Buffer
+		symbdata, err := d.symbSubsys(visited, conf.DBInstance)
+		if err != nil {
+			return "", err
+		}
 		gz := gzip.NewWriter(&b)
 		if _, err := gz.Write([]byte(graphOutput)); err != nil {
 			return "", errors.New("gzip failed")
