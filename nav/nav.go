@@ -24,16 +24,16 @@ const jsonOutputFMT string = "{\"graph\": \"%s\",\"graph_type\":\"%s\",\"symbols
 var fmtDot = []string{
 	"",
 	"\"%s\"->\"%s\" [ edgeid = \"%d\"]; \n",
-	"\\\"%s\\\"->\\\"%s\\\"; \\\\\\n",
 	"\"%s\"->\"%s\"; \n",
 	"\"%s\"->\"%s\"; \n",
+	"\"%s\"->\"%s\" \n",
 	"",
 }
 
 var fmtDotHeader = []string{
 	"",
 	"digraph G {\nrankdir=LR; node [style=filled fillcolor=yellow]\n",
-	"digraph G {\\\\\\nrankdir=\"LR\"\\\\\\n",
+	"digraph G {\nrankdir=LR; node [style=filled fillcolor=yellow]\n",
 	"digraph G {\nrankdir=\"LR\"\n",
 	"digraph G {\nrankdir=\"LR\"\n",
 	"digraph G {\nlayout=\"fdp\"\noverlap=\"1:scalexy\"\nnode [shape=\"box\";style=filled;color=green];\n",
@@ -152,7 +152,7 @@ func generateOutput(d Datasource, cfg *config.Config) (string, error) {
 			conf.TargetSubsys = append(conf.TargetSubsys, targSubsysTmp)
 		}
 
-		navigate(d, start, node{startSubsys, entryName, "entry point", "0x0"}, conf.TargetSubsys, &visited, &adjm, prod, conf.DBInstance, conf.Mode, conf.ExcludedAfter, conf.ExcludedBefore, 0, conf.MaxDepth, fmtDot[opt2num(conf.Type)], &output, &archnum)
+		navigate(d, start, node{startSubsys, entryName, "entry point", "0x0"}, conf.TargetSubsys, &visited, &adjm, prod, conf.DBInstance, conf.Mode, conf.ExcludedAfter, conf.ExcludedBefore, 0, conf.MaxDepth, fmtDot[conf.Mode], &output, &archnum)
 
 		if (conf.Mode == c.PrintSubsysWs) || (conf.Mode == c.PrintTargeted) {
 			output = decorate(output, adjm)
