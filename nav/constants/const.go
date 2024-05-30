@@ -24,6 +24,8 @@ const (
 	PrintSubsys
 	PrintSubsysWs
 	PrintTargeted
+	GDataFunc
+	GDataSubs
 	OutModeLast
 )
 

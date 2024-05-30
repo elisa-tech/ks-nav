@@ -157,7 +157,7 @@ func validateMode(m *c.OutMode) error {
 		*m = c.DefaultMode
 		fmt.Printf("No output mode specified. Defaulting to %d.\n", c.DefaultMode)
 		return nil
-	case c.PrintAll, c.PrintSubsys, c.PrintSubsysWs, c.PrintTargeted:
+	case c.PrintAll, c.PrintSubsys, c.PrintSubsysWs, c.PrintTargeted, c.GDataFunc, c.GDataSubs:
 		return nil
 	default:
 		return fmt.Errorf("invalid output mode: %d\nChoose one of the following: 1=Symbols, 2=Subsystems, "+
