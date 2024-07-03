@@ -13,7 +13,8 @@ type symtype int
 
 const (
 	Unknown symtype = iota
-	TEXT
+	TEXT_LOCAL
+	TEXT_GLOBAL
 	DATA
 	BSS
 	COMMON
@@ -45,8 +46,10 @@ func nmTypeToEnum(t rune) symtype {
 		return SMALL_INITIALIZED
 	case 'R', 'r':
 		return RO
-	case 'T', 't':
-		return TEXT
+	case 'T':
+		return TEXT_GLOBAL
+	case 't':
+		return TEXT_LOCAL
 	case 'W', 'w':
 		return WEAK_SYMBOL
 	case 'V', 'v':
