@@ -1,0 +1,49 @@
+#!/usr/bin/bash
+# J. Nounagnon
+# How to run ksnav? Execute this script on your local machine
+#		Get a Linux or Yocto build with debug symbols enabled and save it to 
+#		the ./ksbuild/app folder (this can be achieved by running ./setup_linux_app first
+#		> ./run_ksnav
+# 		> docker exec -it ksnav-cont sh 
+#		> cd /app
+#		> nav-db-filler /build/ksnav_kdb.json 
+#		> nav -f /build/ksnav_nav.json > /out_img/run_init_process 
+# This is all that is needed for a basic demo of ks-nav
+#
+# Follow the instructions below for further analysis of the tools artifacts
+# When the database has been successfully created (could take from 20 mins to an hour)
+# go to a web brower and type: 
+# 		localhost:8080
+# 		click on the 'Explore' link.
+# Enter a function from the linux kernel
+# Example	: Start Symbol: run_init_process 
+# 		Instance: 1
+# 		Display Mode: Functions Mode (try the 2nd option as well - very useful for architectural details)
+# 		Depth: 2
+# 		Click on 'Generate image"
+# To view symbols in the database, switch users to postgres and connect to the posgresql db: kernel_bin
+#		> su postgres
+# 		> psql -U postgres -h localhost
+#		> \l  # To view all database tables
+#		> \c kernel_bin # To connect to the kernel_bin database
+#		> \d # To view the list of relations available
+#		> SELECT * FROM symbols;  # To view all the symbols from this database
+#		> A Table should be displayed with the list of all symbols extracted from the kernel
+#
+
+
+KS_CONT="ksnav-cont"
+KS_IMG="ksnav-img"
+KS_APP_CONT_PATH="$(pwd)/ksnav_app_linux"
+KS_DOCKERFILE='Dockerfile_ksnav'
+KS_LINUX_APP="$(pwd)/ksbuild/app"
+KS_OUTPUT_IMG="$(pwd)/ksbuild/out_img"
+KS_START_SCRIPT='/build/ksnav_start.sh'
+
+mkdir -p $KS_OUTPUT_IMG
+podman container stop $KS_CONT; podman container rm $KS_CONT
+podman build -t $KS_IMG -f $KS_APP_CONT_PATH/$KS_DOCKERFILE $KS_APP_CONT_PATH
+podman run -d --name $KS_CONT -p 5434:5432 -p 8080:8080 -v $KS_LINUX_APP:/app:z -v $KS_OUTPUT_IMG:/out_img:z $KS_IMG
+echo "Run the following command to interract with the docker"
+echo "podman exec -it $KS_CONT sh "
+###echo "podman exec -it $KS_CONT sh $KS_START_SCRIPT" 

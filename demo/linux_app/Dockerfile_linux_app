@@ -1,0 +1,37 @@
+# BUILDER
+FROM ubuntu:22.04
+
+# build ARGs
+ARG _LINUX_GIT_REPO='https://github.com/torvalds/linux.git'
+ENV LINUX_GIT_REPO=$_LINUX_GIT_REPO
+ARG _LINUX_GIT_BRANCH="v6.6"
+ENV LINUX_GIT_BRANCH=$_LINUX_GIT_BRANCH
+ENV LINUX_APP_DIR="/app"
+
+WORKDIR $LINUX_APP_DIR
+
+# install build dependecies
+RUN apt-get -y update
+RUN apt-get -y upgrade
+RUN apt-get -y autoremove
+RUN apt-get clean autoclean
+RUN apt-get update && apt-get install -y tzdata
+ENV TZ=US/Eastern
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Install Linux dependencies
+RUN apt-get -y install git build-essential libncurses-dev \ 
+	gawk flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf llvm bc
+
+RUN git clone -b ${LINUX_GIT_BRANCH} ${LINUX_GIT_REPO} ${LINUX_APP_DIR}
+
+# Setup configs and build Linux
+COPY linux_config /app/.config
+#RUN cd /app && make defconfig 
+#RUN cd /app && ./scripts/config --file .config -d DEBUG_INFO_NONE -e DEBUG_KERNEL -e DEBUG_INFO_DWARF5 -e GDB_SCRIPTS \
+#	-e DEBUG_INFO -e DEBUG_INFO_COMPRESSED_NONE -e KALLSYMS -e KALLSYMS_ALL
+RUN make oldconfig
+RUN make vmlinux
+
+
+

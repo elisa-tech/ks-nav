@@ -1,0 +1,12 @@
+{
+"LinuxWDebug":		"/app/vmlinux",
+"LinuxWODebug":		"/app/vmlinux.work",
+"StripBin":		"/usr/bin/strip",
+"DBDriver":		"postgres",
+"DBDSN":		"host=localhost port=5432 user=postgres password=my123 dbname=kernel_bin sslmode=disable",
+"Maintainers_fn":	"/app/MAINTAINERS",
+"KConfig_fn":		"include/generated/autoconf.h",
+"KMakefile":		"/app/Makefile",
+"Mode":			15,
+"Note":			"upstream"
+}

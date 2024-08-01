@@ -1,0 +1,28 @@
+#!/usr/bin/bash 
+#
+# This script builds a Linux image for ks-nav
+# At the end of the script, the folder ksbuild ($DEMO_HOST_BUILD) is created
+# and includes the app folder from the container's /app folder
+# The Linux .config file included in the Docker image is pre-configured to 
+# enable debug symbols which are used in the next stage of this tutorial
+#
+#
+LINUX_CONT="linux-cont"
+LINUX_IMG="linux-img"
+
+DEMO_HOST_BUILD="ksbuild"
+DEMO_HOST_PATH="$(pwd)/$DEMO_HOST_BUILD"
+DEMO_HOST_DIR="$DEMO_HOST_PATH/app"
+LINUX_DOCKERFILE="Dockerfile_linux_app"
+LINUX_DOCKER_DIR="$(pwd)/linux_app"
+APP_CONT_DIR="/app"
+
+mkdir -p $DEMO_HOST_PATH
+podman container stop $LINUX_CONT; podman container rm $LINUX_CONT
+podman build -t $LINUX_IMG -f $LINUX_DOCKER_DIR/$LINUX_DOCKERFILE $LINUX_DOCKER_DIR
+podman run -d --name $LINUX_CONT $LINUX_IMG
+podman cp $LINUX_CONT:$APP_CONT_DIR $DEMO_HOST_DIR
+echo "The /app from the container should now be visible under $DEMO_HOST_DIR"
+echo "(optional) Run the following command if you need to interract with the container"
+echo "podman exec -it $LINUX_CONT sh"
+echo "If running the basic demo, move to the next step"
