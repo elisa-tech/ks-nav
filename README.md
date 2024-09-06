@@ -26,7 +26,8 @@ The three tools included in this project are:
    images and enhances the overall user experience.
 
 ## Building and Usage
-
+Each tool includes a user guide for its build and configuration. 
+A demo has also been provided that builds a Linux kernel, run **kern_bin_db**, then **nav** as well as **navweb**. 
 
 ## Contributing
 

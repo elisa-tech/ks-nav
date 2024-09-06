@@ -30,31 +30,43 @@ container, ensuring seamless integration and deployment.
   recent config pull request, ensuring a stable and bug-free experience.
 
 ## Usage Guide
-Build the Container
+
+A step-by-step example describing how to run ks-nav from a container with a locally hosted database, is available in the `./demo` [folder](./demo/README.md). The steps below represent a generic usage guide when the database is hosted outside of the ks-nav container. 
+
+### Build the ks-nav Container
 To build the container, follow these steps:
 
-* Navigate to the container directory.
-* Type the following command:
+- Navigate to the container directory. Type the following command:
+
+```bash
         podman build -v <local directory for postgres data>:/var/lib/postgresql/data:z -t ks-nav .
-  <local directory for postgres data> is the path to the directory where you 
-  want to store PostgreSQL data in your local system.
-* The build phase initializes the basic database. Two options are provided:
+```
+In the command above, `<local directory for postgres data>` is the path to the directory where you 
+  are storing PostgreSQL data on your host or remote system, outside of the ks-nav container. 
+  This parameter is not needed if you intend to run the database within the ks-nav container. 
+
+The build phase initializes the basic database. Two options are provided:
   * An empty database, which is used as the default option.
   * An already initialized database containing the ELISA Tell Tale use case.
-* Run the Application
 
-After successfully building the container, you can run the application using 
-the following steps:
+### Run the Application
 
-* Type the following command in the container directory: 
-        podman run -it -p 5432:5432 -p 8080:8080 -v <linux kernel build directory>:/app:z -v <local directory for postgres data>:/var/lib/postgresql/data:z localhost/ks-nav:latest
-  <linux kernel build directory> is the path to the directory containing the 
-  Linux kernel build.
-  <local directory for postgres data> is the same directory used during the 
-  container build or any other directory containing PostgreSQL data suitable 
-  for the application.
-  If you do not intend to fetch a new database during runtime, you can set the 
-  <linux kernel build directory> to /tmp.
+After successfully building the ks-nav container, you can run the ks-nav application. This application requires the user to have a Linux image built with debug symbols enabled. One example on how to build a Linux image for ks-nav is available in the [demo folder](./demo/README.md#21-build-linux-for-ks-nav). Once the image is successfully built, you can run the ks-nav application, using the following steps:
+
+- Type the following command in the container directory: 
+
+```bash
+        podman run -it -p 5432:5432 -p 8080:8080 \
+          -v <linux kernel build directory>:/app:z \ 
+          -v <local directory for postgres data>:/var/lib/postgresql/data:z \
+          localhost/ks-nav:latest
+```
+
+In the command above, 
+    * `<linux kernel build directory>` is the path to the directory containing the Linux kernel build.
+    * `<local directory for postgres data>` is the same directory used during the container build or any other directory containing PostgreSQL data suitable for the application. This argument is not needed if the database is locally hosted in the ks-nav container. 
+    * If you do not intend to fetch a new database during runtime, you can set the 
+  `<linux kernel build directory>` to /tmp.
 
 By following these steps, you can easily set up and run the containerized project 
 with its multiple applications. Should you encounter any issues or require further 
