@@ -1,6 +1,18 @@
 # BUILDER
 FROM quay.io/centos/centos:stream9 AS builder
 
+# Add ARGs to enable or disable the Demo config
+# Set this argument to any value to enable the Demo config
+# Demo mode is enabled by appending --build_arg _EN_DEMO=true to the build command
+# Demo mode is disabled by ommiting the --build_arg option
+ARG _EN_DEMO
+RUN if [[ -z "$_EN_DEMO" ]] ; \
+	then \
+		echo "Demo is disabled" ; \
+	else \
+		echo "Demo is enabled" ;\
+	fi
+
 # build ARGs
 ARG _RADARE2_GIT_REPO="https://github.com/radareorg/radare2.git"
 ENV RADARE2_GIT_REPO=$_RADARE2_GIT_REPO
@@ -30,10 +42,18 @@ RUN cd /build/radare2 && ./configure && make && make install
 
 # Build ks-nav
 RUN git clone ${KS_NAV_GIT_REPO} /build/ksnav && cd /build/ksnav/kern_bin_db && git checkout ${KS_NAV_GIT_REPO_BRANCH}
+# This local file is copied into the build folder and used for the demo (to support a local database)
+COPY ksnav_nav_local.json /build/.
+RUN if [[-z "$_EN_DEMO" ]] ; \
+	then \
+		echo "Demo not running" ; \
+	else \
+		cp /build/ksnav_nav_local.json /build/ksnav/navweb/data/configs/container.json ; \
+	fi
+
 RUN cd /build/ksnav/kern_bin_db && make && make install
 RUN cd /build/ksnav/nav && make && make install
 RUN cd /build/ksnav/navweb && go get -u github.com/go-bindata/go-bindata/... && go install github.com/go-bindata/go-bindata/... && make && make install
-
 
 
 ##############################################################################################################################################
@@ -117,3 +137,5 @@ EXPOSE 8080
 RUN find /app
 RUN echo -e '#!/bin/sh\nchown -R postgres:postgres ${POSTGRES_DATA_DIR} /run/postgresql\nsu postgres -c "pg_ctl start -D ${POSTGRES_DATA_DIR}/${POSTGRES_NAME}"\n/usr/bin/navweb\n' >/usr/bin/start.sh && chmod +x /usr/bin/start.sh
 ENTRYPOINT ["/usr/bin/start.sh"]
+
+

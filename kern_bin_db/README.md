@@ -37,8 +37,10 @@ any command to the tool. Last known version:
 
 `kern_bin_db` is implemented in Golang, and Golang applications are typically
 easy to build with few dependencies other than the standard Golang packages.
-A Makefile is provided to ease the build process.
+The `kern_bin_db` main source code is in *ks-nav/kern_bin_db/main.go*. 
+Once successfully built, it generates the ***nav-db-filler*** executable. 
 
+A Makefile is provided to ease the build process.
 To build the native executable, simply run:
 
 ```bash
@@ -58,7 +60,7 @@ $ make upx
 The following command line switches are available in the `kern_bin_db` tool:
 
 ```bash
-$ ./kern_bin_db -h
+$ ./nav-db-filler -h
 Kernel symbol fetcher
 	-f	<v>	specifies json configuration file
 	-s	<v>	Forces use specified strip binary
@@ -73,13 +75,13 @@ After compiling with the default PostgreSQL database backend specified, you
 can start collecting symbols by issuing the following command:
 
 ```bash
-$ ./kern_bin_db -f conf.json -n "Custom kernel from NXP bsp"
+$ ./nav-db-filler -f conf.json -n "Custom kernel from NXP bsp"
 ```
 
 ## Sample Configuration
 
 The conf.json file contains a JSON serialized configuration object.
-Here is an example configuration:
+Here is an example configuration. It is assumed in this example that the conf.json file is in the same folder as the Linux source code and build folder. 
 
 ```json
 {
@@ -95,6 +97,7 @@ Here is an example configuration:
     "Note": "upstream"
 }
 ```
+
 Configuration is a file containing a JSON serialized conf object
 
 |Field         |description                                                                         |type    |Default value               |

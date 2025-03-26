@@ -1,0 +1,55 @@
+# BUILDER
+FROM ubuntu:22.04
+
+# build ARGs
+ARG _LINUX_GIT_REPO='https://github.com/gregkh/linux.git'
+ENV LINUX_GIT_REPO=$_LINUX_GIT_REPO
+ARG _LINUX_GIT_BRANCH="v6.6.47"
+ENV LINUX_GIT_BRANCH=$_LINUX_GIT_BRANCH
+ENV LINUX_BUILD_DIR="/build"
+
+WORKDIR $LINUX_BUILD_DIR
+
+# install build dependecies
+RUN apt-get -o APT::Retries=3 update -y && \
+    apt-get upgrade -y && \
+    apt-get -o APT::Retries=3 install -y --no-install-recommends \
+        autoconf bc bison build-essential dkms flex gawk git libelf-dev libiberty-dev \
+        libncurses-dev libpci-dev libssl-dev libudev-dev llvm openssl \
+        && \
+    apt-get -y autoremove && \
+    apt-get -y clean && \
+    apt-get install -y ca-certificates && update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN git clone -b ${LINUX_GIT_BRANCH} ${LINUX_GIT_REPO} .
+
+# Setup configs and build Linux
+RUN make defconfig && ./scripts/config --file .config \
+        -e DEBUG_INFO \
+        -e DEBUG_KERNEL \
+        -d DEBUG_INFO_NONE \
+        -e GDB_SCRIPTS \
+        -d DEBUG_INFO_REDUCED \
+        -e DEBUG_INFO_DWARF5 \
+        -e DEBUG_INFO_COMPRESSED_NONE \
+        -d DEBUG_INFO_SPLIT \
+        -d DEBUG_INFO_COMPRESSED_ZLIB \
+	&& make oldconfig \ 
+	&& make vmlinux
+
+
+#################
+# BUILD ARTIFACTS
+FROM ubuntu:22.04
+ARG _LINUX_APP_DIR="/app"
+ENV LINUX_APP_DIR=$_LINUX_APP_DIR
+WORKDIR ${LINUX_APP_DIR}
+
+RUN mkdir -p include/generated/
+COPY --from=builder /build/Makefile .
+COPY --from=builder /build/MAINTAINERS .
+COPY --from=builder /build/vmlinux .
+COPY --from=builder /build/include/generated/autoconf.h ./include/generated/autoconf.h
+
+
