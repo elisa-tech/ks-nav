@@ -58,7 +58,7 @@ $ make upx
 The following command line switches are available in the `kern_bin_db` tool:
 
 ```bash
-$ ./kern_bin_db -h
+$ ./nav-db-filler -h
 Kernel symbol fetcher
 	-f	<v>	specifies json configuration file
 	-s	<v>	Forces use specified strip binary
@@ -73,7 +73,7 @@ After compiling with the default PostgreSQL database backend specified, you
 can start collecting symbols by issuing the following command:
 
 ```bash
-$ ./kern_bin_db -f conf.json -n "Custom kernel from NXP bsp"
+$ ./nav-db-filler -f conf.json -n "Custom kernel from NXP bsp"
 ```
 
 ## Sample Configuration
@@ -85,7 +85,7 @@ Here is an example configuration:
 {
     "LinuxWDebug": "vmlinux",
     "LinuxWODebug": "vmlinux.work",
-    "StripBin": "/usr/bin/aarch64-linux-gnu-strip",
+    "ToolchainPref": "/usr/bin/aarch64-linux-gnu-",
     "DBDriver": "postgres",
     "DBDSN": "host=dbs.hqhome163.com port=5432 user=alessandro password=<password> dbname=kernel_bin sslmode=disable",
     "Maintainers_fn": "MAINTAINERS",
@@ -101,7 +101,7 @@ Configuration is a file containing a JSON serialized conf object
 |--------------|------------------------------------------------------------------------------------|--------|----------------------------|
 |LinuxWDebug   |Linux image built with the debug symbols, input for the operation                   |string  |vmlinux                     |
 |LinuxWODebug  |File created after the strip operation, and on which the R" tool operates on        |string  |vmlinux.work                |
-|StripBin      |Executable that performs the strip operation to the selected architecture.          |string  |/usr/bin/strip              |
+|ToolchainPref |Prefix for toolchain utilities such as strip and nm                                 |string  |""
 |DBDriver      |Name of DB engine driver, i.e. postgres, mysql or sqlite3                           |string  |postgres                    |
 |DBDSN         |DSN in the engine specific format                                                   |string  |See Note                    |
 |Maintainers_fn|The path to MAINTAINERS file, typically in the kernel source tree                   |string  |MAINTAINERS                 |
